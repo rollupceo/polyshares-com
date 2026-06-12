@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <!-- Rocket icon -->
+  <path d="M22 8 C22 8 30 10 30 22 L30 32 L22 38 L14 32 L14 22 C14 10 22 8 22 8Z" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="22" cy="20" r="3" fill="white"/>
+  <path d="M14 28 L8 34 L14 34" fill="none" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M30 28 L36 34 L30 34" fill="none" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- Wordmark -->
+  <text x="46" y="21" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="11" font-weight="700" fill="white" letter-spacing="1.5">ROCKET AIR</text>
+  <text x="46" y="37" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="11" font-weight="400" fill="rgba(255,255,255,0.7)" letter-spacing="1.5">SUPPLY</text>
+</svg>

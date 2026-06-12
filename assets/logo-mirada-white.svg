@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" fill="none">
+  <!-- M geometric icon -->
+  <polyline points="8,36 8,12 20,28 32,12 32,36" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Divider -->
+  <line x1="44" y1="10" x2="44" y2="38" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+  <!-- Wordmark stacked -->
+  <text x="54" y="21" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="11" font-weight="700" fill="white" letter-spacing="2">MIRADA</text>
+  <text x="54" y="37" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="10" font-weight="400" fill="rgba(255,255,255,0.65)" letter-spacing="1.5">CAPITAL GROUP</text>
+</svg>

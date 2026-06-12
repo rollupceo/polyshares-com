@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" fill="none">
+  <!-- BB monogram -->
+  <text x="4" y="36" font-family="'Georgia', 'Times New Roman', serif" font-size="28" font-weight="700" fill="white" letter-spacing="-2">BB</text>
+  <!-- Divider -->
+  <line x1="52" y1="10" x2="52" y2="38" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+  <!-- Wordmark stacked -->
+  <text x="62" y="21" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="10" font-weight="700" fill="white" letter-spacing="1.5">BEARDED BROTHERS</text>
+  <text x="62" y="36" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="10" font-weight="400" fill="rgba(255,255,255,0.7)" letter-spacing="2">ROOFING</text>
+</svg>

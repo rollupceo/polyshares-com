@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 48" fill="none">
+  <!-- Roof icon -->
+  <polygon points="12,28 28,12 44,28" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
+  <rect x="18" y="28" width="20" height="12" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Wordmark -->
+  <text x="52" y="34" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="18" font-weight="700" fill="white" letter-spacing="0.5">Roofer.com</text>
+</svg>

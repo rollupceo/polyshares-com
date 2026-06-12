@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" fill="none">
+  <!-- Sun/solar icon -->
+  <circle cx="22" cy="24" r="7" fill="none" stroke="white" stroke-width="2"/>
+  <line x1="22" y1="8" x2="22" y2="12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="22" y1="36" x2="22" y2="40" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="8" y1="24" x2="12" y2="24" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="32" y1="24" x2="36" y2="24" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="12" y1="14" x2="15" y2="17" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="29" y1="31" x2="32" y2="34" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="32" y1="14" x2="29" y2="17" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="15" y1="31" x2="12" y2="34" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <!-- Wordmark -->
+  <text x="46" y="21" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="11" font-weight="700" fill="white" letter-spacing="1.5">MIDWEST</text>
+  <text x="46" y="37" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="11" font-weight="400" fill="rgba(255,255,255,0.75)" letter-spacing="1">ROOF &amp; SOLAR</text>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 48" fill="none">
+  <!-- Canopy/arch icon -->
+  <path d="M10 34 Q22 10 34 34" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="10" y1="34" x2="10" y2="40" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <line x1="34" y1="34" x2="34" y2="40" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <!-- Wordmark -->
+  <text x="46" y="21" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="12" font-weight="700" fill="white" letter-spacing="1.5">CANOPY</text>
+  <text x="46" y="37" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="10" font-weight="400" fill="rgba(255,255,255,0.7)" letter-spacing="0.8">ROOF &amp; RESTORATION</text>
+</svg>
