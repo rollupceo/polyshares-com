@@ -6,7 +6,7 @@
   --maxw:1160px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;overflow-x:hidden}
 body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
 img{display:block;max-width:100%}
@@ -168,7 +168,7 @@ section{padding:104px 0;position:relative}
 .faq-item.open .faq-q::after{transform:translateY(-50%) rotate(45deg)}
 .faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease;color:var(--muted);font-size:16px}
 .faq-a div{padding:0 50px 28px 0}
-.faq-item.open .faq-a{max-height:340px}
+.faq-item.open .faq-a{max-height:700px}
 
 .final{background:var(--dark);color:#fff;text-align:center;padding:110px 0}
 .final .eyebrow{color:rgba(255,255,255,.5)}
@@ -198,4 +198,9 @@ footer{background:var(--dark);color:rgba(255,255,255,.6);padding:46px 0;border-t
   section{padding:72px 0}
   .cs-pill{text-align:left}
   .rollup{font-size:12.5px}.rollup th,.rollup td{padding:10px 11px}
+  .cmp{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;font-size:13.5px}
+  .cmp th,.cmp td{padding:14px 12px;white-space:nowrap}
+  .cmp td:first-child{font-size:15px}
+  .rollup{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .rollup th,.rollup td{white-space:nowrap}
 }
