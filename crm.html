@@ -153,9 +153,15 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
       <div class="row"><select id="aRep"></select><input id="aCount" type="number" value="2000" min="1" max="5000" style="width:90px" /><button class="btn" id="aGo" onclick="assignLeads()">Assign from pool</button></div>
       <div style="font-size:12.5px;color:var(--muted)">Pool remaining: <span id="poolN">…</span></div>
     </div>
-    <div class="panel"><h3>Add a rep</h3>
-      <div class="row"><input id="rName" placeholder="Full name" /><button class="btn" onclick="addRep()">Add rep</button></div>
-      <div style="font-size:12.5px;color:var(--muted)">New reps log in with the same team passcode and pick their name.</div>
+    <div class="panel"><h3>Team &amp; roles</h3>
+      <div id="repTable" style="overflow-x:auto"></div>
+      <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" /><label style="display:flex;gap:5px;align-items:center;font-size:12.5px"><input type="checkbox" id="rAdmin" style="width:auto"> admin</label><input id="rPin" placeholder="PIN (optional)" style="width:110px" /><button class="btn" onclick="addRep()">Add rep</button></div>
+      <div style="font-size:12.5px;color:var(--muted)">Reps log in with the team passcode, pick their name, and enter their PIN if one is set. Removing a rep returns their leads to the pool.</div>
+    </div>
+    <div class="panel"><h3>Email &amp; LinkedIn templates</h3>
+      <div id="tplEditor"></div>
+      <div class="row"><button class="btn ghost sm" onclick="tplAdd()">+ Add template</button><button class="btn sm" onclick="tplSave()">Save templates</button></div>
+      <div style="font-size:12.5px;color:var(--muted)">Merge fields: {{first}} {{last}} {{company}} {{title}}. "Compose" opens Gmail pre-filled and logs the email. The LinkedIn template is copied to the clipboard on "in Connect".</div>
     </div>
     <div class="panel"><h3>Import leads (CSV)</h3>
       <div class="row"><input type="file" id="csvFile" accept=".csv" /><button class="btn" onclick="importCsv()">Import to pool</button></div>
@@ -172,11 +178,12 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 <script>
 const REPO = 'rollupceo/polyshares-crm-data';
 const ENC = { s:'V02R4hZVJ7RmywtRQOkg9Q==', iv:'SirmFbnT/mlV6OPN', ct:'htGkDGmxck5ed1owo9Gs2pF7IIwUfHorUyLezXmod/AysO2+isGwjUomBSxNLqmVO8jka0Hi8gs=' };
-let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[];
+let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], templates=[];
 let shas={}, dirty={leads:false,acts:false}, saveTimer=null, colLimit={};
 
 /* ---------- crypto ---------- */
 const ub64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
+const sha = async s => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))).map(b=>b.toString(16).padStart(2,'0')).join('');
 async function decryptToken(pass){
   const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
   const key = await crypto.subtle.deriveKey({name:'PBKDF2', salt:ub64(ENC.s), iterations:310000, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, false, ['decrypt']);
@@ -238,11 +245,17 @@ async function unlock(){
 function showRepPick(){
   document.getElementById('passStep').style.display='none';
   const rp = document.getElementById('repPick'); rp.style.display='block';
-  rp.innerHTML = '<div class="sub" style="margin-bottom:10px">Who are you?</div>' + reps.map(r =>
+  rp.innerHTML = '<div class="sub" style="margin-bottom:10px">Who are you?</div>' + reps.filter(r=>r.active!==false).map(r =>
     `<button class="repbtn" onclick="pickRep('${r.id}')"><span class="dot" style="background:${r.color}"></span>${r.name}${r.admin?' <span style="color:var(--muted);font-size:11px;margin-left:auto">admin</span>':''}</button>`).join('');
 }
 async function pickRep(id){
-  me = reps.find(r=>r.id===id);
+  const r = reps.find(x=>x.id===id);
+  if (r.pin){
+    const p = prompt('PIN for ' + r.name + ':');
+    if (p===null) return;
+    if (await sha(p.trim()) !== r.pin){ document.getElementById('loginErr').textContent='Wrong PIN.'; return; }
+  }
+  me = r;
   localStorage.setItem('crm_rep', id);
   await enterApp();
 }
@@ -255,7 +268,8 @@ async function boot(){
   if (me) await enterApp(); else { document.getElementById('passStep').style.display='none'; showRepPick(); }
 }
 async function enterApp(){
-  try { stages = await load('meta/stages.json'); } catch(e){ stages=['New','Contacted','Connected','Call Booked','Qualified','Won','Dead']; }
+  try { stages = await load('meta/stages.json'); } catch(e){ stages=['New','Contacted','Connected','Call Booked','Call Attended','Proposal Sent','Paid & Closed','Dead']; }
+  try { templates = await load('meta/templates.json'); } catch(e){ templates=[]; }
   myLeads = await load(`reps/${me.id}/leads.json`);
   myActs  = await load(`reps/${me.id}/activities.json`);
   document.getElementById('login').style.display='none';
@@ -291,7 +305,7 @@ function renderBoard(){
     for (const l of leads.slice(0,lim)){
       const c = document.createElement('div'); c.className='card'; c.draggable=true; c.dataset.id=l.i;
       c.innerHTML = `<div class="nm">${esc(leadName(l))}</div><div class="co">${esc(l.co)}</div><div class="ti">${esc(l.ti)}</div>
-        <div class="acts"><button onclick="event.stopPropagation();quickLog('${l.i}','call')">📞 Call</button><button onclick="event.stopPropagation();quickLog('${l.i}','email')">✉️ Email</button><button onclick="event.stopPropagation();quickLog('${l.i}','li')">in Connect</button></div>`;
+        <div class="acts"><button onclick="event.stopPropagation();quickLog('${l.i}','call')">📞 Call</button><button onclick="event.stopPropagation();emailLead('${l.i}',0)">✉️ Email</button><button onclick="event.stopPropagation();liLead('${l.i}')">in Connect</button></div>`;
       c.onclick = () => openDrawer(l.i);
       c.ondragstart = e => e.dataTransfer.setData('text/plain', l.i);
       wrap.appendChild(c);
@@ -318,6 +332,25 @@ function setStage(id, st){
 function logAct(l, ty, d){
   myActs.push({ t: Date.now(), ty, l: l.i, n: leadName(l), d: d||'' });
   markDirty('acts');
+}
+function emailTpls(){ return templates.filter(t=>t.type!=='li'); }
+function merge(s, l){ return (s||'').replace(/{{\s*first\s*}}/gi, l.fn||'').replace(/{{\s*last\s*}}/gi, l.ln||'').replace(/{{\s*company\s*}}/gi, l.co||'').replace(/{{\s*title\s*}}/gi, l.ti||''); }
+function emailLead(id, tplIdx){
+  const l = myLeads.find(x=>x.i===id); if(!l) return;
+  if (!l.em){ toast('No email on file for this lead'); return; }
+  const sel = document.getElementById('dTpl');
+  const idx = (tplIdx!==undefined) ? tplIdx : (sel ? parseInt(sel.value) : 0);
+  const t = emailTpls()[idx] || {su:'', body:''};
+  window.open('https://mail.google.com/mail/?view=cm&fm=1&to='+encodeURIComponent(l.em)+'&su='+encodeURIComponent(merge(t.su,l))+'&body='+encodeURIComponent(merge(t.body,l)), '_blank');
+  l.la = Date.now(); logAct(l, 'email', t.name||''); markDirty('leads');
+  toast('Gmail opened — email logged');
+}
+async function liLead(id){
+  const l = myLeads.find(x=>x.i===id); if(!l) return;
+  const t = templates.find(x=>x.type==='li');
+  if (t){ try{ await navigator.clipboard.writeText(merge(t.body,l)); toast('Connect note copied — paste it on LinkedIn'); }catch(e){} }
+  if (l.li) window.open(l.li, '_blank'); else toast('No LinkedIn URL on file');
+  l.la = Date.now(); logAct(l, 'li'); markDirty('leads');
 }
 function quickLog(id, ty){
   const l = myLeads.find(x=>x.i===id); if(!l) return;
@@ -357,7 +390,8 @@ function openDrawer(id){
     <div class="fld"><b>Industry</b>${esc(l.in||'—')} ${l.sz?`<span class="tag">${esc(l.sz)} emp</span>`:''}</div>
     <div class="fld"><b>Stage</b><select onchange="setStage('${l.i}', this.value)">${stages.map(s=>`<option ${ (l.st||'New')===s?'selected':'' }>${s}</option>`).join('')}</select></div>
     ${me.admin ? `<div class="fld"><b>Rep</b><select onchange="moveLead('${l.i}', this.value)">${reps.map(r=>`<option value="${r.id}" ${r.id===me.id?'selected':''}>${r.name}</option>`).join('')}</select></div>` : ''}
-    <div class="logrow"><button class="btn sm" onclick="quickLog('${l.i}','call')">📞 Log call</button><button class="btn sm" onclick="quickLog('${l.i}','email')">✉️ Log email</button><button class="btn sm" onclick="quickLog('${l.i}','li')">in Connect</button></div>
+    ${emailTpls().length ? `<div class="fld" style="margin-top:12px"><b>Template</b><select id="dTpl" style="max-width:210px">${emailTpls().map((t,ix)=>`<option value="${ix}">${esc(t.name)}</option>`).join('')}</select></div>` : ''}
+    <div class="logrow"><button class="btn sm" onclick="emailLead('${l.i}')">✉️ Compose</button><button class="btn sm" onclick="liLead('${l.i}')">in Connect</button><button class="btn sm ghost" onclick="quickLog('${l.i}','call')">📞 Log call</button><button class="btn sm ghost" onclick="quickLog('${l.i}','email')">Log email</button></div>
     <textarea placeholder="Notes…" onblur="saveNote('${l.i}', this.value)">${esc(l.nt||'')}</textarea>
     <div class="hist"><div class="subhead">History</div>${hist.map(a=>`<div class="h">${tyLabel[a.ty]||a.ty} ${a.d?('· '+esc(a.d)):''} <span>· ${new Date(a.t).toLocaleString()}</span></div>`).join('') || '<div class="h" style="color:var(--muted)">No activity yet</div>'}</div>`;
   document.getElementById('drawer').classList.add('open');
@@ -413,8 +447,55 @@ async function renderMetrics(){
 
 /* ---------- admin ---------- */
 function fillAdmin(){
-  document.getElementById('aRep').innerHTML = reps.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+  document.getElementById('aRep').innerHTML = reps.filter(r=>r.active!==false).map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+  if (me && me.admin){ renderReps(); renderTpls(); }
 }
+function renderReps(){
+  document.getElementById('repTable').innerHTML = '<table class="tbl"><thead><tr><th>Rep</th><th>Role</th><th>PIN</th><th>Status</th><th></th></tr></thead><tbody>' + reps.map((r,i)=>`<tr>
+    <td><b>${esc(r.name)}</b>${r.id===me.id?' <span style="color:var(--muted);font-size:11px">(you)</span>':''}</td>
+    <td><label style="display:flex;gap:5px;align-items:center;font-size:12px"><input type="checkbox" ${r.admin?'checked':''} ${r.id===me.id?'disabled':''} onchange="setAdmin(${i}, this.checked)" style="width:auto"> admin</label></td>
+    <td><button class="btn sm ghost" onclick="setPin(${i})">${r.pin?'Reset PIN':'Set PIN'}</button></td>
+    <td>${r.active===false?'<span class="tag">inactive</span> ':''}<button class="btn sm ghost" onclick="toggleActive(${i})">${r.active===false?'Activate':'Deactivate'}</button></td>
+    <td>${r.id!==me.id?`<button class="btn sm ghost" style="color:var(--red)" onclick="delRep(${i})">Remove</button>`:''}</td></tr>`).join('') + '</tbody></table>';
+}
+async function saveReps(msg){ try{ await save('meta/reps.json', reps, msg||'crm: update reps'); }catch(e){ toast('Save failed: '+e.message); } renderReps(); fillAdmin(); }
+async function setAdmin(i, v){ reps[i].admin = v; await saveReps('crm: role '+reps[i].id); toast('Role updated'); }
+async function setPin(i){
+  const p = prompt('New PIN for '+reps[i].name+' (leave empty to remove):'); if (p===null) return;
+  if (p.trim()) reps[i].pin = await sha(p.trim()); else delete reps[i].pin;
+  await saveReps('crm: pin '+reps[i].id); toast(p.trim()?'PIN set':'PIN removed');
+}
+async function toggleActive(i){ reps[i].active = reps[i].active===false; await saveReps('crm: active '+reps[i].id); }
+async function delRep(i){
+  const r = reps[i];
+  if (!confirm('Remove '+r.name+'? Their assigned leads return to the pool.')) return;
+  try{
+    const leads = await load(`reps/${r.id}/leads.json`);
+    if (leads.length){
+      const idx = await load('pool/index.json');
+      const fname = `pool/pool-${String(idx.chunks.length).padStart(3,'0')}.json`;
+      shas[fname] = null;
+      leads.forEach(l => { delete l.st; delete l.a; delete l.la; delete l.nt; });
+      await save(fname, leads, `crm: return ${leads.length} leads from ${r.id}`);
+      idx.chunks.push({file:fname, count:leads.length}); idx.total += leads.length;
+      await save('pool/index.json', idx, 'crm: pool index');
+    }
+    reps.splice(i,1);
+    await saveReps('crm: remove rep '+r.id);
+    refreshPool(); toast('Removed '+r.name);
+  }catch(e){ toast('Remove failed: '+e.message); }
+}
+function renderTpls(){
+  document.getElementById('tplEditor').innerHTML = templates.map((t,i)=>`<div style="border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px">
+    <div class="row"><input value="${esc(t.name)}" placeholder="Template name" oninput="templates[${i}].name=this.value" style="width:200px" />
+    <label style="display:flex;gap:5px;align-items:center;font-size:12px"><input type="checkbox" ${t.type==='li'?'checked':''} onchange="templates[${i}].type=this.checked?'li':'email'" style="width:auto"> LinkedIn note</label>
+    <button class="btn sm ghost" style="color:var(--red);margin-left:auto" onclick="templates.splice(${i},1);renderTpls()">Delete</button></div>
+    <input value="${esc(t.su||'')}" placeholder="Subject (email only)" oninput="templates[${i}].su=this.value" style="width:100%;margin-bottom:7px" />
+    <textarea style="width:100%;min-height:84px" placeholder="Body" oninput="templates[${i}].body=this.value">${esc(t.body||'')}</textarea></div>`).join('')
+    || '<div style="color:var(--muted);font-size:13px;margin-bottom:8px">No templates yet.</div>';
+}
+function tplAdd(){ templates.push({name:'New template', type:'email', su:'', body:''}); renderTpls(); }
+async function tplSave(){ try{ await save('meta/templates.json', templates, 'crm: templates'); toast('Templates saved'); }catch(e){ toast('Save failed: '+e.message); } }
 async function refreshPool(){
   try { const idx = await load('pool/index.json'); document.getElementById('poolN').textContent = idx.total.toLocaleString() + ' unassigned'; }
   catch(e){ document.getElementById('poolN').textContent = '?'; }
@@ -456,14 +537,17 @@ async function addRep(){
   const name = document.getElementById('rName').value.trim(); if(!name) return;
   const id = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').split('-')[0] + (Math.random()*100|0);
   const colors = ['#A55050','#C9A227','#6B5B95','#3E7C8F','#7A9E7E'];
-  reps.push({ id, name, admin:false, color: colors[reps.length % colors.length] });
+  const rep = { id, name, admin: document.getElementById('rAdmin').checked, color: colors[reps.length % colors.length], active: true };
+  const pinV = document.getElementById('rPin').value.trim();
+  if (pinV) rep.pin = await sha(pinV);
+  reps.push(rep);
   try{
     await save('meta/reps.json', reps, 'crm: add rep '+name);
     shas[`reps/${id}/leads.json`] = null; shas[`reps/${id}/activities.json`] = null;
     await save(`reps/${id}/leads.json`, [], 'crm: init '+id);
     await save(`reps/${id}/activities.json`, [], 'crm: init '+id);
     fillAdmin(); toast('Added '+name);
-    document.getElementById('rName').value='';
+    document.getElementById('rName').value=''; document.getElementById('rPin').value=''; document.getElementById('rAdmin').checked=false;
   }catch(e){ toast('Failed: '+e.message); }
 }
 async function importCsv(){
