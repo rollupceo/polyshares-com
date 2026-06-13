@@ -1,1 +1,37 @@
-{"logins":[{"id":"nathan","name":"nathan@polyshares.com","color":"#4A6FA5","enc":{"s":"fR3w6VoVm3RgWxQG/aZZzg==","iv":"lpK4l0LkJofKwCfd","ct":"OsfqO2v2VvojLc2nFKT0gBu7yOiCtvFmf1EY89Ce/mAbsaKSApoKDHK6VtYC28PhGP2dloZ3iX0="},"setup":true},{"id":"austin","name":"austin@polyshares.com","color":"#7A9E7E","enc":{"s":"7VpfaNske7EnE5S2lrNF5g==","iv":"8V17+NI/IzAtm+sx","ct":"CWRNrgruSlFv/7EhWsVX1H2TXH3ySATiHy7KOBpTc549Pc4pa4Vo5iodDJEatVVZFbQ67Ff8BCs="},"setup":true},{"id":"ryan","name":"ryan@polyshares.com","color":"#A55050","enc":{"s":"uhYb3J87j4waksAmrkRACA==","iv":"BMjR6bv5SR2DoAbU","ct":"ehuuv0P8nksZkdCew5oKKZldIWuOcdhCtjDQivhr5sZAhIbQnDJPA5nTv3a5kCBqjh0pQK7JMc0="}}]}
+{
+ "logins": [
+  {
+   "id": "nathan",
+   "name": "nathan@polyshares.com",
+   "color": "#4A6FA5",
+   "enc": {
+    "s": "xtaQESNA8qohLGTQGrplpw==",
+    "iv": "ET3DCZDZVVkwa4ad",
+    "ct": "BFyQVNHhZvYyiMOxynLvb4LzOg9PxyMHGhUbkdM7RXUPuvSsB8ck7AbyRHyMNOE4ERigbzoH72U="
+   },
+   "setup": true
+  },
+  {
+   "id": "austin",
+   "name": "austin@polyshares.com",
+   "color": "#7A9E7E",
+   "enc": {
+    "s": "x88xXBu/Im7UDub4JZPieg==",
+    "iv": "3YYdwuhHop16ErpF",
+    "ct": "p+lMIKV1YmyKHPDdJ5ePpITMLx8sHUluXKAnI0rcw0/0Brl4YpXxHVC5w7XbS1+EWwbTPyoJdI8="
+   },
+   "setup": true
+  },
+  {
+   "id": "ryan",
+   "name": "ryan@polyshares.com",
+   "color": "#A55050",
+   "enc": {
+    "s": "RLGeTjQqMTPBXl7+w8YNDw==",
+    "iv": "Czz16sOtqvp6vcsN",
+    "ct": "qCIrY+QPXSfVKfF6SKEZUezuSTZtpHhvnScRFKKmwGxTPl7m/gaDbJmDVt/xoaKevoasoHtuN+o="
+   },
+   "setup": true
+  }
+ ]
+}
