@@ -117,12 +117,14 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   <div class="card">
     <h1>Polyshares CRM</h1>
     <div class="sub">Internal — authorized team only.</div>
-    <div id="passStep">
-      <input type="password" id="passcode" placeholder="Team passcode" autocomplete="current-password" />
+    <div id="whoStep"></div>
+    <div id="passStep" style="display:none">
+      <div class="sub" id="passWho" style="margin-bottom:10px"></div>
+      <input type="password" id="passcode" placeholder="Your passcode" autocomplete="current-password" />
       <label style="display:flex;gap:7px;align-items:center;font-size:12.5px;color:var(--muted);margin-bottom:14px"><input type="checkbox" id="remember" style="width:auto"> Keep me signed in on this device</label>
-      <button class="btn" id="unlock">Unlock</button>
+      <button class="btn" id="unlock">Sign in</button>
+      <button class="btn ghost" style="width:100%;margin-top:8px" onclick="backToWho()">Back</button>
     </div>
-    <div id="repPick"></div>
     <div class="err" id="loginErr"></div>
   </div>
 </div>
@@ -132,6 +134,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   <div class="brand"><svg viewBox="0 0 96 96" fill="none"><rect x="18" y="18" width="42" height="42" stroke="currentColor" stroke-width="7"/><rect x="36" y="36" width="42" height="42" stroke="currentColor" stroke-width="7"/></svg>Polyshares CRM</div>
   <nav>
     <button data-v="board" class="on">Board</button>
+    <button data-v="queue">Queue</button>
     <button data-v="leads">Leads</button>
     <button data-v="metrics">Metrics</button>
     <button data-v="team" id="teamTab">Team</button>
@@ -142,6 +145,10 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   <section id="v-board">
     <input id="qsearch" placeholder="Search my leads…" oninput="renderBoard()" />
     <div class="board" id="board"></div>
+  </section>
+  <section id="v-queue" style="display:none">
+    <div class="row"><span style="font-size:12.5px;color:var(--muted)">Mark stale after</span><input id="staleN" type="number" min="1" max="30" style="width:64px" onchange="localStorage.setItem('crm_staleN', this.value); renderQueue()" /><span style="font-size:12.5px;color:var(--muted)">days without a touch</span></div>
+    <div id="queueWrap" style="margin-top:8px"></div>
   </section>
   <section id="v-leads" style="display:none">
     <div class="row"><input id="tsearch" placeholder="Filter by name, company, title, state, industry…" style="width:340px" oninput="renderTable()" /><span id="tcount" style="color:var(--muted);font-size:12.5px"></span></div>
@@ -155,8 +162,8 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     </div>
     <div class="panel"><h3>Team &amp; roles</h3>
       <div id="repTable" style="overflow-x:auto"></div>
-      <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" /><label style="display:flex;gap:5px;align-items:center;font-size:12.5px"><input type="checkbox" id="rAdmin" style="width:auto"> admin</label><input id="rPin" placeholder="PIN (optional)" style="width:110px" /><button class="btn" onclick="addRep()">Add rep</button></div>
-      <div style="font-size:12.5px;color:var(--muted)">Reps log in with the team passcode, pick their name, and enter their PIN if one is set. Removing a rep returns their leads to the pool.</div>
+      <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" /><label style="display:flex;gap:5px;align-items:center;font-size:12.5px"><input type="checkbox" id="rAdmin" style="width:auto"> admin</label><button class="btn" onclick="addRep()">Add rep</button></div>
+      <div style="font-size:12.5px;color:var(--muted)">Each rep gets their own passcode — it's shown once when you add them (or reset it here). Removing a rep returns their leads to the pool and revokes their login.</div>
     </div>
     <div class="panel"><h3>Email &amp; LinkedIn templates</h3>
       <div id="tplEditor"></div>
@@ -177,18 +184,35 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 
 <script>
 const REPO = 'rollupceo/polyshares-crm-data';
-const ENC = { s:'V02R4hZVJ7RmywtRQOkg9Q==', iv:'SirmFbnT/mlV6OPN', ct:'htGkDGmxck5ed1owo9Gs2pF7IIwUfHorUyLezXmod/AysO2+isGwjUomBSxNLqmVO8jka0Hi8gs=' };
+const SITE_REPO = 'rollupceo/polyshares-com';
+const LOGINS_URL = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-logins.json';
 let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], templates=[];
 let shas={}, dirty={leads:false,acts:false}, saveTimer=null, colLimit={};
 
 /* ---------- crypto ---------- */
 const ub64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
 const sha = async s => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))).map(b=>b.toString(16).padStart(2,'0')).join('');
-async function decryptToken(pass){
+async function deriveKey(pass, salt, usage){
   const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey({name:'PBKDF2', salt:ub64(ENC.s), iterations:310000, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, false, ['decrypt']);
-  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:ub64(ENC.iv)}, key, ub64(ENC.ct));
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:310000, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, false, [usage]);
+}
+async function decryptToken(pass, enc){
+  const key = await deriveKey(pass, ub64(enc.s), 'decrypt');
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:ub64(enc.iv)}, key, ub64(enc.ct));
   return new TextDecoder().decode(pt);
+}
+async function encryptToken(pass, tok){
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(pass, salt, 'encrypt');
+  const ct = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(tok)));
+  const b64 = a => btoa(String.fromCharCode(...a));
+  return { s: b64(salt), iv: b64(iv), ct: b64(ct) };
+}
+function genPass(){
+  const a = new Uint8Array(12); crypto.getRandomValues(a);
+  const cs = 'abcdefghjkmnpqrstuvwxyz23456789';
+  const s = Array.from(a, b => cs[b % cs.length]).join('');
+  return 'poly-' + s.slice(0,4) + '-' + s.slice(4,8) + '-' + s.slice(8,12);
 }
 
 /* ---------- github api ---------- */
@@ -227,45 +251,74 @@ async function save(path, obj, msg){
   const j = await r.json(); shas[path] = j.content.sha;
 }
 
-/* ---------- login ---------- */
+/* ---------- login (individual passcodes) ---------- */
+let loginsDoc=null, pickedId=null;
 document.getElementById('unlock').onclick = unlock;
 document.getElementById('passcode').addEventListener('keydown', e=>{ if(e.key==='Enter') unlock(); });
+async function initLogin(){
+  try{
+    let r = await fetch(LOGINS_URL + '?t=' + Date.now());
+    if (!r.ok) r = await fetch('crm-logins.json?t=' + Date.now());
+    loginsDoc = await r.json();
+  }catch(e){
+    try{ loginsDoc = await (await fetch('crm-logins.json?t=' + Date.now())).json(); }
+    catch(e2){ document.getElementById('loginErr').textContent = 'Could not load login list.'; return; }
+  }
+  const ws = document.getElementById('whoStep');
+  ws.innerHTML = '<div class="sub" style="margin-bottom:10px">Who are you?</div>' + loginsDoc.logins.map(L =>
+    `<button class="repbtn" onclick="pickLogin('${L.id}')"><span class="dot" style="background:${L.color||'#999'}"></span>${esc(L.name)}</button>`).join('');
+}
+function pickLogin(id){
+  pickedId = id;
+  document.getElementById('whoStep').style.display='none';
+  document.getElementById('passStep').style.display='block';
+  document.getElementById('passWho').textContent = 'Signing in as ' + ((loginsDoc.logins.find(l=>l.id===id)||{}).name || id);
+  document.getElementById('loginErr').textContent='';
+  document.getElementById('passcode').focus();
+}
+function backToWho(){
+  document.getElementById('passStep').style.display='none';
+  document.getElementById('whoStep').style.display='block';
+  document.getElementById('loginErr').textContent='';
+}
 async function unlock(){
   const err = document.getElementById('loginErr'); err.textContent='';
   const pass = document.getElementById('passcode').value.trim();
-  if (!pass) return;
-  document.getElementById('unlock').textContent = 'Unlocking…';
-  try { token = await decryptToken(pass); }
-  catch(e){ err.textContent = 'Wrong passcode.'; document.getElementById('unlock').textContent='Unlock'; return; }
+  const L = loginsDoc && loginsDoc.logins.find(l=>l.id===pickedId);
+  if (!pass || !L) return;
+  document.getElementById('unlock').textContent = 'Signing in…';
+  try { token = await decryptToken(pass, L.enc); }
+  catch(e){ err.textContent = 'Wrong passcode.'; document.getElementById('unlock').textContent='Sign in'; return; }
   const store = document.getElementById('remember').checked ? localStorage : sessionStorage;
   store.setItem('crm_t', token);
-  try { reps = await load('meta/reps.json'); } catch(e){ err.textContent='Could not reach data repo.'; return; }
-  showRepPick();
-}
-function showRepPick(){
-  document.getElementById('passStep').style.display='none';
-  const rp = document.getElementById('repPick'); rp.style.display='block';
-  rp.innerHTML = '<div class="sub" style="margin-bottom:10px">Who are you?</div>' + reps.filter(r=>r.active!==false).map(r =>
-    `<button class="repbtn" onclick="pickRep('${r.id}')"><span class="dot" style="background:${r.color}"></span>${r.name}${r.admin?' <span style="color:var(--muted);font-size:11px;margin-left:auto">admin</span>':''}</button>`).join('');
-}
-async function pickRep(id){
-  const r = reps.find(x=>x.id===id);
-  if (r.pin){
-    const p = prompt('PIN for ' + r.name + ':');
-    if (p===null) return;
-    if (await sha(p.trim()) !== r.pin){ document.getElementById('loginErr').textContent='Wrong PIN.'; return; }
-  }
-  me = r;
-  localStorage.setItem('crm_rep', id);
+  localStorage.setItem('crm_rep', pickedId);
+  try { reps = await load('meta/reps.json'); } catch(e){ err.textContent='Could not reach data repo.'; document.getElementById('unlock').textContent='Sign in'; return; }
+  me = reps.find(r=>r.id===pickedId) || { id: pickedId, name: L.name, admin: false };
   await enterApp();
 }
 async function boot(){
+  initLogin();
   token = sessionStorage.getItem('crm_t') || localStorage.getItem('crm_t');
   if (!token) return;
   try { reps = await load('meta/reps.json'); } catch(e){ token=null; return; }
-  const rid = localStorage.getItem('crm_rep');
-  me = reps.find(r=>r.id===rid);
-  if (me) await enterApp(); else { document.getElementById('passStep').style.display='none'; showRepPick(); }
+  me = reps.find(r=>r.id===localStorage.getItem('crm_rep'));
+  if (me) await enterApp();
+  else { sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); token=null; }
+}
+/* logins file lives in the public site repo */
+async function ghSite(path, opts={}){
+  const r = await fetch(`https://api.github.com/repos/${SITE_REPO}/contents/${path}`, {
+    ...opts, headers:{ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json', ...(opts.headers||{}) }
+  });
+  return r;
+}
+async function loadLogins(){
+  const r = await ghSite('crm-logins.json'); const j = await r.json();
+  return { doc: b64dec(j.content), sha: j.sha };
+}
+async function saveLogins(doc, sha, msg){
+  const r = await ghSite('crm-logins.json', { method:'PUT', body: JSON.stringify({ message: msg||'crm: update logins', content: b64enc(doc), sha }) });
+  if (!r.ok) throw new Error('logins save '+r.status);
 }
 async function enterApp(){
   try { stages = await load('meta/stages.json'); } catch(e){ stages=['New','Prospecting','Connected','Meeting Booked','Meeting Attended','Proposal Sent','Paid & Closed','Dead']; }
@@ -276,7 +329,7 @@ async function enterApp(){
   document.getElementById('app').style.display='block';
   document.getElementById('who').textContent = me.name;
   document.getElementById('teamTab').style.display = me.admin ? '' : 'none';
-  renderBoard(); fillAdmin();
+  renderBoard(); fillAdmin(); updateQueueBadge();
 }
 function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); location.reload(); }
 
@@ -284,10 +337,11 @@ function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('
 document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
   document.querySelectorAll('header nav button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
-  ['board','leads','metrics','team'].forEach(v => document.getElementById('v-'+v).style.display = (v===b.dataset.v?'':'none'));
+  ['board','queue','leads','metrics','team'].forEach(v => document.getElementById('v-'+v).style.display = (v===b.dataset.v?'':'none'));
   if (b.dataset.v==='metrics') renderMetrics();
   if (b.dataset.v==='leads') renderTable();
   if (b.dataset.v==='team') refreshPool();
+  if (b.dataset.v==='queue') renderQueue();
 });
 
 /* ---------- board ---------- */
@@ -326,6 +380,56 @@ function setStage(id, st){
   l.st = st; l.la = Date.now();
   logAct(l, 'stage', st);
   markDirty('leads'); renderBoard();
+}
+
+/* ---------- queue ---------- */
+const DAY = 86400000;
+function queueGroups(){
+  const now = Date.now();
+  const N = parseInt(localStorage.getItem('crm_staleN')||'3');
+  const touch = l => l.la || l.a || 0;
+  const active = myLeads.filter(l => !['Paid & Closed','Dead'].includes(l.st||'New'));
+  const fuDue = active.filter(l => l.fu && l.fu <= now).sort((a,b)=>a.fu-b.fu);
+  const fresh = active.filter(l => !fuDue.includes(l) && (l.st||'New')==='New' && !l.la).sort((a,b)=>(a.a||0)-(b.a||0));
+  const stale = active.filter(l => !fuDue.includes(l) && !fresh.includes(l) && !l.fu && (now - touch(l)) >= N*DAY).sort((a,b)=>touch(a)-touch(b));
+  return {fuDue, stale, fresh, N};
+}
+function updateQueueBadge(){
+  const g = queueGroups();
+  const n = g.fuDue.length + g.stale.length + g.fresh.length;
+  const btn = document.querySelector('[data-v=queue]');
+  if (btn) btn.textContent = 'Queue' + (n ? ` (${n})` : '');
+}
+function qRows(list, dueText){
+  const now = Date.now();
+  return list.map(l => `<tr>
+    <td onclick="openDrawer('${l.i}')" style="cursor:pointer"><b>${esc(leadName(l))}</b><div style="color:var(--muted);font-size:11.5px">${esc(l.co)}</div></td>
+    <td><span class="tag">${esc(l.st||'New')}</span></td>
+    <td style="color:var(--muted)">${dueText(l, now)}</td>
+    <td style="white-space:nowrap"><button class="btn sm ghost" onclick="quickLog('${l.i}','call')">📞</button> <button class="btn sm ghost" onclick="emailLead('${l.i}',0)">✉️</button> <button class="btn sm ghost" onclick="liLead('${l.i}')">in</button> <button class="btn sm ghost" onclick="snooze('${l.i}')">Snooze 3d</button> <button class="btn sm" onclick="openDrawer('${l.i}')">Open</button></td>
+  </tr>`).join('');
+}
+function renderQueue(){
+  updateQueueBadge();
+  const g = queueGroups();
+  document.getElementById('staleN').value = g.N;
+  const tbl = rows => `<div style="overflow-x:auto"><table class="tbl"><tbody>${rows}</tbody></table></div>`;
+  const ago = t => { const d = Math.floor((Date.now()-t)/DAY); return d<=0?'today':(d===1?'1 day ago':d+' days ago'); };
+  let html = '';
+  html += `<div class="subhead">Follow-ups due — ${g.fuDue.length}</div>` + (g.fuDue.length ? tbl(qRows(g.fuDue, l => 'due ' + (l.fu < Date.now()-DAY ? ago(l.fu) : 'today'))) : '<div style="color:var(--muted);font-size:13px;margin-bottom:6px">Nothing scheduled. Set "Follow up" dates from a lead\'s panel.</div>');
+  html += `<div class="subhead" style="margin-top:18px">Going stale (no touch in ${g.N}+ days) — ${g.stale.length}</div>` + (g.stale.length ? tbl(qRows(g.stale.slice(0,200), l => 'last touch ' + ago(l.la||l.a||0))) : '<div style="color:var(--muted);font-size:13px;margin-bottom:6px">Nothing stale. Keep it that way.</div>');
+  html += `<div class="subhead" style="margin-top:18px">Fresh — never touched — ${g.fresh.length}</div>` + (g.fresh.length ? tbl(qRows(g.fresh.slice(0,200), l => 'assigned ' + (l.a?ago(l.a):'—'))) : '<div style="color:var(--muted);font-size:13px">All caught up.</div>');
+  document.getElementById('queueWrap').innerHTML = html;
+}
+function snooze(id, days){
+  const l = myLeads.find(x=>x.i===id); if(!l) return;
+  l.fu = Date.now() + (days||3)*DAY;
+  markDirty('leads'); renderQueue(); toast('Snoozed — back in queue in '+(days||3)+' days');
+}
+function setFu(id, v){
+  const l = myLeads.find(x=>x.i===id); if(!l) return;
+  if (v) l.fu = new Date(v+'T09:00:00').getTime(); else delete l.fu;
+  markDirty('leads'); updateQueueBadge();
 }
 
 /* ---------- activity ---------- */
@@ -389,6 +493,7 @@ function openDrawer(id){
     <div class="fld"><b>Location</b>${esc([l.ci,l.st_||l.st&&''].filter(Boolean).join(', ')) || esc([l.ci,l.stt].filter(Boolean).join(', ')) || esc(l.ci||'—')}</div>
     <div class="fld"><b>Industry</b>${esc(l.in||'—')} ${l.sz?`<span class="tag">${esc(l.sz)} emp</span>`:''}</div>
     <div class="fld"><b>Stage</b><select onchange="setStage('${l.i}', this.value)">${stages.map(s=>`<option ${ (l.st||'New')===s?'selected':'' }>${s}</option>`).join('')}</select></div>
+    <div class="fld"><b>Follow up</b><input type="date" value="${l.fu?new Date(l.fu).toISOString().slice(0,10):''}" onchange="setFu('${l.i}', this.value)" /></div>
     ${me.admin ? `<div class="fld"><b>Rep</b><select onchange="moveLead('${l.i}', this.value)">${reps.map(r=>`<option value="${r.id}" ${r.id===me.id?'selected':''}>${r.name}</option>`).join('')}</select></div>` : ''}
     ${emailTpls().length ? `<div class="fld" style="margin-top:12px"><b>Template</b><select id="dTpl" style="max-width:210px">${emailTpls().map((t,ix)=>`<option value="${ix}">${esc(t.name)}</option>`).join('')}</select></div>` : ''}
     <div class="logrow"><button class="btn sm" onclick="emailLead('${l.i}')">✉️ Compose</button><button class="btn sm" onclick="liLead('${l.i}')">in Connect</button><button class="btn sm ghost" onclick="quickLog('${l.i}','call')">📞 Log call</button><button class="btn sm ghost" onclick="quickLog('${l.i}','email')">Log email</button></div>
@@ -454,16 +559,24 @@ function renderReps(){
   document.getElementById('repTable').innerHTML = '<table class="tbl"><thead><tr><th>Rep</th><th>Role</th><th>PIN</th><th>Status</th><th></th></tr></thead><tbody>' + reps.map((r,i)=>`<tr>
     <td><b>${esc(r.name)}</b>${r.id===me.id?' <span style="color:var(--muted);font-size:11px">(you)</span>':''}</td>
     <td><label style="display:flex;gap:5px;align-items:center;font-size:12px"><input type="checkbox" ${r.admin?'checked':''} ${r.id===me.id?'disabled':''} onchange="setAdmin(${i}, this.checked)" style="width:auto"> admin</label></td>
-    <td><button class="btn sm ghost" onclick="setPin(${i})">${r.pin?'Reset PIN':'Set PIN'}</button></td>
+    <td><button class="btn sm ghost" onclick="resetPass(${i})">Reset passcode</button></td>
     <td>${r.active===false?'<span class="tag">inactive</span> ':''}<button class="btn sm ghost" onclick="toggleActive(${i})">${r.active===false?'Activate':'Deactivate'}</button></td>
     <td>${r.id!==me.id?`<button class="btn sm ghost" style="color:var(--red)" onclick="delRep(${i})">Remove</button>`:''}</td></tr>`).join('') + '</tbody></table>';
 }
 async function saveReps(msg){ try{ await save('meta/reps.json', reps, msg||'crm: update reps'); }catch(e){ toast('Save failed: '+e.message); } renderReps(); fillAdmin(); }
 async function setAdmin(i, v){ reps[i].admin = v; await saveReps('crm: role '+reps[i].id); toast('Role updated'); }
-async function setPin(i){
-  const p = prompt('New PIN for '+reps[i].name+' (leave empty to remove):'); if (p===null) return;
-  if (p.trim()) reps[i].pin = await sha(p.trim()); else delete reps[i].pin;
-  await saveReps('crm: pin '+reps[i].id); toast(p.trim()?'PIN set':'PIN removed');
+async function resetPass(i){
+  const r = reps[i];
+  if (!confirm('Generate a new passcode for '+r.name+'? Their old one stops working immediately.')) return;
+  try{
+    const pass = genPass();
+    const { doc, sha: lsha } = await loadLogins();
+    const enc = await encryptToken(pass, token);
+    const L = doc.logins.find(l=>l.id===r.id);
+    if (L){ L.enc = enc; L.name = r.name; L.color = r.color; } else doc.logins.push({ id:r.id, name:r.name, color:r.color, enc });
+    await saveLogins(doc, lsha, 'crm: reset passcode '+r.id);
+    prompt('New passcode for '+r.name+' — copy it now, it will not be shown again:', pass);
+  }catch(e){ toast('Reset failed: '+e.message); }
 }
 async function toggleActive(i){ reps[i].active = reps[i].active===false; await saveReps('crm: active '+reps[i].id); }
 async function delRep(i){
@@ -482,6 +595,11 @@ async function delRep(i){
     }
     reps.splice(i,1);
     await saveReps('crm: remove rep '+r.id);
+    try{
+      const { doc, sha: lsha } = await loadLogins();
+      doc.logins = doc.logins.filter(l=>l.id!==r.id);
+      await saveLogins(doc, lsha, 'crm: revoke login '+r.id);
+    }catch(e){}
     refreshPool(); toast('Removed '+r.name);
   }catch(e){ toast('Remove failed: '+e.message); }
 }
@@ -538,16 +656,19 @@ async function addRep(){
   const id = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').split('-')[0] + (Math.random()*100|0);
   const colors = ['#A55050','#C9A227','#6B5B95','#3E7C8F','#7A9E7E'];
   const rep = { id, name, admin: document.getElementById('rAdmin').checked, color: colors[reps.length % colors.length], active: true };
-  const pinV = document.getElementById('rPin').value.trim();
-  if (pinV) rep.pin = await sha(pinV);
   reps.push(rep);
   try{
     await save('meta/reps.json', reps, 'crm: add rep '+name);
     shas[`reps/${id}/leads.json`] = null; shas[`reps/${id}/activities.json`] = null;
     await save(`reps/${id}/leads.json`, [], 'crm: init '+id);
     await save(`reps/${id}/activities.json`, [], 'crm: init '+id);
+    const pass = genPass();
+    const { doc, sha: lsha } = await loadLogins();
+    doc.logins.push({ id, name, color: rep.color, enc: await encryptToken(pass, token) });
+    await saveLogins(doc, lsha, 'crm: add login '+id);
     fillAdmin(); toast('Added '+name);
-    document.getElementById('rName').value=''; document.getElementById('rPin').value=''; document.getElementById('rAdmin').checked=false;
+    prompt(name+"'s passcode — copy it now, it will not be shown again:", pass);
+    document.getElementById('rName').value=''; document.getElementById('rAdmin').checked=false;
   }catch(e){ toast('Failed: '+e.message); }
 }
 async function importCsv(){

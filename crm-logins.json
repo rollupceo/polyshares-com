@@ -1,0 +1,24 @@
+{
+ "logins": [
+  {
+   "id": "nathan",
+   "name": "Nathan Mathews",
+   "color": "#4A6FA5",
+   "enc": {
+    "s": "we5+1EzdCy/JyScSKwpWug==",
+    "iv": "YsGug5wsoWIGHXCF",
+    "ct": "KyWxf0L54DmCSlEX5y9ABPbsnoLhq1t+99Rtfemw2ogJPt5IMYbwodJBQSomvgx8X4IoRA2AMTk="
+   }
+  },
+  {
+   "id": "austin",
+   "name": "Austin Turner",
+   "color": "#7A9E7E",
+   "enc": {
+    "s": "LmZ8ipcmD+5NpEqBuWz+pg==",
+    "iv": "G1Si75QJvP1UK06a",
+    "ct": "CJZFd4shd1Q5y/sUIvWxoHNMKK3lR6eIvQmrkH+l0nQugB9m24UsxHD8gElXLoDmt/LRqJpObv8="
+   }
+  }
+ ]
+}
