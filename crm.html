@@ -125,6 +125,12 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
       <button class="btn" id="unlock">Sign in</button>
       <button class="btn ghost" style="width:100%;margin-top:8px" onclick="backToWho()">Back</button>
     </div>
+    <div id="setupStep" style="display:none">
+      <div class="sub" style="margin-bottom:10px">Welcome! Create your passcode — you'll use it to sign in from now on.</div>
+      <input type="password" id="newPass1" placeholder="New passcode (8+ characters)" autocomplete="new-password" />
+      <input type="password" id="newPass2" placeholder="Confirm passcode" autocomplete="new-password" />
+      <button class="btn" id="setPassBtn" onclick="completeSetup()">Set passcode &amp; enter</button>
+    </div>
     <div class="err" id="loginErr"></div>
   </div>
 </div>
@@ -139,7 +145,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <button data-v="metrics">Metrics</button>
     <button data-v="team" id="teamTab">Team</button>
   </nav>
-  <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
+  <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="changeMyPass()">Passcode</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
 </header>
 <main>
   <section id="v-board">
@@ -162,8 +168,8 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     </div>
     <div class="panel"><h3>Team &amp; roles</h3>
       <div id="repTable" style="overflow-x:auto"></div>
-      <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" /><label style="display:flex;gap:5px;align-items:center;font-size:12.5px"><input type="checkbox" id="rAdmin" style="width:auto"> admin</label><button class="btn" onclick="addRep()">Add rep</button></div>
-      <div style="font-size:12.5px;color:var(--muted)">Each rep gets their own passcode — it's shown once when you add them (or reset it here). Removing a rep returns their leads to the pool and revokes their login.</div>
+      <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" /><input id="rPass" type="text" placeholder="Passcode (optional)" style="width:160px" /><label style="display:flex;gap:5px;align-items:center;font-size:12.5px"><input type="checkbox" id="rAdmin" style="width:auto"> admin</label><button class="btn" onclick="addRep()">Add rep</button></div>
+      <div style="font-size:12.5px;color:var(--muted)">Set a passcode yourself, or leave it blank to get a one-time invite code — they'll create their own passcode at first sign-in. Anyone can change theirs later via the Passcode button in the header. Removing a rep returns their leads to the pool and revokes their login.</div>
     </div>
     <div class="panel"><h3>Email &amp; LinkedIn templates</h3>
       <div id="tplEditor"></div>
@@ -186,8 +192,8 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 const REPO = 'rollupceo/polyshares-crm-data';
 const SITE_REPO = 'rollupceo/polyshares-com';
 const LOGINS_URL = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-logins.json';
-let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], templates=[];
-let shas={}, dirty={leads:false,acts:false}, saveTimer=null, colLimit={};
+let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], myOutbox=[], templates=[];
+let shas={}, dirty={leads:false,acts:false,outbox:false}, saveTimer=null, colLimit={};
 
 /* ---------- crypto ---------- */
 const ub64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
@@ -292,9 +298,46 @@ async function unlock(){
   const store = document.getElementById('remember').checked ? localStorage : sessionStorage;
   store.setItem('crm_t', token);
   localStorage.setItem('crm_rep', pickedId);
-  try { reps = await load('meta/reps.json'); } catch(e){ err.textContent='Could not reach data repo.'; document.getElementById('unlock').textContent='Sign in'; return; }
+  if (L.setup){
+    document.getElementById('passStep').style.display='none';
+    document.getElementById('setupStep').style.display='block';
+    document.getElementById('newPass1').focus();
+    return;
+  }
+  await finishLogin(L);
+}
+async function finishLogin(L){
+  try { reps = await load('meta/reps.json'); } catch(e){ document.getElementById('loginErr').textContent='Could not reach data repo.'; document.getElementById('unlock').textContent='Sign in'; return; }
   me = reps.find(r=>r.id===pickedId) || { id: pickedId, name: L.name, admin: false };
   await enterApp();
+}
+async function completeSetup(){
+  const err = document.getElementById('loginErr'); err.textContent='';
+  const p1 = document.getElementById('newPass1').value.trim(), p2 = document.getElementById('newPass2').value.trim();
+  if (p1.length < 8){ err.textContent='Use at least 8 characters.'; return; }
+  if (p1 !== p2){ err.textContent="Passcodes don't match."; return; }
+  document.getElementById('setPassBtn').textContent='Saving…';
+  try{
+    const { doc, sha } = await loadLogins();
+    const L = doc.logins.find(l=>l.id===pickedId);
+    L.enc = await encryptToken(p1, token); delete L.setup;
+    await saveLogins(doc, sha, 'crm: first-login passcode '+pickedId);
+    await finishLogin(L);
+  }catch(e){ err.textContent='Could not save passcode: '+e.message; document.getElementById('setPassBtn').textContent='Set passcode & enter'; }
+}
+async function changeMyPass(){
+  const p1 = prompt('New passcode (8+ characters):'); if (p1===null) return;
+  if (p1.trim().length < 8) return toast('Use at least 8 characters');
+  const p2 = prompt('Confirm new passcode:'); if (p2===null) return;
+  if (p1.trim() !== p2.trim()) return toast("Passcodes don't match");
+  try{
+    const { doc, sha } = await loadLogins();
+    let L = doc.logins.find(l=>l.id===me.id);
+    if (!L){ L = { id: me.id, name: me.name, color: me.color }; doc.logins.push(L); }
+    L.enc = await encryptToken(p1.trim(), token); delete L.setup;
+    await saveLogins(doc, sha, 'crm: passcode change '+me.id);
+    toast('Passcode updated — use it next time you sign in');
+  }catch(e){ toast('Failed: '+e.message); }
 }
 async function boot(){
   initLogin();
@@ -325,6 +368,7 @@ async function enterApp(){
   try { templates = await load('meta/templates.json'); } catch(e){ templates=[]; }
   myLeads = await load(`reps/${me.id}/leads.json`);
   myActs  = await load(`reps/${me.id}/activities.json`);
+  try { myOutbox = await load(`reps/${me.id}/outbox.json`); } catch(e){ myOutbox = []; shas[`reps/${me.id}/outbox.json`] = null; }
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('who').textContent = me.name;
@@ -392,11 +436,12 @@ function queueGroups(){
   const fuDue = active.filter(l => l.fu && l.fu <= now).sort((a,b)=>a.fu-b.fu);
   const fresh = active.filter(l => !fuDue.includes(l) && (l.st||'New')==='New' && !l.la).sort((a,b)=>(a.a||0)-(b.a||0));
   const stale = active.filter(l => !fuDue.includes(l) && !fresh.includes(l) && !l.fu && (now - touch(l)) >= N*DAY).sort((a,b)=>touch(a)-touch(b));
-  return {fuDue, stale, fresh, N};
+  const outDue = myOutbox.filter(o => o.st==='queued' && (!o.at || o.at <= now)).sort((a,b)=>(a.at||0)-(b.at||0));
+  return {fuDue, stale, fresh, outDue, N};
 }
 function updateQueueBadge(){
   const g = queueGroups();
-  const n = g.fuDue.length + g.stale.length + g.fresh.length;
+  const n = g.fuDue.length + g.stale.length + g.fresh.length + g.outDue.length;
   const btn = document.querySelector('[data-v=queue]');
   if (btn) btn.textContent = 'Queue' + (n ? ` (${n})` : '');
 }
@@ -416,10 +461,35 @@ function renderQueue(){
   const tbl = rows => `<div style="overflow-x:auto"><table class="tbl"><tbody>${rows}</tbody></table></div>`;
   const ago = t => { const d = Math.floor((Date.now()-t)/DAY); return d<=0?'today':(d===1?'1 day ago':d+' days ago'); };
   let html = '';
-  html += `<div class="subhead">Follow-ups due — ${g.fuDue.length}</div>` + (g.fuDue.length ? tbl(qRows(g.fuDue, l => 'due ' + (l.fu < Date.now()-DAY ? ago(l.fu) : 'today'))) : '<div style="color:var(--muted);font-size:13px;margin-bottom:6px">Nothing scheduled. Set "Follow up" dates from a lead\'s panel.</div>');
+  html += `<div class="subhead">Outbox — ready to send — ${g.outDue.length}</div>` + (g.outDue.length ? tbl(g.outDue.map(o => {
+    const l = myLeads.find(x=>x.i===o.l);
+    const when = o.at ? new Date(o.at).toLocaleString() : 'now';
+    return `<tr><td><b>${esc(o.su||'(no subject)')}</b><div style="color:var(--muted);font-size:11.5px">to ${esc(o.to)}${l ? ' · ' + esc(leadName(l)) : ''}${o.src==='ai' ? ' · <span class="tag">AI drafted</span>' : ''}</div></td>
+      <td style="color:var(--muted)">${esc(when)}</td>
+      <td style="white-space:nowrap"><button class="btn sm" onclick="sendOutbox('${o.id}')">Send via Gmail</button> <button class="btn sm ghost" onclick="previewOutbox('${o.id}')">Preview</button> <button class="btn sm ghost" style="color:var(--red)" onclick="discardOutbox('${o.id}')">Discard</button></td></tr>`;
+  }).join('')) : '<div style="color:var(--muted);font-size:13px;margin-bottom:6px">No queued emails. Your AI agents can queue drafts here via the API.</div>');
+  html += `<div class="subhead" style="margin-top:18px">Follow-ups due — ${g.fuDue.length}</div>` + (g.fuDue.length ? tbl(qRows(g.fuDue, l => 'due ' + (l.fu < Date.now()-DAY ? ago(l.fu) : 'today'))) : '<div style="color:var(--muted);font-size:13px;margin-bottom:6px">Nothing scheduled. Set "Follow up" dates from a lead\'s panel.</div>');
   html += `<div class="subhead" style="margin-top:18px">Going stale (no touch in ${g.N}+ days) — ${g.stale.length}</div>` + (g.stale.length ? tbl(qRows(g.stale.slice(0,200), l => 'last touch ' + ago(l.la||l.a||0))) : '<div style="color:var(--muted);font-size:13px;margin-bottom:6px">Nothing stale. Keep it that way.</div>');
   html += `<div class="subhead" style="margin-top:18px">Fresh — never touched — ${g.fresh.length}</div>` + (g.fresh.length ? tbl(qRows(g.fresh.slice(0,200), l => 'assigned ' + (l.a?ago(l.a):'—'))) : '<div style="color:var(--muted);font-size:13px">All caught up.</div>');
   document.getElementById('queueWrap').innerHTML = html;
+}
+function sendOutbox(id){
+  const o = myOutbox.find(x=>x.id===id); if(!o) return;
+  window.open('https://mail.google.com/mail/?view=cm&fm=1&to='+encodeURIComponent(o.to)+'&su='+encodeURIComponent(o.su||'')+'&body='+encodeURIComponent(o.body||''), '_blank');
+  o.st = 'sent'; o.sent = Date.now();
+  const l = myLeads.find(x=>x.i===o.l);
+  if (l){ l.la = Date.now(); logAct(l, 'email', o.su||''); markDirty('leads'); }
+  markDirty('outbox'); renderQueue();
+  toast('Opened in Gmail — marked sent & logged');
+}
+function previewOutbox(id){
+  const o = myOutbox.find(x=>x.id===id); if(!o) return;
+  alert('To: ' + o.to + '\nSubject: ' + (o.su||'') + '\n\n' + (o.body||''));
+}
+function discardOutbox(id){
+  const o = myOutbox.find(x=>x.id===id); if(!o) return;
+  o.st = 'cancelled';
+  markDirty('outbox'); renderQueue(); toast('Discarded');
 }
 function snooze(id, days){
   const l = myLeads.find(x=>x.i===id); if(!l) return;
@@ -465,7 +535,7 @@ function quickLog(id, ty){
 
 /* ---------- save loop ---------- */
 function markDirty(which){
-  dirty[which==='leads'?'leads':'acts'] = true;
+  dirty[which] = true;
   document.getElementById('sync').className='dirty';
   clearTimeout(saveTimer); saveTimer = setTimeout(flush, 1500);
 }
@@ -473,7 +543,8 @@ async function flush(){
   try{
     if (dirty.leads){ dirty.leads=false; await save(`reps/${me.id}/leads.json`, myLeads, `crm: ${me.id} leads update`); }
     if (dirty.acts){ dirty.acts=false; await save(`reps/${me.id}/activities.json`, myActs, `crm: ${me.id} activity`); }
-    document.getElementById('sync').className = (dirty.leads||dirty.acts) ? 'dirty' : '';
+    if (dirty.outbox){ dirty.outbox=false; await save(`reps/${me.id}/outbox.json`, myOutbox, `crm: ${me.id} outbox`); }
+    document.getElementById('sync').className = (dirty.leads||dirty.acts||dirty.outbox) ? 'dirty' : '';
   }catch(e){ document.getElementById('sync').className='err'; toast('Sync failed — will retry'); setTimeout(flush, 4000); }
 }
 window.addEventListener('beforeunload', e => { if (dirty.leads||dirty.acts){ flush(); e.preventDefault(); e.returnValue=''; } });
@@ -567,15 +638,16 @@ async function saveReps(msg){ try{ await save('meta/reps.json', reps, msg||'crm:
 async function setAdmin(i, v){ reps[i].admin = v; await saveReps('crm: role '+reps[i].id); toast('Role updated'); }
 async function resetPass(i){
   const r = reps[i];
-  if (!confirm('Generate a new passcode for '+r.name+'? Their old one stops working immediately.')) return;
+  const pass = prompt('New passcode for '+r.name+' — keep the generated one or type your own (8+ chars). Their old passcode stops working immediately:', genPass());
+  if (pass===null) return;
+  if (pass.trim().length < 8) return toast('Passcode must be 8+ characters');
   try{
-    const pass = genPass();
     const { doc, sha: lsha } = await loadLogins();
-    const enc = await encryptToken(pass, token);
+    const enc = await encryptToken(pass.trim(), token);
     const L = doc.logins.find(l=>l.id===r.id);
-    if (L){ L.enc = enc; L.name = r.name; L.color = r.color; } else doc.logins.push({ id:r.id, name:r.name, color:r.color, enc });
+    if (L){ L.enc = enc; L.name = r.name; L.color = r.color; delete L.setup; } else doc.logins.push({ id:r.id, name:r.name, color:r.color, enc });
     await saveLogins(doc, lsha, 'crm: reset passcode '+r.id);
-    prompt('New passcode for '+r.name+' — copy it now, it will not be shown again:', pass);
+    toast('Passcode set for '+r.name);
   }catch(e){ toast('Reset failed: '+e.message); }
 }
 async function toggleActive(i){ reps[i].active = reps[i].active===false; await saveReps('crm: active '+reps[i].id); }
@@ -662,13 +734,17 @@ async function addRep(){
     shas[`reps/${id}/leads.json`] = null; shas[`reps/${id}/activities.json`] = null;
     await save(`reps/${id}/leads.json`, [], 'crm: init '+id);
     await save(`reps/${id}/activities.json`, [], 'crm: init '+id);
-    const pass = genPass();
+    const passV = document.getElementById('rPass').value.trim();
+    if (passV && passV.length < 8){ toast('Passcode must be 8+ characters'); reps.pop(); return; }
+    const pass = passV || genPass();
     const { doc, sha: lsha } = await loadLogins();
-    doc.logins.push({ id, name, color: rep.color, enc: await encryptToken(pass, token) });
+    const entry = { id, name, color: rep.color, enc: await encryptToken(pass, token) };
+    if (!passV) entry.setup = true;
+    doc.logins.push(entry);
     await saveLogins(doc, lsha, 'crm: add login '+id);
     fillAdmin(); toast('Added '+name);
-    prompt(name+"'s passcode — copy it now, it will not be shown again:", pass);
-    document.getElementById('rName').value=''; document.getElementById('rAdmin').checked=false;
+    prompt(passV ? name+"'s passcode (as you set it):" : name+"'s one-time invite code — they sign in with it once, then create their own passcode:", pass);
+    document.getElementById('rName').value=''; document.getElementById('rPass').value=''; document.getElementById('rAdmin').checked=false;
   }catch(e){ toast('Failed: '+e.message); }
 }
 async function importCsv(){
