@@ -268,7 +268,7 @@ async function boot(){
   if (me) await enterApp(); else { document.getElementById('passStep').style.display='none'; showRepPick(); }
 }
 async function enterApp(){
-  try { stages = await load('meta/stages.json'); } catch(e){ stages=['New','Contacted','Connected','Call Booked','Call Attended','Proposal Sent','Paid & Closed','Dead']; }
+  try { stages = await load('meta/stages.json'); } catch(e){ stages=['New','Prospecting','Connected','Meeting Booked','Meeting Attended','Proposal Sent','Paid & Closed','Dead']; }
   try { templates = await load('meta/templates.json'); } catch(e){ templates=[]; }
   myLeads = await load(`reps/${me.id}/leads.json`);
   myActs  = await load(`reps/${me.id}/activities.json`);
