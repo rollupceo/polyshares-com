@@ -86,12 +86,26 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--paper2);color:var(--ink2)}
 
 /* drawer */
-#drawer{position:fixed;top:0;right:-420px;width:400px;max-width:94vw;height:100vh;background:#fff;border-left:1px solid var(--line);z-index:40;transition:right .22s ease;display:flex;flex-direction:column}
-#drawer.open{right:0}
-#drawer .head{padding:18px 20px 12px;border-bottom:1px solid var(--line)}
-#drawer .head h2{font-family:var(--serif);font-weight:500;font-size:21px}
-#drawer .head .x{position:absolute;top:14px;right:14px;background:none;border:none;font-size:20px;color:var(--muted)}
-#drawer .body{padding:16px 20px;overflow-y:auto;flex:1}
+#drawerback{position:fixed;inset:0;background:rgba(20,18,14,.38);z-index:39;opacity:0;pointer-events:none;transition:opacity .22s}
+#drawerback.open{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;right:0;width:min(1060px,96vw);max-width:96vw;height:100vh;background:#fff;border-left:1px solid var(--line);z-index:40;transform:translateX(101%);transition:transform .24s ease;display:flex;flex-direction:column;box-shadow:-20px 0 60px rgba(0,0,0,.18)}
+#drawer.open{transform:none}
+#drawer .head{padding:18px 26px 0;position:relative;flex:none}
+#drawer .head h2{font-family:var(--serif);font-weight:500;font-size:25px}
+#drawer .head .x{position:absolute;top:16px;right:18px;background:none;border:1px solid var(--line);border-radius:7px;width:30px;height:30px;font-size:18px;color:var(--ink2);cursor:pointer}
+#drawer .body{padding:0;overflow:hidden;flex:1;display:flex;flex-direction:column}
+/* stage stepper */
+.stepper{display:flex;gap:6px;flex-wrap:wrap;padding:16px 26px;border-bottom:1px solid var(--line);flex:none}
+.step-pill{font-size:12px;padding:7px 12px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink2);cursor:pointer;white-space:nowrap;transition:all .15s}
+.step-pill:hover{border-color:var(--ink)}
+.step-pill.done{background:var(--paper3);color:var(--muted)}
+.step-pill.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+.step-pill.dead{margin-left:auto;color:var(--red);border-color:rgba(165,80,80,.3)}
+.step-pill.dead.active{background:var(--red);border-color:var(--red);color:#fff}
+/* two-column deal body */
+.dealgrid{display:grid;grid-template-columns:320px 1fr;flex:1;overflow:hidden}
+.dealcol-left{padding:20px 22px;border-right:1px solid var(--line);overflow-y:auto}
+.dealcol-right{padding:20px 26px;overflow-y:auto;background:var(--paper)}
 .fld{margin-bottom:10px;font-size:13px}
 .fld b{display:inline-block;width:84px;color:var(--muted);font-weight:500}
 .fld a{color:var(--accent)}
@@ -144,6 +158,9 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 @media(max-width:700px){
   main{padding:12px}
   #drawer{width:100vw}
+  .dealgrid{grid-template-columns:1fr;overflow-y:auto}
+  .dealcol-left{border-right:none;border-bottom:1px solid var(--line)}
+  .stepper{overflow-x:auto;flex-wrap:nowrap}
   header{gap:8px;overflow-x:auto;padding:0 12px}
   header .brand{font-size:15px}
   header nav button{padding:8px 9px;font-size:13px}
@@ -259,7 +276,8 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 </main>
 </div>
 
-<div id="drawer"><div class="head" style="position:relative"><button class="x" onclick="closeDrawer()">×</button><h2 id="dName"></h2><div id="dCo" style="color:var(--muted);font-size:13px"></div></div><div class="body" id="dBody"></div></div>
+<div id="drawerback" onclick="closeDrawer()"></div>
+<div id="drawer"><div class="head"><button class="x" onclick="closeDrawer()">×</button><h2 id="dName"></h2><div id="dCo" style="color:var(--muted);font-size:13.5px;margin-top:2px"></div></div><div class="body" id="dBody"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -776,35 +794,45 @@ function openDrawer(id){
   const hist = myActs.filter(a=>a.l===id).sort((a,b)=>b.t-a.t).slice(0,40);
   const tyLabel = {call:'📞 Call', email:'✉️ Email', li:'in Connect', note:'📝 Note', stage:'→ Stage', meeting:'🗓️ Meeting', todo:'✓ To-do'};
   const tasks = openTasks(id);
-  document.getElementById('dBody').innerHTML = `
+  const cur = l.st||'New', curIdx = stages.indexOf(cur);
+  const stepper = stages.filter(s=>s!=='Dead').map(s=>{
+    const i = stages.indexOf(s);
+    const cls = s===cur ? 'active' : (i<curIdx ? 'done' : '');
+    return `<button class="step-pill ${cls}" onclick="setStage('${l.i}','${s}')">${i<curIdx?'✓ ':''}${s}</button>`;
+  }).join('') + `<button class="step-pill dead ${cur==='Dead'?'active':''}" onclick="setStage('${l.i}','Dead')">Dead</button>`;
+
+  const left = `
     <div class="fld"><b>Email</b>${l.em?`<a href="mailto:${esc(l.em)}">${esc(l.em)}</a>`:'—'}</div>
     <div class="fld"><b>Phone</b>${l.ph?`<a href="tel:${esc(l.ph)}">${esc(l.ph)}</a>`:'—'}</div>
     <div class="fld"><b>LinkedIn</b>${l.li?`<a href="${esc(l.li)}" target="_blank" rel="noopener">profile ↗</a>`:'—'}</div>
     <div class="fld"><b>Website</b>${l.ws?`<a href="https://${esc(l.ws.replace(/^https?:\/\//,''))}" target="_blank" rel="noopener">${esc(l.ws)}</a>`:'—'}</div>
-    <div class="fld"><b>Location</b>${esc([l.ci,l.st_||l.st&&''].filter(Boolean).join(', ')) || esc([l.ci,l.stt].filter(Boolean).join(', ')) || esc(l.ci||'—')}</div>
+    <div class="fld"><b>Location</b>${esc([l.ci,l.stt].filter(Boolean).join(', ')) || esc(l.ci||'—')}</div>
     <div class="fld"><b>Industry</b>${esc(l.in||'—')} ${l.sz?`<span class="tag">${esc(l.sz)} emp</span>`:''}</div>
-    <div class="fld"><b>Stage</b><select onchange="setStage('${l.i}', this.value)">${stages.map(s=>`<option ${ (l.st||'New')===s?'selected':'' }>${s}</option>`).join('')}</select> <span style="color:var(--muted);font-size:12px">${prob(l.st||'New')}% likely</span></div>
-    <div class="fld"><b>Deal value</b>$<input type="number" min="0" step="500" value="${l.v||''}" placeholder="0" onchange="setValue('${l.i}', this.value)" style="width:120px" /></div>
+    <div class="fld" style="margin-top:10px"><b>Deal value</b>$<input type="number" min="0" step="500" value="${l.v||''}" placeholder="0" onchange="setValue('${l.i}', this.value)" style="width:110px" /> <span style="color:var(--muted);font-size:11.5px">${prob(cur)}% likely</span></div>
     ${l.lreason?`<div class="fld"><b>Lost reason</b>${esc(l.lreason)}</div>`:''}${l.wnote?`<div class="fld"><b>Won note</b>${esc(l.wnote)}</div>`:''}
     <div class="fld"><b>Follow up</b><input type="date" value="${l.fu?new Date(l.fu).toISOString().slice(0,10):''}" onchange="setFu('${l.i}', this.value)" /></div>
     ${me.admin ? `<div class="fld"><b>Rep</b><select onchange="moveLead('${l.i}', this.value)">${reps.map(r=>`<option value="${r.id}" ${r.id===me.id?'selected':''}>${r.name}</option>`).join('')}</select></div>` : ''}
-    ${emailTpls().length ? `<div class="fld" style="margin-top:12px"><b>Template</b><select id="dTpl" style="max-width:210px" onchange="tplPreview('${l.i}')">${emailTpls().map((t,ix)=>`<option value="${ix}">${esc(t.name)}</option>`).join('')}</select></div><div id="dTplPrev" class="tplprev"></div>` : ''}
-    <div class="logrow"><button class="btn sm" onclick="emailLead('${l.i}')">✉️ Compose</button><button class="btn sm" onclick="liLead('${l.i}')">in Connect</button><button class="btn sm ghost" onclick="quickLog('${l.i}','call')">📞 Log call</button><button class="btn sm ghost" onclick="quickLog('${l.i}','email')">Log email</button></div>
+    ${emailTpls().length ? `<div class="fld" style="margin-top:14px"><b>Template</b><select id="dTpl" style="width:100%;max-width:none" onchange="tplPreview('${l.i}')">${emailTpls().map((t,ix)=>`<option value="${ix}">${esc(t.name)}</option>`).join('')}</select></div><div id="dTplPrev" class="tplprev"></div>` : ''}
+    <div class="logrow" style="flex-wrap:wrap"><button class="btn sm" onclick="emailLead('${l.i}')">✉️ Compose</button><button class="btn sm" onclick="liLead('${l.i}')">in Connect</button><button class="btn sm ghost" onclick="quickLog('${l.i}','call')">📞 Log call</button><button class="btn sm ghost" onclick="quickLog('${l.i}','email')">Log email</button></div>`;
 
-    <div class="subhead">Scheduled activities</div>
-    ${tasks.length ? tasks.map(t=>`<div class="tkrow"><span>${taskLabel(t.ty)}${t.note?' · '+esc(t.note):''}</span><span class="when">${whenText(t.due)}</span><button class="btn sm" onclick="completeTask('${t.id}')">Done</button><button class="btn sm ghost" onclick="delTask('${t.id}');openDrawer('${l.i}')">✕</button></div>`).join('') : '<div style="color:var(--muted);font-size:12.5px;margin-bottom:6px">None scheduled.</div>'}
+  const right = `
+    <div class="subhead">Schedule an activity</div>
+    ${tasks.length ? tasks.map(t=>`<div class="tkrow"><span>${taskLabel(t.ty)}${t.note?' · '+esc(t.note):''}</span><span class="when">${whenText(t.due)}</span><button class="btn sm" onclick="completeTask('${t.id}')">Done</button><button class="btn sm ghost" onclick="delTask('${t.id}');openDrawer('${l.i}')">✕</button></div>`).join('') : '<div style="color:var(--muted);font-size:12.5px;margin-bottom:6px">Nothing scheduled yet.</div>'}
     <div class="schedrow"><select id="tk_ty">${TASK_TYPES.map(([v,lb])=>`<option value="${v}">${lb}</option>`).join('')}</select><input type="date" id="tk_date" /><button class="btn sm" onclick="addTask('${l.i}')">Schedule</button></div>
     <input id="tk_note" placeholder="Optional note for this activity" style="width:100%;margin-top:6px" />
 
-    <div class="subhead" style="margin-top:18px">Add note</div>
-    <textarea id="noteBox" placeholder="Type a note and save it to the timeline…"></textarea>
+    <div class="subhead" style="margin-top:20px">Add note</div>
+    <textarea id="noteBox" placeholder="Type a note and save it to the timeline…" style="min-height:80px"></textarea>
     <div style="margin-top:6px"><button class="btn sm" onclick="addNote('${l.i}', document.getElementById('noteBox').value); document.getElementById('noteBox').value=''">Save note</button></div>
 
-    <div class="hist"><div class="subhead">Timeline</div><div class="histscroll">${hist.map(a=>`<div class="h">${tyLabel[a.ty]||a.ty} ${a.d?('· '+esc(a.d)):''} <span>· ${new Date(a.t).toLocaleString()}</span></div>`).join('') || '<div class="h" style="color:var(--muted)">No activity logged yet — log a call, email, or note above and it will appear here.</div>'}</div></div>`;
-  document.getElementById('drawer').classList.add('open');
+    <div class="subhead" style="margin-top:22px">Timeline</div>
+    <div class="histscroll" style="max-height:none">${hist.map(a=>`<div class="h">${tyLabel[a.ty]||a.ty} ${a.d?('· '+esc(a.d)):''} <span>· ${new Date(a.t).toLocaleString()}</span></div>`).join('') || '<div class="h" style="color:var(--muted)">No activity logged yet — log a call, email, or note and it appears here.</div>'}</div>`;
+
+  document.getElementById('dBody').innerHTML = `<div class="stepper">${stepper}</div><div class="dealgrid"><div class="dealcol-left">${left}</div><div class="dealcol-right">${right}</div></div>`;
+  document.getElementById('drawer').classList.add('open'); document.getElementById('drawerback').classList.add('open');
   tplPreview(id);
 }
-function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); }
+function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerback').classList.remove('open'); }
 function saveNote(id, v){ const l = myLeads.find(x=>x.i===id); if(l && (l.nt||'')!==v){ l.nt=v; logAct(l,'note', v.slice(0,80)); markDirty('leads'); } }
 async function moveLead(id, repId){
   if (repId===me.id) return;
@@ -874,11 +902,11 @@ function openEdit(id){
   document.getElementById('dName').textContent = isNew ? 'New lead' : 'Edit lead';
   document.getElementById('dCo').textContent = '';
   const f = (lbl,k,ph,type)=>`<div class="fld"><b>${lbl}</b><input id="ed_${k}" value="${esc(l[k]||'')}" placeholder="${ph||''}" ${type?'type="'+type+'"':''} style="width:200px" /></div>`;
-  document.getElementById('dBody').innerHTML =
+  document.getElementById('dBody').innerHTML = `<div style="padding:22px 26px;overflow-y:auto;max-width:560px">` +
     f('First name','fn')+f('Last name','ln')+f('Company','co')+f('Title','ti')+f('Email','em','',"email")+f('Phone','ph')+f('LinkedIn','li')+f('Website','ws')+f('City','ci')+f('State','stt')+f('Industry','in')+
     `<div class="fld"><b>Deal value</b>$<input id="ed_v" type="number" min="0" value="${l.v||''}" style="width:120px" /></div>
-     <div class="logrow"><button class="btn" onclick="saveEdit('${l.i}', ${isNew})">${isNew?'Create lead':'Save changes'}</button><button class="btn ghost" onclick="closeDrawer()">Cancel</button></div>`;
-  document.getElementById('drawer').classList.add('open');
+     <div class="logrow"><button class="btn" onclick="saveEdit('${l.i}', ${isNew})">${isNew?'Create lead':'Save changes'}</button><button class="btn ghost" onclick="closeDrawer()">Cancel</button></div></div>`;
+  document.getElementById('drawer').classList.add('open'); document.getElementById('drawerback').classList.add('open');
 }
 function saveEdit(id, isNew){
   const g = k => { const e=document.getElementById('ed_'+k); return e?e.value.trim():''; };
