@@ -117,20 +117,26 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   <div class="card">
     <h1>Polyshares CRM</h1>
     <div class="sub">Internal — authorized team only.</div>
-    <div id="whoStep"></div>
-    <div id="passStep" style="display:none">
-      <div class="sub" id="passWho" style="margin-bottom:10px"></div>
-      <input type="password" id="passcode" placeholder="Your passcode" autocomplete="current-password" />
-      <label style="display:flex;gap:7px;align-items:center;font-size:12.5px;color:var(--muted);margin-bottom:14px"><input type="checkbox" id="remember" style="width:auto"> Keep me signed in on this device</label>
-      <button class="btn" id="unlock">Sign in</button>
-      <button class="btn ghost" style="width:100%;margin-top:8px" onclick="backToWho()">Back</button>
+
+    <div id="signinStep">
+      <input type="email" id="liEmail" placeholder="Email" autocomplete="username" />
+      <input type="password" id="liPass" placeholder="Password" autocomplete="current-password" />
+      <label style="display:flex;gap:7px;align-items:center;font-size:12.5px;color:var(--muted);margin-bottom:14px"><input type="checkbox" id="remember" checked style="width:auto"> Keep me signed in on this device</label>
+      <button class="btn" id="signinBtn" onclick="signIn()">Sign in</button>
+      <div style="text-align:center;font-size:13px;color:var(--muted);margin-top:14px">First time here? <a href="#" onclick="showSignup();return false" style="color:var(--accent)">Create your account</a></div>
     </div>
-    <div id="setupStep" style="display:none">
-      <div class="sub" style="margin-bottom:10px">Welcome! Create your passcode — you'll use it to sign in from now on.</div>
-      <input type="password" id="newPass1" placeholder="New passcode (8+ characters)" autocomplete="new-password" />
-      <input type="password" id="newPass2" placeholder="Confirm passcode" autocomplete="new-password" />
-      <button class="btn" id="setPassBtn" onclick="completeSetup()">Set passcode &amp; enter</button>
+
+    <div id="signupStep" style="display:none">
+      <div class="sub" style="margin-bottom:10px">Create your account</div>
+      <input type="text" id="suName" placeholder="Full name" autocomplete="name" />
+      <input type="email" id="suEmail" placeholder="Work email" autocomplete="username" />
+      <input type="password" id="suPass1" placeholder="Choose a password (8+ characters)" autocomplete="new-password" />
+      <input type="password" id="suPass2" placeholder="Confirm password" autocomplete="new-password" />
+      <input type="password" id="suCode" placeholder="Team signup code" style="margin-bottom:14px" />
+      <button class="btn" id="signupBtn" onclick="signUp()">Create account &amp; enter</button>
+      <button class="btn ghost" style="width:100%;margin-top:8px" onclick="showSignin()">Back to sign in</button>
     </div>
+
     <div class="err" id="loginErr"></div>
   </div>
 </div>
@@ -145,7 +151,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <button data-v="metrics">Metrics</button>
     <button data-v="team" id="teamTab">Team</button>
   </nav>
-  <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="changeMyPass()">Passcode</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
+  <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="changeMyPass()">Password</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
 </header>
 <main>
   <section id="v-board">
@@ -168,13 +174,14 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     </div>
     <div class="panel"><h3>Team &amp; roles</h3>
       <div id="repTable" style="overflow-x:auto"></div>
-      <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" /><input id="rPass" type="text" placeholder="Passcode (optional)" style="width:160px" /><label style="display:flex;gap:5px;align-items:center;font-size:12.5px"><input type="checkbox" id="rAdmin" style="width:auto"> admin</label><button class="btn" onclick="addRep()">Add rep</button></div>
-      <div style="font-size:12.5px;color:var(--muted)">Set a passcode yourself, or leave it blank to get a one-time invite code — they'll create their own passcode at first sign-in. Anyone can change theirs later via the Passcode button in the header. Removing a rep returns their leads to the pool and revokes their login.</div>
+      <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" style="width:150px" /><input id="rEmail" type="email" placeholder="Email" style="width:180px" /><select id="rRole" style="padding:8px"><option value="sales">sales</option><option value="founder">founder</option></select><input id="rPass" type="text" placeholder="Temp password (8+)" style="width:150px" /><button class="btn" onclick="addRep()">Add</button></div>
+      <div style="font-size:12.5px;color:var(--muted)">Most people just self-serve: send them the page and the team signup code below. Or add them here with a temporary password they can change later. Removing a person returns their leads to the pool and revokes their login.</div>
+      <div class="row" style="margin-top:10px"><span style="font-size:12.5px;color:var(--muted)">Team signup code:</span> <button class="btn sm ghost" onclick="showSignupCode()">Reveal / change</button></div>
     </div>
     <div class="panel"><h3>Email &amp; LinkedIn templates</h3>
       <div id="tplEditor"></div>
       <div class="row"><button class="btn ghost sm" onclick="tplAdd()">+ Add template</button><button class="btn sm" onclick="tplSave()">Save templates</button></div>
-      <div style="font-size:12.5px;color:var(--muted)">Merge fields: {{first}} {{last}} {{company}} {{title}}. "Compose" opens Gmail pre-filled and logs the email. The LinkedIn template is copied to the clipboard on "in Connect".</div>
+      <div style="font-size:12.5px;color:var(--muted)">Merge fields: {{first}} {{last}} {{company}} {{title}}. Each template can be shown to everyone, founders only, or sales only — so your founder voice and the sales voice stay separate. "Compose" opens Gmail pre-filled and logs the email.</div>
     </div>
     <div class="panel"><h3>Import leads (CSV)</h3>
       <div class="row"><input type="file" id="csvFile" accept=".csv" /><button class="btn" onclick="importCsv()">Import to pool</button></div>
@@ -257,107 +264,114 @@ async function save(path, obj, msg){
   const j = await r.json(); shas[path] = j.content.sha;
 }
 
-/* ---------- login (individual passcodes) ---------- */
-let loginsDoc=null, pickedId=null;
-document.getElementById('unlock').onclick = unlock;
-document.getElementById('passcode').addEventListener('keydown', e=>{ if(e.key==='Enter') unlock(); });
-async function initLogin(){
-  try{
-    let r = await fetch(LOGINS_URL + '?t=' + Date.now());
-    if (!r.ok) r = await fetch('crm-logins.json?t=' + Date.now());
-    loginsDoc = await r.json();
-  }catch(e){
-    try{ loginsDoc = await (await fetch('crm-logins.json?t=' + Date.now())).json(); }
-    catch(e2){ document.getElementById('loginErr').textContent = 'Could not load login list.'; return; }
-  }
-  const ws = document.getElementById('whoStep');
-  ws.innerHTML = '<div class="sub" style="margin-bottom:10px">Who are you?</div>' + loginsDoc.logins.map(L =>
-    `<button class="repbtn" onclick="pickLogin('${L.id}')"><span class="dot" style="background:${L.color||'#999'}"></span>${esc(L.name)}</button>`).join('');
+/* ---------- login (email + password) ---------- */
+const SIGNUP_URL = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-signup.json';
+function showSignup(){ document.getElementById('signinStep').style.display='none'; document.getElementById('signupStep').style.display='block'; document.getElementById('loginErr').textContent=''; document.getElementById('suName').focus(); }
+function showSignin(){ document.getElementById('signupStep').style.display='none'; document.getElementById('signinStep').style.display='block'; document.getElementById('loginErr').textContent=''; }
+async function fetchLogins(){
+  let r = await fetch(LOGINS_URL + '?t=' + Date.now());
+  if (!r.ok) r = await fetch('crm-logins.json?t=' + Date.now());
+  const d = await r.json();
+  return Array.isArray(d.users) ? d.users : [];
 }
-function pickLogin(id){
-  pickedId = id;
-  document.getElementById('whoStep').style.display='none';
-  document.getElementById('passStep').style.display='block';
-  document.getElementById('passWho').textContent = 'Signing in as ' + ((loginsDoc.logins.find(l=>l.id===id)||{}).name || id);
-  document.getElementById('loginErr').textContent='';
-  document.getElementById('passcode').focus();
-}
-function backToWho(){
-  document.getElementById('passStep').style.display='none';
-  document.getElementById('whoStep').style.display='block';
-  document.getElementById('loginErr').textContent='';
-}
-async function unlock(){
+async function signIn(){
   const err = document.getElementById('loginErr'); err.textContent='';
-  const pass = document.getElementById('passcode').value.trim();
-  const L = loginsDoc && loginsDoc.logins.find(l=>l.id===pickedId);
-  if (!pass || !L) return;
-  document.getElementById('unlock').textContent = 'Signing in…';
-  try { token = await decryptToken(pass, L.enc); }
-  catch(e){ err.textContent = 'Wrong passcode.'; document.getElementById('unlock').textContent='Sign in'; return; }
+  const email = document.getElementById('liEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('liPass').value;
+  if (!email || !pass) { err.textContent='Enter your email and password.'; return; }
+  const btn = document.getElementById('signinBtn'); btn.textContent='Signing in…';
+  let users;
+  try { users = await fetchLogins(); } catch(e){ err.textContent='Could not reach login service.'; btn.textContent='Sign in'; return; }
+  const u = users.find(x => (x.email||'').toLowerCase() === email);
+  if (!u){ err.textContent='No account for that email. Create one below.'; btn.textContent='Sign in'; return; }
+  try { token = await decryptToken(pass, u.enc); }
+  catch(e){ err.textContent='Wrong password.'; btn.textContent='Sign in'; return; }
   const store = document.getElementById('remember').checked ? localStorage : sessionStorage;
-  store.setItem('crm_t', token);
-  localStorage.setItem('crm_rep', pickedId);
-  if (L.setup){
-    document.getElementById('passStep').style.display='none';
-    document.getElementById('setupStep').style.display='block';
-    document.getElementById('newPass1').focus();
-    return;
-  }
-  await finishLogin(L);
-}
-async function finishLogin(L){
-  try { reps = await load('meta/reps.json'); } catch(e){ document.getElementById('loginErr').textContent='Could not reach data repo.'; document.getElementById('unlock').textContent='Sign in'; return; }
-  me = reps.find(r=>r.id===pickedId) || { id: pickedId, name: L.name, admin: false };
+  store.setItem('crm_t', token); localStorage.setItem('crm_email', email);
+  try { reps = await load('meta/reps.json'); } catch(e){ err.textContent='Could not reach data.'; btn.textContent='Sign in'; return; }
+  me = reps.find(r=>r.id===u.id) || { id:u.id, name:u.name, email, role:u.role||'sales', admin:false };
+  if (me.active===false){ err.textContent='This account is deactivated.'; btn.textContent='Sign in'; return; }
   await enterApp();
 }
-async function completeSetup(){
+async function signUp(){
   const err = document.getElementById('loginErr'); err.textContent='';
-  const p1 = document.getElementById('newPass1').value.trim(), p2 = document.getElementById('newPass2').value.trim();
-  if (p1.length < 8){ err.textContent='Use at least 8 characters.'; return; }
-  if (p1 !== p2){ err.textContent="Passcodes don't match."; return; }
-  document.getElementById('setPassBtn').textContent='Saving…';
+  const name = document.getElementById('suName').value.trim();
+  const email = document.getElementById('suEmail').value.trim().toLowerCase();
+  const p1 = document.getElementById('suPass1').value, p2 = document.getElementById('suPass2').value;
+  const code = document.getElementById('suCode').value.trim();
+  if (!name || !email.includes('@')) { err.textContent='Enter your name and a valid email.'; return; }
+  if (p1.length < 8) { err.textContent='Password must be at least 8 characters.'; return; }
+  if (p1 !== p2) { err.textContent="Passwords don't match."; return; }
+  if (!code) { err.textContent='Enter the team signup code.'; return; }
+  const btn = document.getElementById('signupBtn'); btn.textContent='Creating…';
+  // 1) team code unlocks the shared token
+  let signupDoc;
+  try { let r = await fetch(SIGNUP_URL + '?t=' + Date.now()); if(!r.ok) r = await fetch('crm-signup.json?t=' + Date.now()); signupDoc = await r.json(); }
+  catch(e){ err.textContent='Could not reach signup service.'; btn.textContent='Create account & enter'; return; }
+  try { token = await decryptToken(code, signupDoc.enc); }
+  catch(e){ err.textContent='Invalid team signup code.'; btn.textContent='Create account & enter'; return; }
   try{
     const { doc, sha } = await loadLogins();
-    const L = doc.logins.find(l=>l.id===pickedId);
-    L.enc = await encryptToken(p1, token); delete L.setup;
-    await saveLogins(doc, sha, 'crm: first-login passcode '+pickedId);
-    await finishLogin(L);
-  }catch(e){ err.textContent='Could not save passcode: '+e.message; document.getElementById('setPassBtn').textContent='Set passcode & enter'; }
+    if (doc.users.find(u => (u.email||'').toLowerCase()===email)){ err.textContent='An account with that email already exists — sign in instead.'; btn.textContent='Create account & enter'; showSignin(); return; }
+    // 2) stable id from email local part (reuses a pre-seeded rep record so existing leads are preserved)
+    const base = email.split('@')[0].replace(/[^a-z0-9]+/g,'') || 'rep';
+    let id;
+    if (reps.find(r=>r.id===base) && !doc.users.find(u=>u.id===base)) { id = base; }
+    else { id = base; let n=1; const taken = new Set([...doc.users.map(u=>u.id), ...reps.map(r=>r.id)]); while (taken.has(id)) id = base + (++n); }
+    const colors = ['#4A6FA5','#7A9E7E','#A55050','#C9A227','#6B5B95','#3E7C8F'];
+    const seeded = reps.find(r=>r.id===id);
+    const role = seeded ? (seeded.role || (seeded.admin?'founder':'sales')) : (doc.users.length===0 ? 'founder' : 'sales');
+    // 3) write login record (token encrypted under their password)
+    doc.users.push({ id, email, name, role, enc: await encryptToken(p1, token) });
+    await saveLogins(doc, sha, 'crm: signup '+email);
+    // 4) ensure rep roster + data files
+    try { reps = await load('meta/reps.json'); } catch(e){ reps = []; }
+    let rep = reps.find(r=>r.id===id);
+    if (!rep){ rep = { id, name, email, role, admin: role==='founder', color: colors[reps.length%colors.length], active:true }; reps.push(rep); }
+    else { rep.name = name; rep.email = email; rep.role = role; }
+    await save('meta/reps.json', reps, 'crm: rep '+id);
+    for (const f of ['leads','activities','outbox']){ const p=`reps/${id}/${f}.json`; if(shas[p]===undefined){ try{ await load(p); }catch(e){ shas[p]=null; await save(p, [], 'crm: init '+p); } } }
+    const store = document.getElementById('remember').checked ? localStorage : sessionStorage;
+    store.setItem('crm_t', token); localStorage.setItem('crm_email', email);
+    me = rep;
+    await enterApp();
+  }catch(e){ err.textContent='Could not create account: '+e.message; btn.textContent='Create account & enter'; }
 }
 async function changeMyPass(){
-  const p1 = prompt('New passcode (8+ characters):'); if (p1===null) return;
+  const p1 = prompt('New password (8+ characters):'); if (p1===null) return;
   if (p1.trim().length < 8) return toast('Use at least 8 characters');
-  const p2 = prompt('Confirm new passcode:'); if (p2===null) return;
-  if (p1.trim() !== p2.trim()) return toast("Passcodes don't match");
+  const p2 = prompt('Confirm new password:'); if (p2===null) return;
+  if (p1.trim() !== p2.trim()) return toast("Passwords don't match");
   try{
     const { doc, sha } = await loadLogins();
-    let L = doc.logins.find(l=>l.id===me.id);
-    if (!L){ L = { id: me.id, name: me.name, color: me.color }; doc.logins.push(L); }
-    L.enc = await encryptToken(p1.trim(), token); delete L.setup;
-    await saveLogins(doc, sha, 'crm: passcode change '+me.id);
-    toast('Passcode updated — use it next time you sign in');
+    let u = doc.users.find(x=>x.id===me.id);
+    if (!u){ u = { id: me.id, email: me.email, name: me.name, role: me.role }; doc.users.push(u); }
+    u.enc = await encryptToken(p1.trim(), token);
+    await saveLogins(doc, sha, 'crm: password change '+me.id);
+    toast('Password updated');
   }catch(e){ toast('Failed: '+e.message); }
 }
+['liEmail','liPass'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')signIn();}));
 async function boot(){
-  initLogin();
   token = sessionStorage.getItem('crm_t') || localStorage.getItem('crm_t');
   if (!token) return;
   try { reps = await load('meta/reps.json'); } catch(e){ token=null; return; }
-  me = reps.find(r=>r.id===localStorage.getItem('crm_rep'));
-  if (me) await enterApp();
+  const email = (localStorage.getItem('crm_email')||'').toLowerCase();
+  me = reps.find(r=>(r.email||'').toLowerCase()===email) || reps.find(r=>r.id===localStorage.getItem('crm_rep'));
+  if (me && me.active!==false) await enterApp();
   else { sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); token=null; }
 }
 /* logins file lives in the public site repo */
 async function ghSite(path, opts={}){
-  const r = await fetch(`https://api.github.com/repos/${SITE_REPO}/contents/${path}`, {
+  return fetch(`https://api.github.com/repos/${SITE_REPO}/contents/${path}`, {
     ...opts, headers:{ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json', ...(opts.headers||{}) }
   });
-  return r;
 }
 async function loadLogins(){
   const r = await ghSite('crm-logins.json'); const j = await r.json();
-  return { doc: b64dec(j.content), sha: j.sha };
+  const doc = b64dec(j.content);
+  if (!Array.isArray(doc.users)) doc.users = [];
+  return { doc, sha: j.sha };
 }
 async function saveLogins(doc, sha, msg){
   const r = await ghSite('crm-logins.json', { method:'PUT', body: JSON.stringify({ message: msg||'crm: update logins', content: b64enc(doc), sha }) });
@@ -371,11 +385,11 @@ async function enterApp(){
   try { myOutbox = await load(`reps/${me.id}/outbox.json`); } catch(e){ myOutbox = []; shas[`reps/${me.id}/outbox.json`] = null; }
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
-  document.getElementById('who').textContent = me.name;
+  document.getElementById('who').textContent = me.name + (me.role==='founder'?' · Founder':(me.admin?' · Admin':''));
   document.getElementById('teamTab').style.display = me.admin ? '' : 'none';
   renderBoard(); fillAdmin(); updateQueueBadge();
 }
-function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); location.reload(); }
+function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); localStorage.removeItem('crm_email'); localStorage.removeItem('crm_rep'); location.reload(); }
 
 /* ---------- nav ---------- */
 document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
@@ -507,7 +521,9 @@ function logAct(l, ty, d){
   myActs.push({ t: Date.now(), ty, l: l.i, n: leadName(l), d: d||'' });
   markDirty('acts');
 }
-function emailTpls(){ return templates.filter(t=>t.type!=='li'); }
+function tplVisible(t){ const r = t.roles; if (!r || !r.length || r.includes('all')) return true; return r.includes((me&&me.role)||'sales'); }
+function emailTpls(){ return templates.filter(t=>t.type!=='li' && tplVisible(t)); }
+function liTpl(){ return templates.find(t=>t.type==='li' && tplVisible(t)); }
 function merge(s, l){ return (s||'').replace(/{{\s*first\s*}}/gi, l.fn||'').replace(/{{\s*last\s*}}/gi, l.ln||'').replace(/{{\s*company\s*}}/gi, l.co||'').replace(/{{\s*title\s*}}/gi, l.ti||''); }
 function emailLead(id, tplIdx){
   const l = myLeads.find(x=>x.i===id); if(!l) return;
@@ -521,7 +537,7 @@ function emailLead(id, tplIdx){
 }
 async function liLead(id){
   const l = myLeads.find(x=>x.i===id); if(!l) return;
-  const t = templates.find(x=>x.type==='li');
+  const t = liTpl();
   if (t){ try{ await navigator.clipboard.writeText(merge(t.body,l)); toast('Connect note copied — paste it on LinkedIn'); }catch(e){} }
   if (l.li) window.open(l.li, '_blank'); else toast('No LinkedIn URL on file');
   l.la = Date.now(); logAct(l, 'li'); markDirty('leads');
@@ -627,27 +643,34 @@ function fillAdmin(){
   if (me && me.admin){ renderReps(); renderTpls(); }
 }
 function renderReps(){
-  document.getElementById('repTable').innerHTML = '<table class="tbl"><thead><tr><th>Rep</th><th>Role</th><th>PIN</th><th>Status</th><th></th></tr></thead><tbody>' + reps.map((r,i)=>`<tr>
-    <td><b>${esc(r.name)}</b>${r.id===me.id?' <span style="color:var(--muted);font-size:11px">(you)</span>':''}</td>
-    <td><label style="display:flex;gap:5px;align-items:center;font-size:12px"><input type="checkbox" ${r.admin?'checked':''} ${r.id===me.id?'disabled':''} onchange="setAdmin(${i}, this.checked)" style="width:auto"> admin</label></td>
-    <td><button class="btn sm ghost" onclick="resetPass(${i})">Reset passcode</button></td>
+  document.getElementById('repTable').innerHTML = '<table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Admin</th><th>Login</th><th>Status</th><th></th></tr></thead><tbody>' + reps.map((r,i)=>`<tr>
+    <td><b>${esc(r.name)}</b>${r.id===me.id?' <span style="color:var(--muted);font-size:11px">(you)</span>':''}<div style="color:var(--muted);font-size:11.5px">${esc(r.email||'')}</div></td>
+    <td><select onchange="setRole(${i}, this.value)" style="font-size:12px;padding:4px 6px">${['founder','sales'].map(x=>`<option ${ (r.role||'sales')===x?'selected':'' }>${x}</option>`).join('')}</select></td>
+    <td><input type="checkbox" ${r.admin?'checked':''} ${r.id===me.id?'disabled':''} onchange="setAdmin(${i}, this.checked)" style="width:auto" /></td>
+    <td><button class="btn sm ghost" onclick="resetPass(${i})">Reset password</button></td>
     <td>${r.active===false?'<span class="tag">inactive</span> ':''}<button class="btn sm ghost" onclick="toggleActive(${i})">${r.active===false?'Activate':'Deactivate'}</button></td>
     <td>${r.id!==me.id?`<button class="btn sm ghost" style="color:var(--red)" onclick="delRep(${i})">Remove</button>`:''}</td></tr>`).join('') + '</tbody></table>';
 }
 async function saveReps(msg){ try{ await save('meta/reps.json', reps, msg||'crm: update reps'); }catch(e){ toast('Save failed: '+e.message); } renderReps(); fillAdmin(); }
-async function setAdmin(i, v){ reps[i].admin = v; await saveReps('crm: role '+reps[i].id); toast('Role updated'); }
+async function setAdmin(i, v){ reps[i].admin = v; await saveReps('crm: admin '+reps[i].id); toast('Updated'); }
+async function setRole(i, v){
+  reps[i].role = v;
+  try{ const { doc, sha } = await loadLogins(); const u = doc.users.find(x=>x.id===reps[i].id); if (u){ u.role = v; await saveLogins(doc, sha, 'crm: role '+reps[i].id); } }catch(e){}
+  await saveReps('crm: role '+reps[i].id); toast(reps[i].name+' → '+v);
+}
 async function resetPass(i){
   const r = reps[i];
-  const pass = prompt('New passcode for '+r.name+' — keep the generated one or type your own (8+ chars). Their old passcode stops working immediately:', genPass());
+  const pass = prompt('Set a new password for '+r.name+' (8+ characters). They use it with their email '+(r.email||'')+'. Their old password stops working immediately:', '');
   if (pass===null) return;
-  if (pass.trim().length < 8) return toast('Passcode must be 8+ characters');
+  if (pass.trim().length < 8) return toast('Password must be 8+ characters');
   try{
     const { doc, sha: lsha } = await loadLogins();
     const enc = await encryptToken(pass.trim(), token);
-    const L = doc.logins.find(l=>l.id===r.id);
-    if (L){ L.enc = enc; L.name = r.name; L.color = r.color; delete L.setup; } else doc.logins.push({ id:r.id, name:r.name, color:r.color, enc });
-    await saveLogins(doc, lsha, 'crm: reset passcode '+r.id);
-    toast('Passcode set for '+r.name);
+    let u = doc.users.find(x=>x.id===r.id);
+    if (u){ u.enc = enc; u.name = r.name; u.email = r.email||u.email; u.role = r.role||u.role; }
+    else doc.users.push({ id:r.id, email:r.email, name:r.name, role:r.role||'sales', enc });
+    await saveLogins(doc, lsha, 'crm: reset password '+r.id);
+    toast('Password set for '+r.name);
   }catch(e){ toast('Reset failed: '+e.message); }
 }
 async function toggleActive(i){ reps[i].active = reps[i].active===false; await saveReps('crm: active '+reps[i].id); }
@@ -669,22 +692,24 @@ async function delRep(i){
     await saveReps('crm: remove rep '+r.id);
     try{
       const { doc, sha: lsha } = await loadLogins();
-      doc.logins = doc.logins.filter(l=>l.id!==r.id);
+      doc.users = doc.users.filter(l=>l.id!==r.id);
       await saveLogins(doc, lsha, 'crm: revoke login '+r.id);
     }catch(e){}
     refreshPool(); toast('Removed '+r.name);
   }catch(e){ toast('Remove failed: '+e.message); }
 }
+function tplRoleVal(t){ if(!t.roles||!t.roles.length||t.roles.includes('all')) return 'all'; return t.roles[0]; }
 function renderTpls(){
   document.getElementById('tplEditor').innerHTML = templates.map((t,i)=>`<div style="border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px">
-    <div class="row"><input value="${esc(t.name)}" placeholder="Template name" oninput="templates[${i}].name=this.value" style="width:200px" />
+    <div class="row"><input value="${esc(t.name)}" placeholder="Template name" oninput="templates[${i}].name=this.value" style="width:180px" />
     <label style="display:flex;gap:5px;align-items:center;font-size:12px"><input type="checkbox" ${t.type==='li'?'checked':''} onchange="templates[${i}].type=this.checked?'li':'email'" style="width:auto"> LinkedIn note</label>
+    <label style="font-size:12px;color:var(--muted)">Shown to <select onchange="templates[${i}].roles = this.value==='all'?['all']:[this.value]" style="font-size:12px;padding:4px 6px">${[['all','Everyone'],['founder','Founder only'],['sales','Sales only']].map(([v,lb])=>`<option value="${v}" ${tplRoleVal(t)===v?'selected':''}>${lb}</option>`).join('')}</select></label>
     <button class="btn sm ghost" style="color:var(--red);margin-left:auto" onclick="templates.splice(${i},1);renderTpls()">Delete</button></div>
     <input value="${esc(t.su||'')}" placeholder="Subject (email only)" oninput="templates[${i}].su=this.value" style="width:100%;margin-bottom:7px" />
     <textarea style="width:100%;min-height:84px" placeholder="Body" oninput="templates[${i}].body=this.value">${esc(t.body||'')}</textarea></div>`).join('')
     || '<div style="color:var(--muted);font-size:13px;margin-bottom:8px">No templates yet.</div>';
 }
-function tplAdd(){ templates.push({name:'New template', type:'email', su:'', body:''}); renderTpls(); }
+function tplAdd(){ templates.push({name:'New template', type:'email', su:'', body:'', roles:['all']}); renderTpls(); }
 async function tplSave(){ try{ await save('meta/templates.json', templates, 'crm: templates'); toast('Templates saved'); }catch(e){ toast('Save failed: '+e.message); } }
 async function refreshPool(){
   try { const idx = await load('pool/index.json'); document.getElementById('poolN').textContent = idx.total.toLocaleString() + ' unassigned'; }
@@ -724,27 +749,46 @@ async function assignLeads(){
   btn.disabled=false;
 }
 async function addRep(){
-  const name = document.getElementById('rName').value.trim(); if(!name) return;
-  const id = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').split('-')[0] + (Math.random()*100|0);
-  const colors = ['#A55050','#C9A227','#6B5B95','#3E7C8F','#7A9E7E'];
-  const rep = { id, name, admin: document.getElementById('rAdmin').checked, color: colors[reps.length % colors.length], active: true };
-  reps.push(rep);
+  const name = document.getElementById('rName').value.trim();
+  const email = document.getElementById('rEmail').value.trim().toLowerCase();
+  const role = document.getElementById('rRole').value;
+  const pass = document.getElementById('rPass').value.trim();
+  if (!name || !email.includes('@')) return toast('Name and email required');
+  if (pass.length < 8) return toast('Temp password must be 8+ characters');
   try{
-    await save('meta/reps.json', reps, 'crm: add rep '+name);
-    shas[`reps/${id}/leads.json`] = null; shas[`reps/${id}/activities.json`] = null;
+    const { doc, sha: lsha } = await loadLogins();
+    if (doc.users.find(u=>(u.email||'').toLowerCase()===email)) return toast('That email already has an account');
+    let base = email.split('@')[0].replace(/[^a-z0-9]+/g,'') || 'rep';
+    let id = base, n=1; const taken = new Set([...doc.users.map(u=>u.id), ...reps.map(r=>r.id)]);
+    while (taken.has(id)) id = base + (++n);
+    const colors = ['#4A6FA5','#7A9E7E','#A55050','#C9A227','#6B5B95','#3E7C8F'];
+    const rep = { id, name, email, role, admin: role==='founder', color: colors[reps.length%colors.length], active: true };
+    reps.push(rep);
+    await save('meta/reps.json', reps, 'crm: add rep '+id);
+    shas[`reps/${id}/leads.json`]=null; shas[`reps/${id}/activities.json`]=null; shas[`reps/${id}/outbox.json`]=null;
     await save(`reps/${id}/leads.json`, [], 'crm: init '+id);
     await save(`reps/${id}/activities.json`, [], 'crm: init '+id);
-    const passV = document.getElementById('rPass').value.trim();
-    if (passV && passV.length < 8){ toast('Passcode must be 8+ characters'); reps.pop(); return; }
-    const pass = passV || genPass();
-    const { doc, sha: lsha } = await loadLogins();
-    const entry = { id, name, color: rep.color, enc: await encryptToken(pass, token) };
-    if (!passV) entry.setup = true;
-    doc.logins.push(entry);
+    await save(`reps/${id}/outbox.json`, [], 'crm: init '+id);
+    doc.users.push({ id, email, name, role, enc: await encryptToken(pass, token) });
     await saveLogins(doc, lsha, 'crm: add login '+id);
     fillAdmin(); toast('Added '+name);
-    prompt(passV ? name+"'s passcode (as you set it):" : name+"'s one-time invite code — they sign in with it once, then create their own passcode:", pass);
-    document.getElementById('rName').value=''; document.getElementById('rPass').value=''; document.getElementById('rAdmin').checked=false;
+    prompt(name+" can sign in now with email "+email+" and this temporary password (they can change it):", pass);
+    document.getElementById('rName').value=''; document.getElementById('rEmail').value=''; document.getElementById('rPass').value='';
+  }catch(e){ toast('Failed: '+e.message); }
+}
+async function showSignupCode(){
+  const cur = prompt("The team signup code is secret (not stored in readable form). To set or rotate it, type a new code here and everyone will use it to self-register. Leave blank to cancel:", '');
+  if (cur===null || !cur.trim()) return;
+  if (cur.trim().length < 6) return toast('Use at least 6 characters');
+  try{
+    // re-encrypt the shared token under the new signup code
+    const enc = await encryptToken(cur.trim(), token);
+    const r = await ghSite('crm-signup.json');
+    let sha; if (r.ok){ sha = (await r.json()).sha; }
+    const body = { message:'crm: rotate signup code', content: b64enc({ enc }) }; if (sha) body.sha = sha;
+    const pr = await ghSite('crm-signup.json', { method:'PUT', body: JSON.stringify(body) });
+    if (!pr.ok) throw new Error('save '+pr.status);
+    toast('Signup code updated');
   }catch(e){ toast('Failed: '+e.message); }
 }
 async function importCsv(){
