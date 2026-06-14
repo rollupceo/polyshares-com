@@ -161,16 +161,17 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 <main>
   <section id="v-board">
     <div id="pipebar" class="pipebar"></div>
-    <input id="qsearch" placeholder="Search my leads…" oninput="renderBoard()" />
-    <div class="board" id="board"></div>
+    <div class="row"><input id="qsearch" placeholder="Search my leads…" style="flex:1;min-width:200px" oninput="renderBoard()" /><button class="btn" onclick="newLead()">+ New lead</button></div>
+    <div class="board" id="board" style="margin-top:14px"></div>
   </section>
   <section id="v-queue" style="display:none">
     <div class="row"><span style="font-size:12.5px;color:var(--muted)">Mark stale after</span><input id="staleN" type="number" min="1" max="30" style="width:64px" onchange="localStorage.setItem('crm_staleN', this.value); renderQueue()" /><span style="font-size:12.5px;color:var(--muted)">days without a touch</span></div>
     <div id="queueWrap" style="margin-top:8px"></div>
   </section>
   <section id="v-leads" style="display:none">
-    <div class="row"><input id="tsearch" placeholder="Filter by name, company, title, state, industry…" style="width:340px" oninput="renderTable()" /><span id="tcount" style="color:var(--muted);font-size:12.5px"></span></div>
-    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Name</th><th>Company</th><th>Title</th><th>State</th><th>Value</th><th>Stage</th><th>Last activity</th></tr></thead><tbody id="tbody"></tbody></table></div>
+    <div class="row"><input id="tsearch" placeholder="Filter by name, company, title, state, industry…" style="width:300px" oninput="renderTable()" /><select id="tstage" onchange="renderTable()" style="padding:8px"><option value="">All stages</option></select><button class="btn ghost" onclick="newLead()">+ New lead</button><span id="tcount" style="color:var(--muted);font-size:12.5px"></span></div>
+    <div id="bulkBar" style="display:none" class="row" style="margin-top:8px"></div>
+    <div style="overflow-x:auto;margin-top:8px"><table class="tbl"><thead><tr><th style="width:28px"><input type="checkbox" id="selAll" onchange="toggleSelAll(this.checked)" style="width:auto" /></th><th>Name</th><th>Company</th><th>Title</th><th>State</th><th>Value</th><th>Stage</th><th>Last activity</th></tr></thead><tbody id="tbody"></tbody></table></div>
   </section>
   <section id="v-metrics" style="display:none"><div class="mgrid" id="mgrid"></div></section>
   <section id="v-team" style="display:none">
@@ -602,7 +603,7 @@ window.addEventListener('beforeunload', e => { if (dirty.leads||dirty.acts){ flu
 /* ---------- drawer ---------- */
 function openDrawer(id){
   const l = myLeads.find(x=>x.i===id); if(!l) return;
-  document.getElementById('dName').textContent = leadName(l);
+  document.getElementById('dName').innerHTML = esc(leadName(l)) + ` <button class="btn sm ghost" style="font-size:11px;padding:3px 8px;vertical-align:middle" onclick="openEdit('${l.i}')">✎ Edit</button>`;
   document.getElementById('dCo').textContent = [l.ti, l.co].filter(Boolean).join(' · ');
   const hist = myActs.filter(a=>a.l===id).sort((a,b)=>b.t-a.t).slice(0,40);
   const tyLabel = {call:'📞 Call', email:'✉️ Email', li:'in Connect', note:'📝 Note', stage:'→ Stage'};
@@ -641,13 +642,74 @@ async function moveLead(id, repId){
 }
 
 /* ---------- table ---------- */
+let sel = new Set();
 function renderTable(){
+  const sf = document.getElementById('tstage');
+  if (sf && sf.options.length<=1) sf.innerHTML = '<option value="">All stages</option>' + stages.map(s=>`<option>${s}</option>`).join('');
   const q = document.getElementById('tsearch').value.trim();
-  const rows = myLeads.filter(l=>matches(l,q)).slice(0,500);
+  const stg = sf ? sf.value : '';
+  const rows = myLeads.filter(l=>matches(l,q) && (!stg || (l.st||'New')===stg)).slice(0,500);
   document.getElementById('tcount').textContent = `${rows.length}${rows.length===500?'+':''} of ${myLeads.length}`;
-  document.getElementById('tbody').innerHTML = rows.map(l=>`<tr onclick="openDrawer('${l.i}')" style="cursor:pointer">
-    <td><b>${esc(leadName(l))}</b></td><td>${esc(l.co)}</td><td>${esc(l.ti)}</td><td>${esc(l.stt||l.st_||'')}</td><td>${l.v?moneyFull(l.v):'—'}</td>
-    <td><span class="tag">${esc(l.st||'New')}</span></td><td style="color:var(--muted)">${l.la?new Date(l.la).toLocaleDateString():'—'}</td></tr>`).join('');
+  document.getElementById('tbody').innerHTML = rows.map(l=>`<tr style="cursor:pointer">
+    <td onclick="event.stopPropagation()"><input type="checkbox" ${sel.has(l.i)?'checked':''} onchange="toggleSel('${l.i}', this.checked)" style="width:auto" /></td>
+    <td onclick="openDrawer('${l.i}')"><b>${esc(leadName(l))}</b></td><td onclick="openDrawer('${l.i}')">${esc(l.co)}</td><td onclick="openDrawer('${l.i}')">${esc(l.ti)}</td><td onclick="openDrawer('${l.i}')">${esc(l.stt||l.st_||'')}</td><td onclick="openDrawer('${l.i}')">${l.v?moneyFull(l.v):'—'}</td>
+    <td onclick="openDrawer('${l.i}')"><span class="tag">${esc(l.st||'New')}</span></td><td onclick="openDrawer('${l.i}')" style="color:var(--muted)">${l.la?new Date(l.la).toLocaleDateString():'—'}</td></tr>`).join('');
+  renderBulkBar();
+}
+function toggleSel(id, on){ if(on) sel.add(id); else sel.delete(id); renderBulkBar(); }
+function toggleSelAll(on){ sel.clear(); if(on){ const q=document.getElementById('tsearch').value.trim(); const stg=document.getElementById('tstage').value; myLeads.filter(l=>matches(l,q)&&(!stg||(l.st||'New')===stg)).slice(0,500).forEach(l=>sel.add(l.i)); } renderTable(); }
+function renderBulkBar(){
+  const bar = document.getElementById('bulkBar');
+  if (!sel.size){ bar.style.display='none'; return; }
+  bar.style.display='flex';
+  bar.innerHTML = `<b style="font-size:13px">${sel.size} selected</b>
+    <select id="bStage" onchange="bulkStage(this.value);this.value=''" style="padding:7px"><option value="">Set stage…</option>${stages.map(s=>`<option>${s}</option>`).join('')}</select>
+    ${me.admin?`<select id="bRep" onchange="bulkAssign(this.value);this.value=''" style="padding:7px"><option value="">Assign to…</option>${reps.filter(r=>r.active!==false).map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join('')}</select>`:''}
+    <button class="btn sm ghost" onclick="bulkFollow()">Follow up +3d</button>
+    <button class="btn sm ghost" style="color:var(--red)" onclick="bulkDelete()">Delete</button>
+    <button class="btn sm ghost" onclick="sel.clear();renderTable()">Clear</button>`;
+}
+function bulkStage(st){ if(!st) return; let n=0; myLeads.forEach(l=>{ if(sel.has(l.i)){ l.st=st; l.la=Date.now(); n++; } }); markDirty('leads'); toast(n+' moved to '+st); renderTable(); renderBoard(); }
+function bulkFollow(){ const t=Date.now()+3*DAY; myLeads.forEach(l=>{ if(sel.has(l.i)) l.fu=t; }); markDirty('leads'); toast(sel.size+' set to follow up in 3 days'); updateQueueBadge(); }
+async function bulkDelete(){
+  if(!confirm('Delete '+sel.size+' leads? They are removed from your list (not returned to pool).')) return;
+  myLeads = myLeads.filter(l=>!sel.has(l.i)); sel.clear(); markDirty('leads'); renderTable(); renderBoard(); toast('Deleted');
+}
+async function bulkAssign(repId){
+  if(!repId || repId===me.id) return;
+  const moving = myLeads.filter(l=>sel.has(l.i));
+  if(!moving.length) return;
+  toast('Assigning '+moving.length+'…');
+  try{
+    const path=`reps/${repId}/leads.json`; const theirs=await load(path);
+    theirs.push(...moving); await save(path, theirs, `crm: bulk assign ${moving.length} to ${repId}`);
+    myLeads = myLeads.filter(l=>!sel.has(l.i)); sel.clear(); markDirty('leads');
+    renderTable(); renderBoard(); toast('Assigned to '+(reps.find(r=>r.id===repId)||{}).name);
+  }catch(e){ toast('Assign failed: '+e.message); }
+}
+let newLeadId=null;
+function newLead(){ newLeadId = 'n'+Date.now().toString(36)+Math.floor(performance.now()%1000); openEdit(null); }
+function openEdit(id){
+  const l = id ? myLeads.find(x=>x.i===id) : {i:newLeadId, st:'New'};
+  const isNew = !id;
+  document.getElementById('dName').textContent = isNew ? 'New lead' : 'Edit lead';
+  document.getElementById('dCo').textContent = '';
+  const f = (lbl,k,ph,type)=>`<div class="fld"><b>${lbl}</b><input id="ed_${k}" value="${esc(l[k]||'')}" placeholder="${ph||''}" ${type?'type="'+type+'"':''} style="width:200px" /></div>`;
+  document.getElementById('dBody').innerHTML =
+    f('First name','fn')+f('Last name','ln')+f('Company','co')+f('Title','ti')+f('Email','em','',"email")+f('Phone','ph')+f('LinkedIn','li')+f('Website','ws')+f('City','ci')+f('State','stt')+f('Industry','in')+
+    `<div class="fld"><b>Deal value</b>$<input id="ed_v" type="number" min="0" value="${l.v||''}" style="width:120px" /></div>
+     <div class="logrow"><button class="btn" onclick="saveEdit('${l.i}', ${isNew})">${isNew?'Create lead':'Save changes'}</button><button class="btn ghost" onclick="closeDrawer()">Cancel</button></div>`;
+  document.getElementById('drawer').classList.add('open');
+}
+function saveEdit(id, isNew){
+  const g = k => { const e=document.getElementById('ed_'+k); return e?e.value.trim():''; };
+  const data = {}; ['fn','ln','co','ti','em','ph','li','ws','ci','stt','in'].forEach(k=>data[k]=g(k));
+  data.v = Math.max(0, Math.round(Number(g('v'))||0));
+  if (!data.fn && !data.ln && !data.co && !data.em){ toast('Add at least a name, company, or email'); return; }
+  if (isNew){ const l = {i:id, st:'New', a:Date.now(), ...data}; myLeads.unshift(l); logAct(l,'note','Created manually'); }
+  else { const l = myLeads.find(x=>x.i===id); if(l) Object.assign(l, data); }
+  markDirty('leads'); renderBoard(); if(document.getElementById('v-leads').style.display!=='none') renderTable();
+  toast(isNew?'Lead created':'Saved'); openDrawer(id);
 }
 
 /* ---------- metrics ---------- */
