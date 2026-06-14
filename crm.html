@@ -147,6 +147,16 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 #cardpop .cp-hint{font-size:11.5px;color:var(--muted);line-height:1.4}
 #cardpop .cp-empty{font-size:13px;color:var(--muted)}
 #cardpop .btn{width:100%;justify-content:center}
+#tour{display:none;position:fixed;inset:0;z-index:90}
+#tour.on{display:block}
+#tour-spot{position:absolute;border-radius:10px;box-shadow:0 0 0 9999px rgba(18,16,12,.62);transition:all .25s ease;pointer-events:none}
+#tour-box{position:absolute;width:320px;max-width:92vw;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:18px 20px;transition:all .2s ease}
+#tour-box .t-step{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#tour-box h4{font-family:var(--serif);font-weight:500;font-size:19px;margin:6px 0 7px}
+#tour-box p{font-size:13.5px;color:var(--ink2);line-height:1.55}
+#tour-box .t-foot{display:flex;align-items:center;gap:8px;margin-top:16px}
+#tour-box .t-skip{font-size:12.5px;color:var(--muted);background:none;border:none;cursor:pointer;margin-right:auto}
+#tour-box .t-skip:hover{color:var(--ink)}
 .iconbtn{background:var(--paper);border:1px solid var(--line);border-radius:6px;font-size:12px;padding:5px 8px;cursor:pointer}
 .iconbtn:hover{border-color:var(--ink)}
 .qacts{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
@@ -249,7 +259,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <button data-v="templates">Templates</button>
     <button data-v="team" id="teamTab">Admin</button>
   </nav>
-  <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="changeMyPass()">Password</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
+  <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="startTour()" title="Take the tour">? Tour</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="changeMyPass()">Password</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
 </header>
 <main>
   <section id="v-board">
@@ -320,6 +330,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 <div id="drawer"><div class="head"><button class="x" onclick="closeDrawer()">×</button><h2 id="dName"></h2><div id="dCo" style="color:var(--muted);font-size:13.5px;margin-top:2px"></div></div><div class="body" id="dBody"></div></div>
 <div class="toast" id="toast"></div>
 <div id="cardpop"></div>
+<div id="tour"><div id="tour-spot"></div><div id="tour-box"></div></div>
 
 <script>
 const REPO = 'rollupceo/polyshares-crm-data';
@@ -530,6 +541,7 @@ async function enterApp(){
   const bRep = document.getElementById('boardRep');
   if (me.admin){ bRep.style.display=''; bRep.innerHTML = '<option value="">My board</option>' + reps.filter(r=>r.id!==me.id).map(r=>`<option value="${r.id}">${esc(r.name)}'s pipeline</option>`).join(''); }
   renderBoard(); fillAdmin(); updateQueueBadge(); updateActivityBadge();
+  if (!localStorage.getItem('crm_tour_done_'+me.id)) setTimeout(startTour, 700);
 }
 function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); localStorage.removeItem('crm_email'); localStorage.removeItem('crm_rep'); location.reload(); }
 
@@ -1304,6 +1316,58 @@ function hash12(s){ let h1=0xdeadbeef, h2=0x41c6ce57; for(let i=0;i<s.length;i++
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 let toastTimer=null;
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'), 2600); }
+
+/* ---------- guided tour ---------- */
+let tourIdx=0, tourList=[];
+function tourStepsFor(){
+  const steps=[
+    {sel:null, title:'Welcome to Polyshares CRM', body:`Hi ${me?esc((me.name||'').split(' ')[0]):'there'} — here's a 60-second tour of how to work your leads. You can replay this anytime from the "? Tour" button.`},
+    {sel:'[data-v=board]', title:'Board', body:'Your pipeline. Leads sit in stage columns — drag a card from one stage to the next as a deal progresses.'},
+    {sel:'#pipebar', title:'Pipeline at a glance', body:'Your open pipeline value, a weighted forecast (by stage probability), and what you\'ve won.'},
+    {sel:'#board .card', title:'A lead', body:'Each card is a lead. Click it to open the full deal view. The Call / Email / in Connect buttons pop up the contact info so you can reach out and auto-log it.'},
+    {sel:'[data-v=queue]', title:'Queue — your daily list', body:'Work this top to bottom each morning: follow-ups due, leads going stale, and fresh untouched leads. "Snooze" pushes one a few days out.'},
+    {sel:'[data-v=activity]', title:'Activity', body:'Every task and touch in one list — scheduled, overdue, due today, or completed. Schedule calls, emails, meetings and to-dos from any lead.'},
+    {sel:'[data-v=leads]', title:'Leads', body:'A searchable, filterable table of all your leads. Select rows for bulk actions (set stage, assign, follow-up).'},
+    {sel:'[data-v=metrics]', title:'Metrics', body:'Your numbers and the team leaderboard — calls, emails, meetings, pipeline and win rate, over any date range.'},
+    {sel:'[data-v=templates]', title:'Templates', body:'Your personal email & LinkedIn templates. Edit them here; they show up when you compose from a lead. Use {{first}}, {{company}} to personalize.'},
+    {sel:'#teamTab', title:'Admin', body:'Manage users and roles, set stage probabilities, assign leads from the pool, and import CSVs.', adminOnly:true},
+    {sel:'.right', title:'Your account', body:'Change your password anytime here, and log out when you\'re done. That\'s it — go close some deals!'},
+  ];
+  return steps.filter(s=>{ if(s.adminOnly && !(me&&me.admin)) return false; if(s.sel && s.sel!=='#board .card' && !document.querySelector(s.sel)) return false; return true; });
+}
+function startTour(){
+  // ensure we're on the Board so anchors exist
+  const boardBtn=document.querySelector('[data-v=board]'); if(boardBtn && !document.getElementById('v-board').offsetParent && boardBtn.click) boardBtn.click();
+  tourList=tourStepsFor(); tourIdx=0;
+  document.getElementById('tour').classList.add('on'); tourShow();
+}
+function endTour(){ document.getElementById('tour').classList.remove('on'); if(me) localStorage.setItem('crm_tour_done_'+me.id,'1'); }
+function tourShow(){
+  const s=tourList[tourIdx]; if(!s){ endTour(); return; }
+  const box=document.getElementById('tour-box'), spot=document.getElementById('tour-spot');
+  const last=tourIdx===tourList.length-1;
+  box.innerHTML=`<div class="t-step">Step ${tourIdx+1} of ${tourList.length}</div><h4>${esc(s.title)}</h4><p>${s.body}</p>
+    <div class="t-foot"><button class="t-skip" onclick="endTour()">Skip tour</button>${tourIdx>0?'<button class="btn sm ghost" onclick="tourGo(-1)">Back</button>':''}<button class="btn sm" onclick="${last?'endTour()':'tourGo(1)'}">${last?'Done':'Next'}</button></div>`;
+  const tgt=s.sel?document.querySelector(s.sel):null;
+  if(tgt){
+    tgt.scrollIntoView({block:'nearest',inline:'nearest'});
+    const r=tgt.getBoundingClientRect(), pad=6;
+    spot.style.display='block';
+    spot.style.left=(r.left-pad)+'px'; spot.style.top=(r.top-pad)+'px';
+    spot.style.width=(r.width+pad*2)+'px'; spot.style.height=(r.height+pad*2)+'px';
+    // place box below if room, else above, else centered-right
+    const bw=320, bh=box.offsetHeight||190; let x=r.left, y=r.bottom+12;
+    if(y+bh>innerHeight-12) y=Math.max(12, r.top-bh-12);
+    x=Math.min(Math.max(12,x), innerWidth-bw-12);
+    box.style.left=x+'px'; box.style.top=y+'px'; box.style.transform='none';
+  } else {
+    spot.style.display='none'; spot.style.width='0'; spot.style.height='0';
+    box.style.left='50%'; box.style.top='50%'; box.style.transform='translate(-50%,-50%)';
+  }
+}
+function tourGo(d){ tourIdx+=d; tourShow(); }
+addEventListener('resize', ()=>{ if(document.getElementById('tour').classList.contains('on')) tourShow(); });
+
 boot();
 </script>
 </body>
