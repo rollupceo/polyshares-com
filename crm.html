@@ -119,6 +119,16 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .schedrow select,.schedrow input{flex:1;min-width:0}
 .hist{margin-top:16px;border-top:1px solid var(--line);padding-top:10px}
 .histscroll{max-height:38vh;overflow-y:auto}
+.tl{display:flex;flex-direction:column;gap:10px}
+.tl-row{display:flex;gap:11px;align-items:flex-start;padding:2px 0}
+.tl-ic{width:28px;height:28px;border-radius:50%;background:var(--paper3);display:flex;align-items:center;justify-content:center;font-size:12.5px;flex:none;margin-top:1px}
+.tl-main{flex:1;min-width:0}
+.tl-title{font-size:14px;color:var(--ink);line-height:1.35}
+.tl-meta{font-size:11.5px;color:var(--muted);margin-top:1px}
+.tl-note{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+.tl-note .tl-meta{margin:0 0 6px}
+.tl-note .tl-text{font-size:14px;line-height:1.55;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.tl-empty{color:var(--muted);font-size:13px}
 .iconbtn{background:var(--paper);border:1px solid var(--line);border-radius:6px;font-size:12px;padding:5px 8px;cursor:pointer}
 .iconbtn:hover{border-color:var(--ink)}
 .qacts{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
@@ -703,6 +713,21 @@ function updateActivityBadge(){
   const btn=document.querySelector('[data-v=activity]'); if(btn) btn.textContent='Activity'+(due?` (${due})`:'');
 }
 function whenText(ts){ const d=Math.round((ts-Date.now())/DAY); if(d<-1)return Math.abs(d)+' days overdue'; if(d===-1)return 'yesterday'; if(d===0)return 'today'; if(d===1)return 'tomorrow'; return 'in '+d+' days'; }
+const TL_IC={call:'📞',email:'✉️',li:'in',note:'📝',stage:'◆',meeting:'🗓️',todo:'✓'};
+const TL_LB={call:'Logged a call',email:'Logged an email',li:'LinkedIn touch',meeting:'Meeting',todo:'Task'};
+function fmtWhen(t){ return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+function renderTimeline(hist){
+  if(!hist.length) return '<div class="tl-empty">No activity logged yet — log a call, email, or note and it will appear here.</div>';
+  const who = (me&&me.name) ? me.name : '';
+  return '<div class="tl">'+hist.map(a=>{
+    const meta = fmtWhen(a.t) + (who?(' · '+esc(who)):'');
+    if(a.ty==='note'){
+      return `<div class="tl-note"><div class="tl-meta">${meta}</div><div class="tl-text">${esc(a.d||'')}</div></div>`;
+    }
+    const title = a.ty==='stage' ? ('Moved to '+esc(a.d||'')) : ((TL_LB[a.ty]||esc(a.ty))+(a.d?(' · '+esc(a.d)):''));
+    return `<div class="tl-row"><div class="tl-ic">${TL_IC[a.ty]||'•'}</div><div class="tl-main"><div class="tl-title">${title}</div><div class="tl-meta">${meta}</div></div></div>`;
+  }).join('')+'</div>';
+}
 async function renderActivity(){
   updateActivityBadge();
   const f = document.getElementById('actFilter').value;
@@ -826,7 +851,7 @@ function openDrawer(id){
     <div style="margin-top:6px"><button class="btn sm" onclick="addNote('${l.i}', document.getElementById('noteBox').value); document.getElementById('noteBox').value=''">Save note</button></div>
 
     <div class="subhead" style="margin-top:22px">Timeline</div>
-    <div class="histscroll" style="max-height:none">${hist.map(a=>`<div class="h">${tyLabel[a.ty]||a.ty} ${a.d?('· '+esc(a.d)):''} <span>· ${new Date(a.t).toLocaleString()}</span></div>`).join('') || '<div class="h" style="color:var(--muted)">No activity logged yet — log a call, email, or note and it appears here.</div>'}</div>`;
+    ${renderTimeline(hist)}`;
 
   document.getElementById('dBody').innerHTML = `<div class="stepper">${stepper}</div><div class="dealgrid"><div class="dealcol-left">${left}</div><div class="dealcol-right">${right}</div></div>`;
   document.getElementById('drawer').classList.add('open'); document.getElementById('drawerback').classList.add('open');
