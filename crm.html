@@ -59,6 +59,11 @@ main{padding:18px 20px}
 .card .nm{font-weight:600;font-size:13.5px}
 .card .co{color:var(--ink2);font-size:12.5px;margin-top:1px}
 .card .ti{color:var(--muted);font-size:11.5px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .cv{margin-top:6px;font-family:var(--serif);font-size:14px;color:var(--green);font-weight:500}
+.pipebar{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.pstat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 18px;min-width:150px}
+.pstat .pl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pstat .pn{font-family:var(--serif);font-size:24px;margin:3px 0}
 .card .acts{display:flex;gap:4px;margin-top:8px}
 .card .acts button{background:var(--paper);border:1px solid var(--line);border-radius:5px;font-size:11px;padding:3px 7px}
 .card .acts button:hover{border-color:var(--ink)}
@@ -155,6 +160,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 </header>
 <main>
   <section id="v-board">
+    <div id="pipebar" class="pipebar"></div>
     <input id="qsearch" placeholder="Search my leads…" oninput="renderBoard()" />
     <div class="board" id="board"></div>
   </section>
@@ -164,7 +170,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   </section>
   <section id="v-leads" style="display:none">
     <div class="row"><input id="tsearch" placeholder="Filter by name, company, title, state, industry…" style="width:340px" oninput="renderTable()" /><span id="tcount" style="color:var(--muted);font-size:12.5px"></span></div>
-    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Name</th><th>Company</th><th>Title</th><th>State</th><th>Industry</th><th>Stage</th><th>Last activity</th></tr></thead><tbody id="tbody"></tbody></table></div>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Name</th><th>Company</th><th>Title</th><th>State</th><th>Value</th><th>Stage</th><th>Last activity</th></tr></thead><tbody id="tbody"></tbody></table></div>
   </section>
   <section id="v-metrics" style="display:none"><div class="mgrid" id="mgrid"></div></section>
   <section id="v-team" style="display:none">
@@ -199,7 +205,12 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 const REPO = 'rollupceo/polyshares-crm-data';
 const SITE_REPO = 'rollupceo/polyshares-com';
 const LOGINS_URL = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-logins.json';
-let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], myOutbox=[], templates=[];
+let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], myOutbox=[], templates=[], stageProb={};
+const DEFAULT_PROB = {'New':5,'Prospecting':10,'Connected':20,'Meeting Booked':40,'Meeting Attended':60,'Proposal Sent':80,'Paid & Closed':100,'Dead':0};
+function prob(st){ if (stageProb && st in stageProb) return stageProb[st]; if (st in DEFAULT_PROB) return DEFAULT_PROB[st]; if (st==='Dead') return 0; const i=stages.indexOf(st); return i<0?0:Math.round(i/Math.max(1,stages.length-1)*100); }
+function money(n){ n=Number(n)||0; return n>=1000 ? '$'+(n/1000).toFixed(n%1000?1:0)+'k' : '$'+n; }
+function moneyFull(n){ return '$'+(Number(n)||0).toLocaleString(); }
+const isOpen = l => !['Paid & Closed','Dead'].includes(l.st||'New');
 let shas={}, dirty={leads:false,acts:false,outbox:false}, saveTimer=null, colLimit={};
 
 /* ---------- crypto ---------- */
@@ -380,6 +391,7 @@ async function saveLogins(doc, sha, msg){
 async function enterApp(){
   try { stages = await load('meta/stages.json'); } catch(e){ stages=['New','Prospecting','Connected','Meeting Booked','Meeting Attended','Proposal Sent','Paid & Closed','Dead']; }
   try { templates = await load('meta/templates.json'); } catch(e){ templates=[]; }
+  try { stageProb = await load('meta/stageprob.json'); } catch(e){ stageProb={}; }
   myLeads = await load(`reps/${me.id}/leads.json`);
   myActs  = await load(`reps/${me.id}/activities.json`);
   try { myOutbox = await load(`reps/${me.id}/outbox.json`); } catch(e){ myOutbox = []; shas[`reps/${me.id}/outbox.json`] = null; }
@@ -405,18 +417,31 @@ document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
 /* ---------- board ---------- */
 function leadName(l){ return (l.fn+' '+l.ln).trim() || l.em || l.co; }
 function matches(l, q){ if(!q) return true; q=q.toLowerCase(); return [l.fn,l.ln,l.co,l.ti,l.st_,l.st,l.in,l.em].some(v => (v||'').toLowerCase().includes(q)); }
+function renderPipelineBar(){
+  const bar = document.getElementById('pipebar'); if (!bar) return;
+  const open = myLeads.filter(isOpen);
+  const total = open.reduce((s,l)=>s+(Number(l.v)||0),0);
+  const weighted = open.reduce((s,l)=>s+(Number(l.v)||0)*prob(l.st||'New')/100,0);
+  const won = myLeads.filter(l=>(l.st)==='Paid & Closed').reduce((s,l)=>s+(Number(l.v)||0),0);
+  bar.innerHTML = `<div class="pstat"><div class="pl">Open pipeline</div><div class="pn">${moneyFull(total)}</div><div class="pl">${open.length} deals</div></div>
+    <div class="pstat"><div class="pl">Weighted forecast</div><div class="pn">${moneyFull(Math.round(weighted))}</div><div class="pl">by stage probability</div></div>
+    <div class="pstat"><div class="pl">Won</div><div class="pn">${moneyFull(won)}</div><div class="pl">${myLeads.filter(l=>l.st==='Paid & Closed').length} closed</div></div>`;
+}
 function renderBoard(){
   const q = document.getElementById('qsearch').value.trim();
+  renderPipelineBar();
   const board = document.getElementById('board'); board.innerHTML='';
   for (const st of stages){
     const leads = myLeads.filter(l => (l.st||'New')===st && matches(l,q));
+    const sum = leads.reduce((s,l)=>s+(Number(l.v)||0),0);
     const lim = colLimit[st] || 60;
     const col = document.createElement('div'); col.className='col'; col.dataset.stage=st;
-    col.innerHTML = `<h3>${st} <span>${leads.length}</span></h3><div class="cards"></div>`;
+    col.innerHTML = `<h3>${st} <span>${leads.length}${sum?' · '+money(sum):''}</span></h3><div class="cards"></div>`;
     const wrap = col.querySelector('.cards');
     for (const l of leads.slice(0,lim)){
       const c = document.createElement('div'); c.className='card'; c.draggable=true; c.dataset.id=l.i;
       c.innerHTML = `<div class="nm">${esc(leadName(l))}</div><div class="co">${esc(l.co)}</div><div class="ti">${esc(l.ti)}</div>
+        ${l.v?`<div class="cv">${moneyFull(l.v)}</div>`:''}
         <div class="acts"><button onclick="event.stopPropagation();quickLog('${l.i}','call')">📞 Call</button><button onclick="event.stopPropagation();emailLead('${l.i}',0)">✉️ Email</button><button onclick="event.stopPropagation();liLead('${l.i}')">in Connect</button></div>`;
       c.onclick = () => openDrawer(l.i);
       c.ondragstart = e => e.dataTransfer.setData('text/plain', l.i);
@@ -436,8 +461,17 @@ function renderBoard(){
 function setStage(id, st){
   const l = myLeads.find(x=>x.i===id); if (!l || (l.st||'New')===st) return;
   l.st = st; l.la = Date.now();
-  logAct(l, 'stage', st);
+  if (st==='Paid & Closed'){ l.closed = Date.now(); delete l.fu; const r = prompt('Won! Any note (deal value, terms)? Optional:', ''); if (r) l.wnote = r; }
+  else if (st==='Dead'){ l.closed = Date.now(); delete l.fu; const r = prompt('Marking as lost. Reason? Optional:', l.lreason||''); if (r!==null && r) l.lreason = r; }
+  logAct(l, 'stage', st + (l.lreason&&st==='Dead'?(' — '+l.lreason):''));
   markDirty('leads'); renderBoard();
+  if (document.getElementById('drawer').classList.contains('open')) openDrawer(id);
+}
+function setValue(id, v){
+  const l = myLeads.find(x=>x.i===id); if(!l) return;
+  const n = Math.max(0, Math.round(Number(v)||0));
+  if ((l.v||0)===n) return;
+  l.v = n; markDirty('leads'); renderPipelineBar();
 }
 
 /* ---------- queue ---------- */
@@ -579,7 +613,9 @@ function openDrawer(id){
     <div class="fld"><b>Website</b>${l.ws?`<a href="https://${esc(l.ws.replace(/^https?:\/\//,''))}" target="_blank" rel="noopener">${esc(l.ws)}</a>`:'—'}</div>
     <div class="fld"><b>Location</b>${esc([l.ci,l.st_||l.st&&''].filter(Boolean).join(', ')) || esc([l.ci,l.stt].filter(Boolean).join(', ')) || esc(l.ci||'—')}</div>
     <div class="fld"><b>Industry</b>${esc(l.in||'—')} ${l.sz?`<span class="tag">${esc(l.sz)} emp</span>`:''}</div>
-    <div class="fld"><b>Stage</b><select onchange="setStage('${l.i}', this.value)">${stages.map(s=>`<option ${ (l.st||'New')===s?'selected':'' }>${s}</option>`).join('')}</select></div>
+    <div class="fld"><b>Stage</b><select onchange="setStage('${l.i}', this.value)">${stages.map(s=>`<option ${ (l.st||'New')===s?'selected':'' }>${s}</option>`).join('')}</select> <span style="color:var(--muted);font-size:12px">${prob(l.st||'New')}% likely</span></div>
+    <div class="fld"><b>Deal value</b>$<input type="number" min="0" step="500" value="${l.v||''}" placeholder="0" onchange="setValue('${l.i}', this.value)" style="width:120px" /></div>
+    ${l.lreason?`<div class="fld"><b>Lost reason</b>${esc(l.lreason)}</div>`:''}${l.wnote?`<div class="fld"><b>Won note</b>${esc(l.wnote)}</div>`:''}
     <div class="fld"><b>Follow up</b><input type="date" value="${l.fu?new Date(l.fu).toISOString().slice(0,10):''}" onchange="setFu('${l.i}', this.value)" /></div>
     ${me.admin ? `<div class="fld"><b>Rep</b><select onchange="moveLead('${l.i}', this.value)">${reps.map(r=>`<option value="${r.id}" ${r.id===me.id?'selected':''}>${r.name}</option>`).join('')}</select></div>` : ''}
     ${emailTpls().length ? `<div class="fld" style="margin-top:12px"><b>Template</b><select id="dTpl" style="max-width:210px">${emailTpls().map((t,ix)=>`<option value="${ix}">${esc(t.name)}</option>`).join('')}</select></div>` : ''}
@@ -610,7 +646,7 @@ function renderTable(){
   const rows = myLeads.filter(l=>matches(l,q)).slice(0,500);
   document.getElementById('tcount').textContent = `${rows.length}${rows.length===500?'+':''} of ${myLeads.length}`;
   document.getElementById('tbody').innerHTML = rows.map(l=>`<tr onclick="openDrawer('${l.i}')" style="cursor:pointer">
-    <td><b>${esc(leadName(l))}</b></td><td>${esc(l.co)}</td><td>${esc(l.ti)}</td><td>${esc(l.stt||l.st_||'')}</td><td>${esc(l.in||'')}</td>
+    <td><b>${esc(leadName(l))}</b></td><td>${esc(l.co)}</td><td>${esc(l.ti)}</td><td>${esc(l.stt||l.st_||'')}</td><td>${l.v?moneyFull(l.v):'—'}</td>
     <td><span class="tag">${esc(l.st||'New')}</span></td><td style="color:var(--muted)">${l.la?new Date(l.la).toLocaleDateString():'—'}</td></tr>`).join('');
 }
 
@@ -628,10 +664,15 @@ async function renderMetrics(){
     const types = [['call','Calls'],['email','Emails'],['li','LinkedIn']];
     const days = Array.from({length:14}, (_,i) => { const s = today.getTime()-(13-i)*day; return acts.filter(a=>a.t>=s && a.t<s+day && a.ty!=='note').length; });
     const mx = Math.max(...days, 1);
+    const openL = leads.filter(isOpen);
+    const openV = openL.reduce((s,l)=>s+(Number(l.v)||0),0);
+    const wtdV = openL.reduce((s,l)=>s+(Number(l.v)||0)*prob(l.st||'New')/100,0);
+    const wonV = leads.filter(l=>l.st==='Paid & Closed').reduce((s,l)=>s+(Number(l.v)||0),0);
     cards.push(`<div class="mcard"><h3><span class="dot" style="background:${r.color}"></span>${r.name}</h3>
+      <div class="nums" style="margin-bottom:12px"><div class="cell"><div class="n">${moneyFull(openV)}</div><div class="l">Open Pipeline</div></div><div class="cell"><div class="n">${moneyFull(Math.round(wtdV))}</div><div class="l">Weighted</div></div><div class="cell"><div class="n">${moneyFull(wonV)}</div><div class="l">Won</div></div></div>
       <div class="nums">${types.map(([ty,lb])=>`<div class="cell"><div class="n">${cnt(ty)}</div><div class="l">${lb}</div><div style="font-size:10.5px;color:var(--muted)">${cnt(ty, today.getTime())} today · ${cnt(ty, now-7*day)} 7d</div></div>`).join('')}</div>
       <div class="subhead">Activity — last 14 days</div><div class="bars">${days.map(d=>`<div style="height:${Math.round(d/mx*100)}%" title="${d}"></div>`).join('')}</div>
-      <div class="subhead">Pipeline (${leads.length} leads)</div><div class="funnel">${stages.map(s=>{const n=leads.filter(l=>(l.st||'New')===s).length; return n?`<div class="f"><span>${s}</span><b>${n}</b></div>`:'';}).join('')}</div>
+      <div class="subhead">Pipeline (${leads.length} leads)</div><div class="funnel">${stages.map(s=>{const ls=leads.filter(l=>(l.st||'New')===s); const v=ls.reduce((a,l)=>a+(Number(l.v)||0),0); return ls.length?`<div class="f"><span>${s}</span><b>${ls.length}${v?' · '+money(v):''}</b></div>`:'';}).join('')}</div>
     </div>`);
   }
   grid.innerHTML = cards.join('');
