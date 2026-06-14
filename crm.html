@@ -110,6 +110,12 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .bars{display:flex;align-items:flex-end;gap:3px;height:46px}
 .bars div{flex:1;background:var(--accent);opacity:.75;border-radius:2px 2px 0 0;min-height:2px}
 .funnel .f{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--paper2)}
+.funnelbars{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px}
+.fb{display:flex;align-items:center;gap:12px;font-size:13px}
+.fb-l{width:130px;flex:none;color:var(--ink2)}
+.fb-bar{flex:1;background:var(--paper2);border-radius:5px;height:18px;overflow:hidden}
+.fb-bar div{height:100%;background:var(--accent);opacity:.8;border-radius:5px;min-width:2px}
+.fb-n{width:110px;flex:none;text-align:right;color:var(--muted);font-size:12px}
 
 /* team/admin */
 .panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:16px;max-width:640px}
@@ -183,7 +189,15 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <div id="bulkBar" style="display:none" class="row" style="margin-top:8px"></div>
     <div style="overflow-x:auto;margin-top:8px"><table class="tbl"><thead><tr><th style="width:28px"><input type="checkbox" id="selAll" onchange="toggleSelAll(this.checked)" style="width:auto" /></th><th>Name</th><th>Company</th><th>Title</th><th>State</th><th>Value</th><th>Stage</th><th>Last activity</th></tr></thead><tbody id="tbody"></tbody></table></div>
   </section>
-  <section id="v-metrics" style="display:none"><div class="mgrid" id="mgrid"></div></section>
+  <section id="v-metrics" style="display:none">
+    <div class="row"><b style="font-family:var(--serif);font-size:20px">Analytics</b><select id="mRange" onchange="computeMetrics()" style="padding:8px;margin-left:auto"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="0">All time</option></select></div>
+    <div id="mTotals" class="pipebar" style="margin-top:12px"></div>
+    <div class="subhead" style="margin-top:8px">Leaderboard</div>
+    <div style="overflow-x:auto"><table class="tbl" id="mBoard"></table></div>
+    <div class="subhead" style="margin-top:20px">Team pipeline</div>
+    <div id="mFunnel"></div>
+    <div class="mgrid" id="mgrid" style="margin-top:20px"></div>
+  </section>
   <section id="v-team" style="display:none">
     <div class="panel"><h3>Assign leads from pool</h3>
       <div class="row"><select id="aRep"></select><input id="aCount" type="number" value="2000" min="1" max="5000" style="width:90px" /><button class="btn" id="aGo" onclick="assignLeads()">Assign from pool</button></div>
@@ -801,31 +815,75 @@ function saveEdit(id, isNew){
 }
 
 /* ---------- metrics ---------- */
+let metricsCache = null;
 async function renderMetrics(){
-  const grid = document.getElementById('mgrid');
-  grid.innerHTML = '<div style="color:var(--muted)">Loading team metrics…</div>';
-  const day = 86400000, now = Date.now(), today = new Date(); today.setHours(0,0,0,0);
-  const cards = [];
+  document.getElementById('mTotals').innerHTML = '<div style="color:var(--muted)">Loading analytics…</div>';
+  document.getElementById('mBoard').innerHTML=''; document.getElementById('mFunnel').innerHTML=''; document.getElementById('mgrid').innerHTML='';
+  const data = [];
   for (const r of reps){
+    if (r.active===false && r.id!==me.id) continue;
     let acts=[], leads=[];
     try { acts = r.id===me.id ? myActs : await load(`reps/${r.id}/activities.json`); } catch(e){}
     try { leads = r.id===me.id ? myLeads : await load(`reps/${r.id}/leads.json`); } catch(e){}
-    const cnt = (ty, since) => acts.filter(a => a.ty===ty && (!since || a.t>=since)).length;
-    const types = [['call','Calls'],['email','Emails'],['li','LinkedIn']];
-    const days = Array.from({length:14}, (_,i) => { const s = today.getTime()-(13-i)*day; return acts.filter(a=>a.t>=s && a.t<s+day && a.ty!=='note').length; });
-    const mx = Math.max(...days, 1);
+    data.push({ r, acts, leads });
+  }
+  metricsCache = data;
+  computeMetrics();
+}
+function computeMetrics(){
+  if (!metricsCache) return;
+  const day=86400000, now=Date.now();
+  const rangeDays = parseInt(document.getElementById('mRange').value);
+  const since = rangeDays ? now - rangeDays*day : 0;
+  const ACT = [['call','Calls'],['email','Emails'],['li','LinkedIn'],['meeting','Meetings'],['note','Notes']];
+  const rows = metricsCache.map(({r,acts,leads}) => {
+    const inRange = acts.filter(a=>a.t>=since);
+    const c = ty => inRange.filter(a=>a.ty===ty).length;
+    const touches = inRange.filter(a=>a.ty!=='note'&&a.ty!=='stage').length;
     const openL = leads.filter(isOpen);
     const openV = openL.reduce((s,l)=>s+(Number(l.v)||0),0);
-    const wtdV = openL.reduce((s,l)=>s+(Number(l.v)||0)*prob(l.st||'New')/100,0);
-    const wonV = leads.filter(l=>l.st==='Paid & Closed').reduce((s,l)=>s+(Number(l.v)||0),0);
-    cards.push(`<div class="mcard"><h3><span class="dot" style="background:${r.color}"></span>${r.name}</h3>
-      <div class="nums" style="margin-bottom:12px"><div class="cell"><div class="n">${moneyFull(openV)}</div><div class="l">Open Pipeline</div></div><div class="cell"><div class="n">${moneyFull(Math.round(wtdV))}</div><div class="l">Weighted</div></div><div class="cell"><div class="n">${moneyFull(wonV)}</div><div class="l">Won</div></div></div>
-      <div class="nums">${types.map(([ty,lb])=>`<div class="cell"><div class="n">${cnt(ty)}</div><div class="l">${lb}</div><div style="font-size:10.5px;color:var(--muted)">${cnt(ty, today.getTime())} today · ${cnt(ty, now-7*day)} 7d</div></div>`).join('')}</div>
-      <div class="subhead">Activity — last 14 days</div><div class="bars">${days.map(d=>`<div style="height:${Math.round(d/mx*100)}%" title="${d}"></div>`).join('')}</div>
-      <div class="subhead">Pipeline (${leads.length} leads)</div><div class="funnel">${stages.map(s=>{const ls=leads.filter(l=>(l.st||'New')===s); const v=ls.reduce((a,l)=>a+(Number(l.v)||0),0); return ls.length?`<div class="f"><span>${s}</span><b>${ls.length}${v?' · '+money(v):''}</b></div>`:'';}).join('')}</div>
-    </div>`);
-  }
-  grid.innerHTML = cards.join('');
+    const wtdV = Math.round(openL.reduce((s,l)=>s+(Number(l.v)||0)*prob(l.st||'New')/100,0));
+    const won = leads.filter(l=>l.st==='Paid & Closed'), lost = leads.filter(l=>l.st==='Dead');
+    const wonV = won.reduce((s,l)=>s+(Number(l.v)||0),0);
+    const winRate = (won.length+lost.length) ? Math.round(won.length/(won.length+lost.length)*100) : 0;
+    return { r, acts, leads, inRange, c, touches, leadCount:leads.length, openV, wtdV, won:won.length, lost:lost.length, wonV, winRate };
+  }).sort((a,b)=>b.touches-a.touches);
+
+  // team totals
+  const T = { touches:0, openV:0, wtdV:0, won:0, wonV:0 };
+  rows.forEach(x=>{ T.touches+=x.touches; T.openV+=x.openV; T.wtdV+=x.wtdV; T.won+=x.won; T.wonV+=x.wonV; });
+  const rangeLbl = rangeDays?`last ${rangeDays}d`:'all time';
+  document.getElementById('mTotals').innerHTML =
+    `<div class="pstat"><div class="pl">Touches · ${rangeLbl}</div><div class="pn">${T.touches}</div><div class="pl">calls · emails · LinkedIn · meetings</div></div>
+     <div class="pstat"><div class="pl">Open pipeline</div><div class="pn">${moneyFull(T.openV)}</div><div class="pl">weighted ${moneyFull(T.wtdV)}</div></div>
+     <div class="pstat"><div class="pl">Won</div><div class="pn">${moneyFull(T.wonV)}</div><div class="pl">${T.won} deals closed</div></div>`;
+
+  // leaderboard
+  document.getElementById('mBoard').innerHTML =
+    `<thead><tr><th>Rep</th>${ACT.map(a=>`<th>${a[1]}</th>`).join('')}<th>Touches</th><th>Leads</th><th>Open $</th><th>Weighted</th><th>Won</th><th>Win %</th></tr></thead><tbody>` +
+    rows.map(x=>`<tr><td><b><span class="dot" style="background:${x.r.color};display:inline-block;margin-right:6px"></span>${esc(x.r.name)}</b>${x.r.role==='founder'?' <span style="color:var(--muted);font-size:11px">founder</span>':''}</td>
+      ${ACT.map(a=>`<td>${x.c(a[0])}</td>`).join('')}
+      <td><b>${x.touches}</b></td><td>${x.leadCount}</td><td>${x.openV?moneyFull(x.openV):'—'}</td><td>${x.wtdV?moneyFull(x.wtdV):'—'}</td><td>${x.won||'—'}${x.wonV?' · '+money(x.wonV):''}</td><td>${(x.won+x.lost)?x.winRate+'%':'—'}</td></tr>`).join('') + '</tbody>';
+
+  // team funnel (current snapshot, cumulative reach)
+  const allLeads = metricsCache.flatMap(d=>d.leads);
+  const openStages = stages.filter(s=>s!=='Dead');
+  const maxN = Math.max(1, ...openStages.map(s=>allLeads.filter(l=>(l.st||'New')===s).length));
+  document.getElementById('mFunnel').innerHTML = '<div class="funnelbars">' + openStages.map(s=>{
+    const ls = allLeads.filter(l=>(l.st||'New')===s); const v = ls.reduce((a,l)=>a+(Number(l.v)||0),0);
+    return `<div class="fb"><div class="fb-l">${s}</div><div class="fb-bar"><div style="width:${Math.round(ls.length/maxN*100)}%"></div></div><div class="fb-n">${ls.length}${v?' · '+money(v):''}</div></div>`;
+  }).join('') + '</div>';
+
+  // per-rep trend cards
+  const today0=new Date(); today0.setHours(0,0,0,0);
+  const span = rangeDays && rangeDays<=30 ? rangeDays : 30;
+  document.getElementById('mgrid').innerHTML = rows.map(x=>{
+    const days = Array.from({length:span},(_,i)=>{ const s=today0.getTime()-(span-1-i)*day; return x.acts.filter(a=>a.t>=s&&a.t<s+day&&a.ty!=='note'&&a.ty!=='stage').length; });
+    const mx = Math.max(...days,1);
+    return `<div class="mcard"><h3><span class="dot" style="background:${x.r.color}"></span>${esc(x.r.name)}</h3>
+      <div class="nums"><div class="cell"><div class="n">${x.touches}</div><div class="l">Touches</div></div><div class="cell"><div class="n">${x.c('meeting')}</div><div class="l">Meetings</div></div><div class="cell"><div class="n">${x.won||0}</div><div class="l">Won</div></div></div>
+      <div class="subhead">Activity — last ${span} days</div><div class="bars">${days.map(d=>`<div style="height:${Math.round(d/mx*100)}%" title="${d}"></div>`).join('')}</div></div>`;
+  }).join('');
 }
 
 /* ---------- admin ---------- */
