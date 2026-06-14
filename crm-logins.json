@@ -1,1 +1,37 @@
-{"users":[{"id":"nathan","email":"nathan@polyshares.com","name":"Nathan Mathews","role":"founder","enc":{"s":"A+0F65z7uPxk+c1jAu8Vfw==","iv":"Lo/lFN0IioJX5cHm","ct":"VgEDsN7ozi/4GlSloZCm0iA42gIqlPShDuEp6iZqQ2tm3kvYhSd3t7+DRWjZB0fzPfsTS0jRTvw="}},{"id":"austin","email":"austin@polyshares.com","name":"Austin Turner","role":"sales","enc":{"s":"MqHt0ehyuayZanD6Kx/uwA==","iv":"MjZqzt4M80gPmn07","ct":"EhilJLgybTs8h06BYNgxjrv523Y2f+2mSWxT0IEPilTD0pz2Z+/dLTT9l8oiL4XWJ6KLyVs3sG0="}},{"id":"ryan","email":"ryan@polyshares.com","name":"Ryan Lock","role":"sales","enc":{"s":"6CUjXFgVqAZOxILpf/4wTw==","iv":"E5DrF/6g3mcPY26G","ct":"A0KvxRzjy0fsu+K+xQK6Z4XhtnOF3extnNatlejKSj+8N7F63d/F5SVoQ51F2peco9LzE5Yv3ss="}},{"id":"demo","email":"demo@polyshares.com","name":"Demo Tester","role":"sales","enc":{"s":"O46jaZVcUV78wrgayzrang==","iv":"DqrGeKwqvSyBY90Y","ct":"03xNK9tzI8h3fCnQrMXciwFFjU6tSyWvasAjE0wFbRuSX6WXC+iijbi+Sqa3y5r73RWoDcJmn9A="}}]}
+{
+ "users": [
+  {
+   "id": "nathan",
+   "email": "nathan@polyshares.com",
+   "name": "Nathan Mathews",
+   "role": "founder",
+   "enc": {
+    "s": "A+0F65z7uPxk+c1jAu8Vfw==",
+    "iv": "Lo/lFN0IioJX5cHm",
+    "ct": "VgEDsN7ozi/4GlSloZCm0iA42gIqlPShDuEp6iZqQ2tm3kvYhSd3t7+DRWjZB0fzPfsTS0jRTvw="
+   }
+  },
+  {
+   "id": "austin",
+   "email": "austin@polyshares.com",
+   "name": "Austin Turner",
+   "role": "sales",
+   "enc": {
+    "s": "MqHt0ehyuayZanD6Kx/uwA==",
+    "iv": "MjZqzt4M80gPmn07",
+    "ct": "EhilJLgybTs8h06BYNgxjrv523Y2f+2mSWxT0IEPilTD0pz2Z+/dLTT9l8oiL4XWJ6KLyVs3sG0="
+   }
+  },
+  {
+   "id": "ryan",
+   "email": "ryan@polyshares.com",
+   "name": "Ryan Lock",
+   "role": "sales",
+   "enc": {
+    "s": "6CUjXFgVqAZOxILpf/4wTw==",
+    "iv": "E5DrF/6g3mcPY26G",
+    "ct": "A0KvxRzjy0fsu+K+xQK6Z4XhtnOF3extnNatlejKSj+8N7F63d/F5SVoQ51F2peco9LzE5Yv3ss="
+   }
+  }
+ ]
+}
