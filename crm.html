@@ -129,6 +129,14 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .tl-note .tl-meta{margin:0 0 6px}
 .tl-note .tl-text{font-size:14px;line-height:1.55;color:var(--ink);white-space:pre-wrap;word-break:break-word}
 .tl-empty{color:var(--muted);font-size:13px}
+#cardpop{position:fixed;z-index:70;width:240px;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 16px 44px rgba(0,0,0,.22);padding:14px;display:none;flex-direction:column;gap:8px}
+#cardpop.open{display:flex}
+#cardpop .cp-h{font-weight:600;font-size:13px;margin-bottom:2px}
+#cardpop .cp-num{font-family:var(--serif);font-size:18px;color:var(--accent);text-decoration:none;word-break:break-word;display:block}
+#cardpop a.cp-num:hover{text-decoration:underline}
+#cardpop .cp-hint{font-size:11.5px;color:var(--muted);line-height:1.4}
+#cardpop .cp-empty{font-size:13px;color:var(--muted)}
+#cardpop .btn{width:100%;justify-content:center}
 .iconbtn{background:var(--paper);border:1px solid var(--line);border-radius:6px;font-size:12px;padding:5px 8px;cursor:pointer}
 .iconbtn:hover{border-color:var(--ink)}
 .qacts{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
@@ -289,6 +297,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 <div id="drawerback" onclick="closeDrawer()"></div>
 <div id="drawer"><div class="head"><button class="x" onclick="closeDrawer()">×</button><h2 id="dName"></h2><div id="dCo" style="color:var(--muted);font-size:13.5px;margin-top:2px"></div></div><div class="body" id="dBody"></div></div>
 <div class="toast" id="toast"></div>
+<div id="cardpop"></div>
 
 <script>
 const REPO = 'rollupceo/polyshares-crm-data';
@@ -554,7 +563,7 @@ function renderBoard(){
         c.draggable=true;
         c.innerHTML = `<div class="nm">${esc(leadName(l))}</div><div class="co">${esc(l.co)}</div><div class="ti">${esc(l.ti)}</div>
           ${l.v?`<div class="cv">${moneyFull(l.v)}</div>`:''}
-          <div class="acts"><button onclick="event.stopPropagation();quickLog('${l.i}','call')">📞 Call</button><button onclick="event.stopPropagation();emailLead('${l.i}',0)">✉️ Email</button><button onclick="event.stopPropagation();liLead('${l.i}')">in Connect</button></div>`;
+          <div class="acts"><button onclick="event.stopPropagation();openCardPop(event,'${l.i}','call')">📞 Call</button><button onclick="event.stopPropagation();openCardPop(event,'${l.i}','email')">✉️ Email</button><button onclick="event.stopPropagation();openCardPop(event,'${l.i}','li')">in Connect</button></div>`;
         c.onclick = () => openDrawer(l.i);
         c.ondragstart = e => e.dataTransfer.setData('text/plain', l.i);
       }
@@ -622,7 +631,7 @@ function qRows(list, dueText){
     <td onclick="openDrawer('${l.i}')" style="cursor:pointer"><b>${esc(leadName(l))}</b><div style="color:var(--muted);font-size:11.5px">${esc(l.co)}</div></td>
     <td><span class="tag">${esc(l.st||'New')}</span></td>
     <td style="color:var(--muted)">${dueText(l, now)}</td>
-    <td><div class="qacts"><button class="iconbtn" title="Log call" onclick="quickLog('${l.i}','call')">📞</button><button class="iconbtn" title="Email" onclick="emailLead('${l.i}',0)">✉️</button><button class="iconbtn" title="LinkedIn" onclick="liLead('${l.i}')">in</button><button class="btn sm ghost" onclick="snooze('${l.i}')">Snooze</button><button class="btn sm" onclick="openDrawer('${l.i}')">Open</button></div></td>
+    <td><div class="qacts"><button class="iconbtn" title="Call" onclick="event.stopPropagation();openCardPop(event,'${l.i}','call')">📞</button><button class="iconbtn" title="Email" onclick="event.stopPropagation();openCardPop(event,'${l.i}','email')">✉️</button><button class="iconbtn" title="LinkedIn" onclick="event.stopPropagation();openCardPop(event,'${l.i}','li')">in</button><button class="btn sm ghost" onclick="snooze('${l.i}')">Snooze</button><button class="btn sm" onclick="openDrawer('${l.i}')">Open</button></div></td>
   </tr>`).join('');
 }
 function renderQueue(){
@@ -793,6 +802,37 @@ function quickLog(id, ty){
   toast({call:'Call logged',email:'Email logged',li:'LinkedIn connect logged'}[ty] + ' — ' + leadName(l));
   if (document.getElementById('drawer').classList.contains('open')) openDrawer(id);
 }
+/* ---------- card action popover ---------- */
+function closeCardPop(){ const p=document.getElementById('cardpop'); p.classList.remove('open'); p.innerHTML=''; }
+async function copyText(t){ try{ await navigator.clipboard.writeText(t); toast('Copied'); }catch(e){ toast('Copy failed'); } }
+function openCardPop(ev, id, ty){
+  const l = myLeads.find(x=>x.i===id); if(!l) return;
+  const pop = document.getElementById('cardpop');
+  let body='';
+  if (ty==='call'){
+    body = `<div class="cp-h">📞 Call ${esc(leadName(l))}</div>` + (l.ph
+      ? `<a class="cp-num" href="tel:${esc(l.ph)}" onclick="quickLog('${id}','call')">${esc(l.ph)}</a><div class="cp-hint">Tap to dial — logs a call automatically</div><button class="btn sm ghost" onclick="copyText('${esc(l.ph)}')">Copy number</button>`
+      : `<div class="cp-empty">No phone number on file</div>`)
+      + `<button class="btn sm" onclick="quickLog('${id}','call');closeCardPop()">Log a call</button>`;
+  } else if (ty==='email'){
+    body = `<div class="cp-h">✉️ Email ${esc(leadName(l))}</div>` + (l.em
+      ? `<div class="cp-num">${esc(l.em)}</div><button class="btn sm" onclick="emailLead('${id}');closeCardPop()">Compose in Gmail ↗</button><button class="btn sm ghost" onclick="copyText('${esc(l.em)}')">Copy address</button><button class="btn sm ghost" onclick="quickLog('${id}','email');closeCardPop()">Just log an email</button>`
+      : `<div class="cp-empty">No email on file</div>`);
+  } else {
+    body = `<div class="cp-h">in Connect on LinkedIn</div>` + (l.li
+      ? `<div class="cp-hint">Opens their profile and copies your connect note to paste.</div><button class="btn sm" onclick="liLead('${id}');closeCardPop()">Open profile ↗</button><button class="btn sm ghost" onclick="quickLog('${id}','li');closeCardPop()">Just log a connect</button>`
+      : `<div class="cp-empty">No LinkedIn URL on file</div><button class="btn sm ghost" onclick="quickLog('${id}','li');closeCardPop()">Log a connect anyway</button>`);
+  }
+  pop.innerHTML = body;
+  pop.classList.add('open');
+  // position near the click, clamped to viewport
+  const pw=240, ph=pop.offsetHeight||160;
+  let x=ev.clientX, y=ev.clientY+12;
+  x=Math.min(x, innerWidth-pw-12); x=Math.max(12,x);
+  if (y+ph>innerHeight-12) y=ev.clientY-ph-12;
+  pop.style.left=x+'px'; pop.style.top=Math.max(12,y)+'px';
+}
+document.addEventListener('click', e=>{ const p=document.getElementById('cardpop'); if(p&&p.classList.contains('open') && !p.contains(e.target) && !e.target.closest('.acts') && !e.target.closest('.qacts')) closeCardPop(); }, true);
 
 /* ---------- save loop ---------- */
 function markDirty(which){
