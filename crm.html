@@ -256,7 +256,6 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <button data-v="activity">Activity</button>
     <button data-v="leads">Leads</button>
     <button data-v="metrics">Metrics</button>
-    <button data-v="templates">Templates</button>
     <button data-v="team" id="teamTab">Admin</button>
   </nav>
   <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="startTour()" title="Take the tour">? Tour</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="changeMyPass()">Password</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
@@ -314,15 +313,6 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     </div>
     <div id="log"></div>
   </section>
-
-  <section id="v-templates" style="display:none">
-    <h2 style="font-family:var(--serif);font-weight:500;font-size:24px;margin-bottom:4px">Templates</h2>
-    <div style="color:var(--muted);font-size:13px;margin-bottom:18px">Your personal email &amp; LinkedIn templates. Only you see and use these. Merge fields: {{first}} {{last}} {{company}} {{title}}.</div>
-    <div class="panel" style="max-width:760px">
-      <div id="tplEditor"></div>
-      <div class="row"><button class="btn ghost sm" onclick="tplAdd()">+ Add template</button><button class="btn sm" onclick="tplSave()">Save templates</button></div>
-    </div>
-  </section>
 </main>
 </div>
 
@@ -336,7 +326,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 const REPO = 'rollupceo/polyshares-crm-data';
 const SITE_REPO = 'rollupceo/polyshares-com';
 const LOGINS_URL = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-logins.json';
-let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], myOutbox=[], myTasks=[], templates=[], myTemplates=[], stageProb={};
+let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], myOutbox=[], myTasks=[], stageProb={};
 const DEFAULT_PROB = {'New':5,'Prospecting':10,'Connected':20,'Meeting Booked':40,'Meeting Attended':60,'Proposal Sent':80,'Paid & Closed':100,'Dead':0};
 function prob(st){ if (stageProb && st in stageProb) return stageProb[st]; if (st in DEFAULT_PROB) return DEFAULT_PROB[st]; if (st==='Dead') return 0; const i=stages.indexOf(st); return i<0?0:Math.round(i/Math.max(1,stages.length-1)*100); }
 function money(n){ n=Number(n)||0; return n>=1000 ? '$'+(n/1000).toFixed(n%1000?1:0)+'k' : '$'+n; }
@@ -521,19 +511,11 @@ async function saveLogins(doc, sha, msg){
 }
 async function enterApp(){
   try { stages = await load('meta/stages.json'); } catch(e){ stages=['New','Prospecting','Connected','Meeting Booked','Meeting Attended','Proposal Sent','Paid & Closed','Dead']; }
-  try { templates = await load('meta/templates.json'); } catch(e){ templates=[]; }
   try { stageProb = await load('meta/stageprob.json'); } catch(e){ stageProb={}; }
   myLeads = await load(`reps/${me.id}/leads.json`);
   myActs  = await load(`reps/${me.id}/activities.json`);
   try { myOutbox = await load(`reps/${me.id}/outbox.json`); } catch(e){ myOutbox = []; shas[`reps/${me.id}/outbox.json`] = null; }
   try { myTasks = await load(`reps/${me.id}/tasks.json`); } catch(e){ myTasks = []; shas[`reps/${me.id}/tasks.json`] = null; }
-  // per-user templates; seed from the shared defaults (role-appropriate) on first use
-  try { myTemplates = await load(`reps/${me.id}/templates.json`); }
-  catch(e){
-    shas[`reps/${me.id}/templates.json`] = null;
-    myTemplates = templates.filter(t=>!t.roles || !t.roles.length || t.roles.includes('all') || t.roles.includes(me.role||'sales')).map(t=>{ const c={...t}; delete c.roles; return c; });
-    try { await save(`reps/${me.id}/templates.json`, myTemplates, 'crm: seed templates '+me.id); } catch(e2){}
-  }
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('who').textContent = me.name + (me.role==='founder'?' · Founder':(me.admin?' · Admin':''));
@@ -557,7 +539,6 @@ document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
   if (b.dataset.v==='team') { refreshPool(); renderProbEditor(); }
   if (b.dataset.v==='queue') renderQueue();
   if (b.dataset.v==='activity') renderActivity();
-  if (b.dataset.v==='templates') renderMyTemplates();
 });
 
 /* ---------- board ---------- */
@@ -810,30 +791,16 @@ async function renderActivity(){
   document.getElementById('actCount').textContent = count+' items';
   wrap.innerHTML = html;
 }
-function emailTpls(){ return myTemplates.filter(t=>t.type!=='li'); }
-function tplPreview(id){
-  const box = document.getElementById('dTplPrev'); if(!box) return;
-  const l = myLeads.find(x=>x.i===id); const sel = document.getElementById('dTpl');
-  const t = emailTpls()[sel ? parseInt(sel.value) : 0]; if(!t){ box.textContent=''; return; }
-  const body = merge(t.body, l||{}).replace(/\n+/g,' ').trim();
-  box.innerHTML = (t.su?`<b>${esc(merge(t.su,l||{}))}</b><br>`:'') + esc(body.slice(0,120)) + (body.length>120?'…':'');
-}
-function liTpl(){ return myTemplates.find(t=>t.type==='li'); }
-function merge(s, l){ return (s||'').replace(/{{\s*first\s*}}/gi, l.fn||'').replace(/{{\s*last\s*}}/gi, l.ln||'').replace(/{{\s*company\s*}}/gi, l.co||'').replace(/{{\s*title\s*}}/gi, l.ti||''); }
-function emailLead(id, tplIdx){
+function emailLead(id){
   const l = myLeads.find(x=>x.i===id); if(!l) return;
   if (!l.em){ toast('No email on file for this lead'); return; }
-  const sel = document.getElementById('dTpl');
-  const idx = (tplIdx!==undefined) ? tplIdx : (sel ? parseInt(sel.value) : 0);
-  const t = emailTpls()[idx] || {su:'', body:''};
-  window.open('https://mail.google.com/mail/?view=cm&fm=1&to='+encodeURIComponent(l.em)+'&su='+encodeURIComponent(merge(t.su,l))+'&body='+encodeURIComponent(merge(t.body,l)), '_blank');
-  l.la = Date.now(); logAct(l, 'email', t.name||''); markDirty('leads');
-  toast('Gmail opened — email logged');
+  // open a BLANK compose to this lead — write it personally, no template
+  window.open('https://mail.google.com/mail/?view=cm&fm=1&to='+encodeURIComponent(l.em), '_blank');
+  l.la = Date.now(); logAct(l, 'email'); markDirty('leads');
+  toast('Gmail opened — write something personal');
 }
 async function liLead(id){
   const l = myLeads.find(x=>x.i===id); if(!l) return;
-  const t = liTpl();
-  if (t){ try{ await navigator.clipboard.writeText(merge(t.body,l)); toast('Connect note copied — paste it on LinkedIn'); }catch(e){} }
   if (l.li) window.open(l.li, '_blank'); else toast('No LinkedIn URL on file');
   l.la = Date.now(); logAct(l, 'li'); markDirty('leads');
 }
@@ -861,7 +828,7 @@ function openCardPop(ev, id, ty){
       : `<div class="cp-empty">No email on file</div>`);
   } else {
     body = `<div class="cp-h">in Connect on LinkedIn</div>` + (l.li
-      ? `<div class="cp-hint">Opens their profile and copies your connect note to paste.</div><button class="btn sm" onclick="liLead('${id}');closeCardPop()">Open profile ↗</button><button class="btn sm ghost" onclick="quickLog('${id}','li');closeCardPop()">Just log a connect</button>`
+      ? `<div class="cp-hint">Opens their profile so you can send a personal connect note.</div><button class="btn sm" onclick="liLead('${id}');closeCardPop()">Open profile ↗</button><button class="btn sm ghost" onclick="quickLog('${id}','li');closeCardPop()">Just log a connect</button>`
       : `<div class="cp-empty">No LinkedIn URL on file</div><button class="btn sm ghost" onclick="quickLog('${id}','li');closeCardPop()">Log a connect anyway</button>`);
   }
   pop.innerHTML = body;
@@ -918,7 +885,6 @@ function openDrawer(id){
     ${l.lreason?`<div class="fld"><b>Lost reason</b>${esc(l.lreason)}</div>`:''}${l.wnote?`<div class="fld"><b>Won note</b>${esc(l.wnote)}</div>`:''}
     <div class="fld"><b>Follow up</b><input type="date" value="${l.fu?new Date(l.fu).toISOString().slice(0,10):''}" onchange="setFu('${l.i}', this.value)" /></div>
     ${me.admin ? `<div class="fld"><b>Rep</b><select onchange="moveLead('${l.i}', this.value)">${reps.map(r=>`<option value="${r.id}" ${r.id===me.id?'selected':''}>${r.name}</option>`).join('')}</select></div>` : ''}
-    ${emailTpls().length ? `<div class="fld" style="margin-top:14px"><b>Template</b><select id="dTpl" style="width:100%;max-width:none" onchange="tplPreview('${l.i}')">${emailTpls().map((t,ix)=>`<option value="${ix}">${esc(t.name)}</option>`).join('')}</select></div><div id="dTplPrev" class="tplprev"></div>` : ''}
     <div class="logrow" style="flex-wrap:wrap;gap:7px"><button class="btn sm" onclick="emailLead('${l.i}')">✉️ Compose</button><button class="btn sm ghost" onclick="liLead('${l.i}')">in Connect</button><button class="btn sm ghost" onclick="quickLog('${l.i}','call')">📞 Log call</button></div>`;
 
   const right = `
@@ -940,7 +906,6 @@ function openDrawer(id){
 
   document.getElementById('dBody').innerHTML = `<div class="stepper">${stepper}</div><div class="dealgrid"><div class="dealcol-left">${left}</div><div class="dealcol-right">${right}</div></div>`;
   document.getElementById('drawer').classList.add('open'); document.getElementById('drawerback').classList.add('open');
-  tplPreview(id);
 }
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerback').classList.remove('open'); }
 function compTab(which){
@@ -1123,7 +1088,6 @@ async function saveProb(){
   try { await save('meta/stageprob.json', m, 'crm: stage probabilities'); toast('Probabilities saved'); renderBoard(); }
   catch(e){ toast('Save failed: '+e.message); }
 }
-function renderMyTemplates(){ renderTpls(); }
 function renderReps(){
   document.getElementById('repTable').innerHTML = '<table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Admin</th><th>Login</th><th>Status</th><th></th></tr></thead><tbody>' + reps.map((r,i)=>`<tr>
     <td><b>${esc(r.name)}</b>${r.id===me.id?' <span style="color:var(--muted);font-size:11px">(you)</span>':''}<div style="color:var(--muted);font-size:11.5px">${esc(r.email||'')}</div></td>
@@ -1180,17 +1144,6 @@ async function delRep(i){
     refreshPool(); toast('Removed '+r.name);
   }catch(e){ toast('Remove failed: '+e.message); }
 }
-function renderTpls(){
-  document.getElementById('tplEditor').innerHTML = myTemplates.map((t,i)=>`<div style="border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px">
-    <div class="row"><input value="${esc(t.name)}" placeholder="Template name" oninput="myTemplates[${i}].name=this.value" style="width:200px" />
-    <label style="display:flex;gap:5px;align-items:center;font-size:12px"><input type="checkbox" ${t.type==='li'?'checked':''} onchange="myTemplates[${i}].type=this.checked?'li':'email'" style="width:auto"> LinkedIn note</label>
-    <button class="btn sm ghost" style="color:var(--red);margin-left:auto" onclick="myTemplates.splice(${i},1);renderTpls()">Delete</button></div>
-    <input value="${esc(t.su||'')}" placeholder="Subject (email only)" oninput="myTemplates[${i}].su=this.value" style="width:100%;margin-bottom:7px" />
-    <textarea style="width:100%;min-height:84px" placeholder="Body" oninput="myTemplates[${i}].body=this.value">${esc(t.body||'')}</textarea></div>`).join('')
-    || '<div style="color:var(--muted);font-size:13px;margin-bottom:8px">No templates yet. Add one to use it on a lead.</div>';
-}
-function tplAdd(){ myTemplates.push({name:'New template', type:'email', su:'', body:''}); renderTpls(); }
-async function tplSave(){ try{ await save(`reps/${me.id}/templates.json`, myTemplates, 'crm: templates '+me.id); toast('Templates saved'); }catch(e){ toast('Save failed: '+e.message); } }
 async function refreshPool(){
   try { const idx = await load('pool/index.json'); document.getElementById('poolN').textContent = idx.total.toLocaleString() + ' unassigned'; }
   catch(e){ document.getElementById('poolN').textContent = '?'; }
@@ -1329,7 +1282,6 @@ function tourStepsFor(){
     {sel:'[data-v=activity]', title:'Activity', body:'Every task and touch in one list — scheduled, overdue, due today, or completed. Schedule calls, emails, meetings and to-dos from any lead.'},
     {sel:'[data-v=leads]', title:'Leads', body:'A searchable, filterable table of all your leads. Select rows for bulk actions (set stage, assign, follow-up).'},
     {sel:'[data-v=metrics]', title:'Metrics', body:'Your numbers and the team leaderboard — calls, emails, meetings, pipeline and win rate, over any date range.'},
-    {sel:'[data-v=templates]', title:'Templates', body:'Your personal email & LinkedIn templates. Edit them here; they show up when you compose from a lead. Use {{first}}, {{company}} to personalize.'},
     {sel:'#teamTab', title:'Admin', body:'Manage users and roles, set stage probabilities, assign leads from the pool, and import CSVs.', adminOnly:true},
     {sel:'.right', title:'Your account', body:'Change your password anytime here, and log out when you\'re done. That\'s it — go close some deals!'},
   ];
