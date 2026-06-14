@@ -89,6 +89,11 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .logrow{display:flex;gap:6px;margin:14px 0 6px}
 .logrow .btn{flex:1}
 #drawer textarea{width:100%;min-height:70px;margin-top:6px}
+.tkrow{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--paper2)}
+.tkrow span:first-child{flex:1}
+.tkrow .when{color:var(--muted)}
+.schedrow{display:flex;gap:6px;margin-top:8px}
+.schedrow select,.schedrow input{flex:1;min-width:0}
 .hist{margin-top:16px;border-top:1px solid var(--line);padding-top:10px}
 .hist .h{font-size:12px;color:var(--ink2);padding:5px 0;border-bottom:1px solid var(--paper2)}
 .hist .h span{color:var(--muted)}
@@ -152,6 +157,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   <nav>
     <button data-v="board" class="on">Board</button>
     <button data-v="queue">Queue</button>
+    <button data-v="activity">Activity</button>
     <button data-v="leads">Leads</button>
     <button data-v="metrics">Metrics</button>
     <button data-v="team" id="teamTab">Team</button>
@@ -167,6 +173,10 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   <section id="v-queue" style="display:none">
     <div class="row"><span style="font-size:12.5px;color:var(--muted)">Mark stale after</span><input id="staleN" type="number" min="1" max="30" style="width:64px" onchange="localStorage.setItem('crm_staleN', this.value); renderQueue()" /><span style="font-size:12.5px;color:var(--muted)">days without a touch</span></div>
     <div id="queueWrap" style="margin-top:8px"></div>
+  </section>
+  <section id="v-activity" style="display:none">
+    <div class="row"><select id="actFilter" onchange="renderActivity()" style="padding:8px"><option value="open">Scheduled (open)</option><option value="overdue">Overdue</option><option value="today">Due today</option><option value="done">Completed</option><option value="all">Everything</option></select><select id="actRep" onchange="renderActivity()" style="padding:8px;display:none"></select><span id="actCount" style="color:var(--muted);font-size:12.5px"></span></div>
+    <div id="activityWrap" style="margin-top:10px"></div>
   </section>
   <section id="v-leads" style="display:none">
     <div class="row"><input id="tsearch" placeholder="Filter by name, company, title, state, industry…" style="width:300px" oninput="renderTable()" /><select id="tstage" onchange="renderTable()" style="padding:8px"><option value="">All stages</option></select><button class="btn ghost" onclick="newLead()">+ New lead</button><span id="tcount" style="color:var(--muted);font-size:12.5px"></span></div>
@@ -206,13 +216,13 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 const REPO = 'rollupceo/polyshares-crm-data';
 const SITE_REPO = 'rollupceo/polyshares-com';
 const LOGINS_URL = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-logins.json';
-let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], myOutbox=[], templates=[], stageProb={};
+let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], myOutbox=[], myTasks=[], templates=[], stageProb={};
 const DEFAULT_PROB = {'New':5,'Prospecting':10,'Connected':20,'Meeting Booked':40,'Meeting Attended':60,'Proposal Sent':80,'Paid & Closed':100,'Dead':0};
 function prob(st){ if (stageProb && st in stageProb) return stageProb[st]; if (st in DEFAULT_PROB) return DEFAULT_PROB[st]; if (st==='Dead') return 0; const i=stages.indexOf(st); return i<0?0:Math.round(i/Math.max(1,stages.length-1)*100); }
 function money(n){ n=Number(n)||0; return n>=1000 ? '$'+(n/1000).toFixed(n%1000?1:0)+'k' : '$'+n; }
 function moneyFull(n){ return '$'+(Number(n)||0).toLocaleString(); }
 const isOpen = l => !['Paid & Closed','Dead'].includes(l.st||'New');
-let shas={}, dirty={leads:false,acts:false,outbox:false}, saveTimer=null, colLimit={};
+let shas={}, dirty={leads:false,acts:false,outbox:false,tasks:false}, saveTimer=null, colLimit={};
 
 /* ---------- crypto ---------- */
 const ub64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
@@ -396,11 +406,12 @@ async function enterApp(){
   myLeads = await load(`reps/${me.id}/leads.json`);
   myActs  = await load(`reps/${me.id}/activities.json`);
   try { myOutbox = await load(`reps/${me.id}/outbox.json`); } catch(e){ myOutbox = []; shas[`reps/${me.id}/outbox.json`] = null; }
+  try { myTasks = await load(`reps/${me.id}/tasks.json`); } catch(e){ myTasks = []; shas[`reps/${me.id}/tasks.json`] = null; }
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('who').textContent = me.name + (me.role==='founder'?' · Founder':(me.admin?' · Admin':''));
   document.getElementById('teamTab').style.display = me.admin ? '' : 'none';
-  renderBoard(); fillAdmin(); updateQueueBadge();
+  renderBoard(); fillAdmin(); updateQueueBadge(); updateActivityBadge();
 }
 function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); localStorage.removeItem('crm_email'); localStorage.removeItem('crm_rep'); location.reload(); }
 
@@ -408,11 +419,12 @@ function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('
 document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
   document.querySelectorAll('header nav button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
-  ['board','queue','leads','metrics','team'].forEach(v => document.getElementById('v-'+v).style.display = (v===b.dataset.v?'':'none'));
+  ['board','queue','activity','leads','metrics','team'].forEach(v => document.getElementById('v-'+v).style.display = (v===b.dataset.v?'':'none'));
   if (b.dataset.v==='metrics') renderMetrics();
   if (b.dataset.v==='leads') renderTable();
   if (b.dataset.v==='team') refreshPool();
   if (b.dataset.v==='queue') renderQueue();
+  if (b.dataset.v==='activity') renderActivity();
 });
 
 /* ---------- board ---------- */
@@ -556,6 +568,71 @@ function logAct(l, ty, d){
   myActs.push({ t: Date.now(), ty, l: l.i, n: leadName(l), d: d||'' });
   markDirty('acts');
 }
+const TASK_TYPES = [['call','📞 Call'],['email','✉️ Email'],['li','in LinkedIn'],['meeting','🗓️ Meeting'],['todo','✓ To-do']];
+const taskLabel = ty => (TASK_TYPES.find(t=>t[0]===ty)||[,'• '+ty])[1];
+function newTaskId(){ return 't'+Date.now().toString(36)+Math.floor(performance.now()%1000); }
+function addNote(id, text){
+  const l = myLeads.find(x=>x.i===id); if(!l || !text.trim()) return;
+  logAct(l, 'note', text.trim());
+  toast('Note saved'); openDrawer(id);
+}
+function addTask(id){
+  const l = myLeads.find(x=>x.i===id); if(!l) return;
+  const ty = document.getElementById('tk_ty').value;
+  const dv = document.getElementById('tk_date').value;
+  const note = document.getElementById('tk_note').value.trim();
+  if (!dv){ toast('Pick a date'); return; }
+  const due = new Date(dv + 'T09:00:00').getTime();
+  myTasks.push({ id:newTaskId(), l:id, n:leadName(l), ty, due, note, done:false, t:Date.now() });
+  markDirty('tasks'); updateActivityBadge(); toast('Activity scheduled'); openDrawer(id);
+}
+function completeTask(tid){
+  const tk = myTasks.find(x=>x.id===tid); if(!tk) return;
+  tk.done = true; tk.doneAt = Date.now();
+  const l = myLeads.find(x=>x.i===tk.l);
+  if (l){ l.la = Date.now(); logAct(l, tk.ty, (tk.note?tk.note+' ':'')+'(scheduled)'); markDirty('leads'); }
+  markDirty('tasks'); updateActivityBadge();
+  if (document.getElementById('v-activity').style.display!=='none') renderActivity();
+  if (document.getElementById('drawer').classList.contains('open') && l) openDrawer(tk.l);
+  toast('Marked done & logged');
+}
+function delTask(tid){ const i=myTasks.findIndex(x=>x.id===tid); if(i<0)return; myTasks.splice(i,1); markDirty('tasks'); updateActivityBadge(); if(document.getElementById('v-activity').style.display!=='none')renderActivity(); }
+function openTasks(leadId){ return myTasks.filter(t=>t.l===leadId && !t.done).sort((a,b)=>a.due-b.due); }
+function updateActivityBadge(){
+  const now=Date.now(); const due = myTasks.filter(t=>!t.done && t.due<=now+DAY).length;
+  const btn=document.querySelector('[data-v=activity]'); if(btn) btn.textContent='Activity'+(due?` (${due})`:'');
+}
+function whenText(ts){ const d=Math.round((ts-Date.now())/DAY); if(d<-1)return Math.abs(d)+' days overdue'; if(d===-1)return 'yesterday'; if(d===0)return 'today'; if(d===1)return 'tomorrow'; return 'in '+d+' days'; }
+async function renderActivity(){
+  updateActivityBadge();
+  const f = document.getElementById('actFilter').value;
+  const wrap = document.getElementById('activityWrap');
+  // admin can view by rep
+  const repSel = document.getElementById('actRep');
+  if (me.admin){ repSel.style.display=''; if(repSel.options.length===0){ repSel.innerHTML='<option value="">My activity</option>'+reps.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join(''); } }
+  const viewRep = me.admin ? repSel.value : '';
+  let tasks = myTasks, acts = myActs;
+  if (viewRep && viewRep!==me.id){ wrap.innerHTML='<div style="color:var(--muted)">Loading…</div>'; try{ tasks=await load(`reps/${viewRep}/tasks.json`); }catch(e){ tasks=[]; } try{ acts=await load(`reps/${viewRep}/activities.json`); }catch(e){ acts=[]; } }
+  const now = Date.now();
+  const open = tasks.filter(t=>!t.done);
+  const rowsT = list => `<table class="tbl"><tbody>${list.sort((a,b)=>a.due-b.due).map(t=>{
+    const overdue = t.due < now-DAY;
+    return `<tr><td style="width:120px"><b>${taskLabel(t.ty)}</b></td>
+      <td onclick="openDrawer('${t.l}')" style="cursor:pointer">${esc(t.n)}${t.note?`<div style="color:var(--muted);font-size:11.5px">${esc(t.note)}</div>`:''}</td>
+      <td style="color:${overdue?'var(--red)':'var(--muted)'};white-space:nowrap">${whenText(t.due)}</td>
+      <td style="white-space:nowrap"><button class="btn sm" onclick="completeTask('${t.id}')">Done</button> <button class="btn sm ghost" onclick="delTask('${t.id}')">✕</button></td></tr>`;
+  }).join('')}</tbody></table>`;
+  const rowsDone = list => `<table class="tbl"><tbody>${list.slice(0,150).map(a=>`<tr>
+      <td style="width:120px">${taskLabel(a.ty)}</td>
+      <td onclick="openDrawer('${a.l}')" style="cursor:pointer">${esc(a.n||'')}${a.d?`<div style="color:var(--muted);font-size:11.5px">${esc(a.d)}</div>`:''}</td>
+      <td style="color:var(--muted);white-space:nowrap">${new Date(a.t).toLocaleString()}</td></tr>`).join('')}</tbody></table>`;
+  let html='', count=0;
+  if (f==='done'){ const done=[...acts].sort((a,b)=>b.t-a.t); count=done.length; html = done.length?rowsDone(done):'<div style="color:var(--muted)">No completed activity yet.</div>'; }
+  else if (f==='all'){ const o=open; count=o.length+acts.length; html = `<div class="subhead">Scheduled (${o.length})</div>`+(o.length?rowsT(o):'<div style="color:var(--muted);font-size:13px;margin-bottom:6px">None scheduled.</div>')+`<div class="subhead" style="margin-top:18px">Completed (${acts.length})</div>`+([...acts].sort((a,b)=>b.t-a.t).length?rowsDone([...acts].sort((a,b)=>b.t-a.t)):'<div style="color:var(--muted)">None.</div>'); }
+  else { let list = open; if(f==='overdue') list=open.filter(t=>t.due<now-DAY); if(f==='today'){ const s=new Date();s.setHours(0,0,0,0); const e=s.getTime()+DAY; list=open.filter(t=>t.due>=s.getTime()&&t.due<e || t.due<now-DAY); } count=list.length; html = list.length?rowsT(list):'<div style="color:var(--muted)">Nothing here. Schedule activities from any lead.</div>'; }
+  document.getElementById('actCount').textContent = count+' items';
+  wrap.innerHTML = html;
+}
 function tplVisible(t){ const r = t.roles; if (!r || !r.length || r.includes('all')) return true; return r.includes((me&&me.role)||'sales'); }
 function emailTpls(){ return templates.filter(t=>t.type!=='li' && tplVisible(t)); }
 function liTpl(){ return templates.find(t=>t.type==='li' && tplVisible(t)); }
@@ -595,10 +672,11 @@ async function flush(){
     if (dirty.leads){ dirty.leads=false; await save(`reps/${me.id}/leads.json`, myLeads, `crm: ${me.id} leads update`); }
     if (dirty.acts){ dirty.acts=false; await save(`reps/${me.id}/activities.json`, myActs, `crm: ${me.id} activity`); }
     if (dirty.outbox){ dirty.outbox=false; await save(`reps/${me.id}/outbox.json`, myOutbox, `crm: ${me.id} outbox`); }
-    document.getElementById('sync').className = (dirty.leads||dirty.acts||dirty.outbox) ? 'dirty' : '';
+    if (dirty.tasks){ dirty.tasks=false; await save(`reps/${me.id}/tasks.json`, myTasks, `crm: ${me.id} tasks`); }
+    document.getElementById('sync').className = (dirty.leads||dirty.acts||dirty.outbox||dirty.tasks) ? 'dirty' : '';
   }catch(e){ document.getElementById('sync').className='err'; toast('Sync failed — will retry'); setTimeout(flush, 4000); }
 }
-window.addEventListener('beforeunload', e => { if (dirty.leads||dirty.acts){ flush(); e.preventDefault(); e.returnValue=''; } });
+window.addEventListener('beforeunload', e => { if (dirty.leads||dirty.acts||dirty.outbox||dirty.tasks){ flush(); e.preventDefault(); e.returnValue=''; } });
 
 /* ---------- drawer ---------- */
 function openDrawer(id){
@@ -606,7 +684,8 @@ function openDrawer(id){
   document.getElementById('dName').innerHTML = esc(leadName(l)) + ` <button class="btn sm ghost" style="font-size:11px;padding:3px 8px;vertical-align:middle" onclick="openEdit('${l.i}')">✎ Edit</button>`;
   document.getElementById('dCo').textContent = [l.ti, l.co].filter(Boolean).join(' · ');
   const hist = myActs.filter(a=>a.l===id).sort((a,b)=>b.t-a.t).slice(0,40);
-  const tyLabel = {call:'📞 Call', email:'✉️ Email', li:'in Connect', note:'📝 Note', stage:'→ Stage'};
+  const tyLabel = {call:'📞 Call', email:'✉️ Email', li:'in Connect', note:'📝 Note', stage:'→ Stage', meeting:'🗓️ Meeting', todo:'✓ To-do'};
+  const tasks = openTasks(id);
   document.getElementById('dBody').innerHTML = `
     <div class="fld"><b>Email</b>${l.em?`<a href="mailto:${esc(l.em)}">${esc(l.em)}</a>`:'—'}</div>
     <div class="fld"><b>Phone</b>${l.ph?`<a href="tel:${esc(l.ph)}">${esc(l.ph)}</a>`:'—'}</div>
@@ -621,8 +700,17 @@ function openDrawer(id){
     ${me.admin ? `<div class="fld"><b>Rep</b><select onchange="moveLead('${l.i}', this.value)">${reps.map(r=>`<option value="${r.id}" ${r.id===me.id?'selected':''}>${r.name}</option>`).join('')}</select></div>` : ''}
     ${emailTpls().length ? `<div class="fld" style="margin-top:12px"><b>Template</b><select id="dTpl" style="max-width:210px">${emailTpls().map((t,ix)=>`<option value="${ix}">${esc(t.name)}</option>`).join('')}</select></div>` : ''}
     <div class="logrow"><button class="btn sm" onclick="emailLead('${l.i}')">✉️ Compose</button><button class="btn sm" onclick="liLead('${l.i}')">in Connect</button><button class="btn sm ghost" onclick="quickLog('${l.i}','call')">📞 Log call</button><button class="btn sm ghost" onclick="quickLog('${l.i}','email')">Log email</button></div>
-    <textarea placeholder="Notes…" onblur="saveNote('${l.i}', this.value)">${esc(l.nt||'')}</textarea>
-    <div class="hist"><div class="subhead">History</div>${hist.map(a=>`<div class="h">${tyLabel[a.ty]||a.ty} ${a.d?('· '+esc(a.d)):''} <span>· ${new Date(a.t).toLocaleString()}</span></div>`).join('') || '<div class="h" style="color:var(--muted)">No activity yet</div>'}</div>`;
+
+    <div class="subhead">Scheduled activities</div>
+    ${tasks.length ? tasks.map(t=>`<div class="tkrow"><span>${taskLabel(t.ty)}${t.note?' · '+esc(t.note):''}</span><span class="when">${whenText(t.due)}</span><button class="btn sm" onclick="completeTask('${t.id}')">Done</button><button class="btn sm ghost" onclick="delTask('${t.id}');openDrawer('${l.i}')">✕</button></div>`).join('') : '<div style="color:var(--muted);font-size:12.5px;margin-bottom:6px">None scheduled.</div>'}
+    <div class="schedrow"><select id="tk_ty">${TASK_TYPES.map(([v,lb])=>`<option value="${v}">${lb}</option>`).join('')}</select><input type="date" id="tk_date" /><button class="btn sm" onclick="addTask('${l.i}')">Schedule</button></div>
+    <input id="tk_note" placeholder="Optional note for this activity" style="width:100%;margin-top:6px" />
+
+    <div class="subhead" style="margin-top:18px">Add note</div>
+    <textarea id="noteBox" placeholder="Type a note and save it to the timeline…"></textarea>
+    <div style="margin-top:6px"><button class="btn sm" onclick="addNote('${l.i}', document.getElementById('noteBox').value); document.getElementById('noteBox').value=''">Save note</button></div>
+
+    <div class="hist"><div class="subhead">Timeline</div>${hist.map(a=>`<div class="h">${tyLabel[a.ty]||a.ty} ${a.d?('· '+esc(a.d)):''} <span>· ${new Date(a.t).toLocaleString()}</span></div>`).join('') || '<div class="h" style="color:var(--muted)">No activity yet</div>'}</div>`;
   document.getElementById('drawer').classList.add('open');
 }
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); }
