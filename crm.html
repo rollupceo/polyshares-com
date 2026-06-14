@@ -105,7 +105,17 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 /* two-column deal body */
 .dealgrid{display:grid;grid-template-columns:320px 1fr;flex:1;overflow:hidden}
 .dealcol-left{padding:20px 22px;border-right:1px solid var(--line);overflow-y:auto}
-.dealcol-right{padding:20px 26px;overflow-y:auto;background:var(--paper)}
+.dealcol-right{padding:22px 26px;overflow-y:auto;background:var(--paper)}
+.composer{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:24px}
+.comp-tabs{display:flex;gap:4px;padding:8px 8px 0}
+.comp-tab{background:none;border:none;font-size:13px;padding:7px 13px;border-radius:7px 7px 0 0;color:var(--muted);cursor:pointer}
+.comp-tab.on{background:var(--paper3);color:var(--ink);font-weight:500}
+.composer textarea{width:100%;border:none;background:none;min-height:84px;resize:vertical;padding:12px 14px;font-size:14px}
+.composer textarea:focus{outline:none}
+.composer select,.composer input[type=date],.composer input[type=text]{font-size:13px}
+.comp-foot{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-top:1px solid var(--line2)}
+.comp-hint{font-size:11.5px;color:var(--muted)}
+.subhead2{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 12px;font-weight:500}
 .fld{margin-bottom:10px;font-size:13px}
 .fld b{display:inline-block;width:84px;color:var(--muted);font-weight:500}
 .fld a{color:var(--accent)}
@@ -236,7 +246,8 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <button data-v="activity">Activity</button>
     <button data-v="leads">Leads</button>
     <button data-v="metrics">Metrics</button>
-    <button data-v="team" id="teamTab">Team</button>
+    <button data-v="templates">Templates</button>
+    <button data-v="team" id="teamTab">Admin</button>
   </nav>
   <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="changeMyPass()">Password</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
 </header>
@@ -270,26 +281,37 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <div class="mgrid" id="mgrid" style="margin-top:20px"></div>
   </section>
   <section id="v-team" style="display:none">
+    <h2 style="font-family:var(--serif);font-weight:500;font-size:24px;margin-bottom:4px">Admin Dashboard</h2>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:18px">Manage your team, pipeline settings, and lead pool.</div>
+    <div class="panel"><h3>Users &amp; roles</h3>
+      <div id="repTable" style="overflow-x:auto"></div>
+      <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" style="width:150px" /><input id="rEmail" type="email" placeholder="Email" style="width:180px" /><select id="rRole" style="padding:8px"><option value="sales">sales</option><option value="founder">founder</option></select><input id="rPass" type="text" placeholder="Temp password (8+)" style="width:150px" /><button class="btn" onclick="addRep()">Add user</button></div>
+      <div style="font-size:12.5px;color:var(--muted)">Add a user with a temporary password they can change later, or share the team signup code so they self-register. Removing a user returns their leads to the pool and revokes their login.</div>
+      <div class="row" style="margin-top:10px"><span style="font-size:12.5px;color:var(--muted)">Team signup code:</span> <button class="btn sm ghost" onclick="showSignupCode()">Reveal / change</button></div>
+    </div>
+    <div class="panel"><h3>Stage probabilities</h3>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Likelihood of closing at each stage — drives the Weighted Forecast on the Board and Metrics.</div>
+      <div id="probEditor"></div>
+      <button class="btn sm" style="margin-top:12px" onclick="saveProb()">Save probabilities</button>
+    </div>
     <div class="panel"><h3>Assign leads from pool</h3>
       <div class="row"><select id="aRep"></select><input id="aCount" type="number" value="2000" min="1" max="5000" style="width:90px" /><button class="btn" id="aGo" onclick="assignLeads()">Assign from pool</button></div>
       <div style="font-size:12.5px;color:var(--muted)">Pool remaining: <span id="poolN">…</span></div>
-    </div>
-    <div class="panel"><h3>Team &amp; roles</h3>
-      <div id="repTable" style="overflow-x:auto"></div>
-      <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" style="width:150px" /><input id="rEmail" type="email" placeholder="Email" style="width:180px" /><select id="rRole" style="padding:8px"><option value="sales">sales</option><option value="founder">founder</option></select><input id="rPass" type="text" placeholder="Temp password (8+)" style="width:150px" /><button class="btn" onclick="addRep()">Add</button></div>
-      <div style="font-size:12.5px;color:var(--muted)">Most people just self-serve: send them the page and the team signup code below. Or add them here with a temporary password they can change later. Removing a person returns their leads to the pool and revokes their login.</div>
-      <div class="row" style="margin-top:10px"><span style="font-size:12.5px;color:var(--muted)">Team signup code:</span> <button class="btn sm ghost" onclick="showSignupCode()">Reveal / change</button></div>
-    </div>
-    <div class="panel"><h3>Email &amp; LinkedIn templates</h3>
-      <div id="tplEditor"></div>
-      <div class="row"><button class="btn ghost sm" onclick="tplAdd()">+ Add template</button><button class="btn sm" onclick="tplSave()">Save templates</button></div>
-      <div style="font-size:12.5px;color:var(--muted)">Merge fields: {{first}} {{last}} {{company}} {{title}}. Each template can be shown to everyone, founders only, or sales only — so your founder voice and the sales voice stay separate. "Compose" opens Gmail pre-filled and logs the email.</div>
     </div>
     <div class="panel"><h3>Import leads (CSV)</h3>
       <div class="row"><input type="file" id="csvFile" accept=".csv" /><button class="btn" onclick="importCsv()">Import to pool</button></div>
       <div style="font-size:12.5px;color:var(--muted)">HubSpot-style headers (First Name, Last Name, Email, Job Title, Company Name…). Added to the unassigned pool.</div>
     </div>
     <div id="log"></div>
+  </section>
+
+  <section id="v-templates" style="display:none">
+    <h2 style="font-family:var(--serif);font-weight:500;font-size:24px;margin-bottom:4px">Templates</h2>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:18px">Your personal email &amp; LinkedIn templates. Only you see and use these. Merge fields: {{first}} {{last}} {{company}} {{title}}.</div>
+    <div class="panel" style="max-width:760px">
+      <div id="tplEditor"></div>
+      <div class="row"><button class="btn ghost sm" onclick="tplAdd()">+ Add template</button><button class="btn sm" onclick="tplSave()">Save templates</button></div>
+    </div>
   </section>
 </main>
 </div>
@@ -303,7 +325,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 const REPO = 'rollupceo/polyshares-crm-data';
 const SITE_REPO = 'rollupceo/polyshares-com';
 const LOGINS_URL = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-logins.json';
-let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], myOutbox=[], myTasks=[], templates=[], stageProb={};
+let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], myOutbox=[], myTasks=[], templates=[], myTemplates=[], stageProb={};
 const DEFAULT_PROB = {'New':5,'Prospecting':10,'Connected':20,'Meeting Booked':40,'Meeting Attended':60,'Proposal Sent':80,'Paid & Closed':100,'Dead':0};
 function prob(st){ if (stageProb && st in stageProb) return stageProb[st]; if (st in DEFAULT_PROB) return DEFAULT_PROB[st]; if (st==='Dead') return 0; const i=stages.indexOf(st); return i<0?0:Math.round(i/Math.max(1,stages.length-1)*100); }
 function money(n){ n=Number(n)||0; return n>=1000 ? '$'+(n/1000).toFixed(n%1000?1:0)+'k' : '$'+n; }
@@ -494,6 +516,13 @@ async function enterApp(){
   myActs  = await load(`reps/${me.id}/activities.json`);
   try { myOutbox = await load(`reps/${me.id}/outbox.json`); } catch(e){ myOutbox = []; shas[`reps/${me.id}/outbox.json`] = null; }
   try { myTasks = await load(`reps/${me.id}/tasks.json`); } catch(e){ myTasks = []; shas[`reps/${me.id}/tasks.json`] = null; }
+  // per-user templates; seed from the shared defaults (role-appropriate) on first use
+  try { myTemplates = await load(`reps/${me.id}/templates.json`); }
+  catch(e){
+    shas[`reps/${me.id}/templates.json`] = null;
+    myTemplates = templates.filter(t=>!t.roles || !t.roles.length || t.roles.includes('all') || t.roles.includes(me.role||'sales')).map(t=>{ const c={...t}; delete c.roles; return c; });
+    try { await save(`reps/${me.id}/templates.json`, myTemplates, 'crm: seed templates '+me.id); } catch(e2){}
+  }
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('who').textContent = me.name + (me.role==='founder'?' · Founder':(me.admin?' · Admin':''));
@@ -508,14 +537,15 @@ function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('
 document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
   document.querySelectorAll('header nav button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
-  ['board','queue','activity','leads','metrics','team'].forEach(v => document.getElementById('v-'+v).style.display = (v===b.dataset.v?'':'none'));
+  ['board','queue','activity','leads','metrics','templates','team'].forEach(v => document.getElementById('v-'+v).style.display = (v===b.dataset.v?'':'none'));
   // lead panel is only contextually correct on Board and Leads; close it elsewhere
   if (!['board','leads'].includes(b.dataset.v)) closeDrawer();
   if (b.dataset.v==='metrics') renderMetrics();
   if (b.dataset.v==='leads') renderTable();
-  if (b.dataset.v==='team') refreshPool();
+  if (b.dataset.v==='team') { refreshPool(); renderProbEditor(); }
   if (b.dataset.v==='queue') renderQueue();
   if (b.dataset.v==='activity') renderActivity();
+  if (b.dataset.v==='templates') renderMyTemplates();
 });
 
 /* ---------- board ---------- */
@@ -768,8 +798,7 @@ async function renderActivity(){
   document.getElementById('actCount').textContent = count+' items';
   wrap.innerHTML = html;
 }
-function tplVisible(t){ const r = t.roles; if (!r || !r.length || r.includes('all')) return true; return r.includes((me&&me.role)||'sales'); }
-function emailTpls(){ return templates.filter(t=>t.type!=='li' && tplVisible(t)); }
+function emailTpls(){ return myTemplates.filter(t=>t.type!=='li'); }
 function tplPreview(id){
   const box = document.getElementById('dTplPrev'); if(!box) return;
   const l = myLeads.find(x=>x.i===id); const sel = document.getElementById('dTpl');
@@ -777,7 +806,7 @@ function tplPreview(id){
   const body = merge(t.body, l||{}).replace(/\n+/g,' ').trim();
   box.innerHTML = (t.su?`<b>${esc(merge(t.su,l||{}))}</b><br>`:'') + esc(body.slice(0,120)) + (body.length>120?'…':'');
 }
-function liTpl(){ return templates.find(t=>t.type==='li' && tplVisible(t)); }
+function liTpl(){ return myTemplates.find(t=>t.type==='li'); }
 function merge(s, l){ return (s||'').replace(/{{\s*first\s*}}/gi, l.fn||'').replace(/{{\s*last\s*}}/gi, l.ln||'').replace(/{{\s*company\s*}}/gi, l.co||'').replace(/{{\s*title\s*}}/gi, l.ti||''); }
 function emailLead(id, tplIdx){
   const l = myLeads.find(x=>x.i===id); if(!l) return;
@@ -878,19 +907,23 @@ function openDrawer(id){
     <div class="fld"><b>Follow up</b><input type="date" value="${l.fu?new Date(l.fu).toISOString().slice(0,10):''}" onchange="setFu('${l.i}', this.value)" /></div>
     ${me.admin ? `<div class="fld"><b>Rep</b><select onchange="moveLead('${l.i}', this.value)">${reps.map(r=>`<option value="${r.id}" ${r.id===me.id?'selected':''}>${r.name}</option>`).join('')}</select></div>` : ''}
     ${emailTpls().length ? `<div class="fld" style="margin-top:14px"><b>Template</b><select id="dTpl" style="width:100%;max-width:none" onchange="tplPreview('${l.i}')">${emailTpls().map((t,ix)=>`<option value="${ix}">${esc(t.name)}</option>`).join('')}</select></div><div id="dTplPrev" class="tplprev"></div>` : ''}
-    <div class="logrow" style="flex-wrap:wrap"><button class="btn sm" onclick="emailLead('${l.i}')">✉️ Compose</button><button class="btn sm" onclick="liLead('${l.i}')">in Connect</button><button class="btn sm ghost" onclick="quickLog('${l.i}','call')">📞 Log call</button><button class="btn sm ghost" onclick="quickLog('${l.i}','email')">Log email</button></div>`;
+    <div class="logrow" style="flex-wrap:wrap;gap:7px"><button class="btn sm" onclick="emailLead('${l.i}')">✉️ Compose</button><button class="btn sm ghost" onclick="liLead('${l.i}')">in Connect</button><button class="btn sm ghost" onclick="quickLog('${l.i}','call')">📞 Log call</button></div>`;
 
   const right = `
-    <div class="subhead">Schedule an activity</div>
-    ${tasks.length ? tasks.map(t=>`<div class="tkrow"><span>${taskLabel(t.ty)}${t.note?' · '+esc(t.note):''}</span><span class="when">${whenText(t.due)}</span><button class="btn sm" onclick="completeTask('${t.id}')">Done</button><button class="btn sm ghost" onclick="delTask('${t.id}');openDrawer('${l.i}')">✕</button></div>`).join('') : '<div style="color:var(--muted);font-size:12.5px;margin-bottom:6px">Nothing scheduled yet.</div>'}
-    <div class="schedrow"><select id="tk_ty">${TASK_TYPES.map(([v,lb])=>`<option value="${v}">${lb}</option>`).join('')}</select><input type="date" id="tk_date" /><button class="btn sm" onclick="addTask('${l.i}')">Schedule</button></div>
-    <input id="tk_note" placeholder="Optional note for this activity" style="width:100%;margin-top:6px" />
-
-    <div class="subhead" style="margin-top:20px">Add note</div>
-    <textarea id="noteBox" placeholder="Type a note and save it to the timeline…" style="min-height:80px"></textarea>
-    <div style="margin-top:6px"><button class="btn sm" onclick="addNote('${l.i}', document.getElementById('noteBox').value); document.getElementById('noteBox').value=''">Save note</button></div>
-
-    <div class="subhead" style="margin-top:22px">Timeline</div>
+    <div class="composer">
+      <div class="comp-tabs"><button class="comp-tab on" id="ct-note" onclick="compTab('note')">Note</button><button class="comp-tab" id="ct-act" onclick="compTab('act')">Activity</button></div>
+      <div id="comp-note">
+        <textarea id="noteBox" placeholder="Write a note…"></textarea>
+        <div class="comp-foot"><span class="comp-hint">Saved to the timeline</span><button class="btn sm" onclick="addNote('${l.i}', document.getElementById('noteBox').value); document.getElementById('noteBox').value=''">Add note</button></div>
+      </div>
+      <div id="comp-act" style="display:none">
+        <div style="padding:10px 12px"><div class="schedrow"><select id="tk_ty">${TASK_TYPES.map(([v,lb])=>`<option value="${v}">${lb}</option>`).join('')}</select><input type="date" id="tk_date" /></div>
+        <input id="tk_note" placeholder="Optional note" style="width:100%;margin-top:8px" /></div>
+        <div class="comp-foot"><span class="comp-hint">Adds to your Activity queue</span><button class="btn sm" onclick="addTask('${l.i}')">Schedule</button></div>
+      </div>
+    </div>
+    ${tasks.length ? `<div class="subhead2">Upcoming</div>`+tasks.map(t=>`<div class="tkrow"><span>${taskLabel(t.ty)}${t.note?' · '+esc(t.note):''}</span><span class="when">${whenText(t.due)}</span><button class="btn sm" onclick="completeTask('${t.id}')">Done</button><button class="btn sm ghost" onclick="delTask('${t.id}');openDrawer('${l.i}')">✕</button></div>`).join('') : ''}
+    <div class="subhead2" style="margin-top:${tasks.length?'18px':'0'}">Timeline</div>
     ${renderTimeline(hist)}`;
 
   document.getElementById('dBody').innerHTML = `<div class="stepper">${stepper}</div><div class="dealgrid"><div class="dealcol-left">${left}</div><div class="dealcol-right">${right}</div></div>`;
@@ -898,6 +931,12 @@ function openDrawer(id){
   tplPreview(id);
 }
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerback').classList.remove('open'); }
+function compTab(which){
+  document.getElementById('comp-note').style.display = which==='note'?'':'none';
+  document.getElementById('comp-act').style.display = which==='act'?'':'none';
+  document.getElementById('ct-note').classList.toggle('on', which==='note');
+  document.getElementById('ct-act').classList.toggle('on', which==='act');
+}
 function saveNote(id, v){ const l = myLeads.find(x=>x.i===id); if(l && (l.nt||'')!==v){ l.nt=v; logAct(l,'note', v.slice(0,80)); markDirty('leads'); } }
 async function moveLead(id, repId){
   if (repId===me.id) return;
@@ -1059,8 +1098,20 @@ function computeMetrics(){
 /* ---------- admin ---------- */
 function fillAdmin(){
   document.getElementById('aRep').innerHTML = reps.filter(r=>r.active!==false).map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
-  if (me && me.admin){ renderReps(); renderTpls(); }
+  if (me && me.admin){ renderReps(); renderProbEditor(); }
 }
+function renderProbEditor(){
+  const box = document.getElementById('probEditor'); if(!box) return;
+  box.innerHTML = stages.map(s=>`<div class="row" style="margin-bottom:6px"><span style="width:160px;font-size:13px">${s}</span><input type="number" min="0" max="100" value="${prob(s)}" data-stage="${esc(s)}" class="probin" style="width:80px" /><span style="color:var(--muted);font-size:12px">%</span></div>`).join('');
+}
+async function saveProb(){
+  const m = {};
+  document.querySelectorAll('#probEditor .probin').forEach(i=>{ m[i.dataset.stage] = Math.max(0, Math.min(100, parseInt(i.value)||0)); });
+  stageProb = m;
+  try { await save('meta/stageprob.json', m, 'crm: stage probabilities'); toast('Probabilities saved'); renderBoard(); }
+  catch(e){ toast('Save failed: '+e.message); }
+}
+function renderMyTemplates(){ renderTpls(); }
 function renderReps(){
   document.getElementById('repTable').innerHTML = '<table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Admin</th><th>Login</th><th>Status</th><th></th></tr></thead><tbody>' + reps.map((r,i)=>`<tr>
     <td><b>${esc(r.name)}</b>${r.id===me.id?' <span style="color:var(--muted);font-size:11px">(you)</span>':''}<div style="color:var(--muted);font-size:11.5px">${esc(r.email||'')}</div></td>
@@ -1117,19 +1168,17 @@ async function delRep(i){
     refreshPool(); toast('Removed '+r.name);
   }catch(e){ toast('Remove failed: '+e.message); }
 }
-function tplRoleVal(t){ if(!t.roles||!t.roles.length||t.roles.includes('all')) return 'all'; return t.roles[0]; }
 function renderTpls(){
-  document.getElementById('tplEditor').innerHTML = templates.map((t,i)=>`<div style="border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px">
-    <div class="row"><input value="${esc(t.name)}" placeholder="Template name" oninput="templates[${i}].name=this.value" style="width:180px" />
-    <label style="display:flex;gap:5px;align-items:center;font-size:12px"><input type="checkbox" ${t.type==='li'?'checked':''} onchange="templates[${i}].type=this.checked?'li':'email'" style="width:auto"> LinkedIn note</label>
-    <label style="font-size:12px;color:var(--muted)">Shown to <select onchange="templates[${i}].roles = this.value==='all'?['all']:[this.value]" style="font-size:12px;padding:4px 6px">${[['all','Everyone'],['founder','Founder only'],['sales','Sales only']].map(([v,lb])=>`<option value="${v}" ${tplRoleVal(t)===v?'selected':''}>${lb}</option>`).join('')}</select></label>
-    <button class="btn sm ghost" style="color:var(--red);margin-left:auto" onclick="templates.splice(${i},1);renderTpls()">Delete</button></div>
-    <input value="${esc(t.su||'')}" placeholder="Subject (email only)" oninput="templates[${i}].su=this.value" style="width:100%;margin-bottom:7px" />
-    <textarea style="width:100%;min-height:84px" placeholder="Body" oninput="templates[${i}].body=this.value">${esc(t.body||'')}</textarea></div>`).join('')
-    || '<div style="color:var(--muted);font-size:13px;margin-bottom:8px">No templates yet.</div>';
+  document.getElementById('tplEditor').innerHTML = myTemplates.map((t,i)=>`<div style="border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px">
+    <div class="row"><input value="${esc(t.name)}" placeholder="Template name" oninput="myTemplates[${i}].name=this.value" style="width:200px" />
+    <label style="display:flex;gap:5px;align-items:center;font-size:12px"><input type="checkbox" ${t.type==='li'?'checked':''} onchange="myTemplates[${i}].type=this.checked?'li':'email'" style="width:auto"> LinkedIn note</label>
+    <button class="btn sm ghost" style="color:var(--red);margin-left:auto" onclick="myTemplates.splice(${i},1);renderTpls()">Delete</button></div>
+    <input value="${esc(t.su||'')}" placeholder="Subject (email only)" oninput="myTemplates[${i}].su=this.value" style="width:100%;margin-bottom:7px" />
+    <textarea style="width:100%;min-height:84px" placeholder="Body" oninput="myTemplates[${i}].body=this.value">${esc(t.body||'')}</textarea></div>`).join('')
+    || '<div style="color:var(--muted);font-size:13px;margin-bottom:8px">No templates yet. Add one to use it on a lead.</div>';
 }
-function tplAdd(){ templates.push({name:'New template', type:'email', su:'', body:'', roles:['all']}); renderTpls(); }
-async function tplSave(){ try{ await save('meta/templates.json', templates, 'crm: templates'); toast('Templates saved'); }catch(e){ toast('Save failed: '+e.message); } }
+function tplAdd(){ myTemplates.push({name:'New template', type:'email', su:'', body:''}); renderTpls(); }
+async function tplSave(){ try{ await save(`reps/${me.id}/templates.json`, myTemplates, 'crm: templates '+me.id); toast('Templates saved'); }catch(e){ toast('Save failed: '+e.message); } }
 async function refreshPool(){
   try { const idx = await load('pool/index.json'); document.getElementById('poolN').textContent = idx.total.toLocaleString() + ' unassigned'; }
   catch(e){ document.getElementById('poolN').textContent = '?'; }
