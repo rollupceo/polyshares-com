@@ -268,7 +268,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <div class="board" id="board" style="margin-top:14px"></div>
   </section>
   <section id="v-queue" style="display:none">
-    <div class="row"><span style="font-size:12.5px;color:var(--muted)">Mark stale after</span><input id="staleN" type="number" min="1" max="30" style="width:64px" onchange="localStorage.setItem('crm_staleN', this.value); renderQueue()" /><span style="font-size:12.5px;color:var(--muted)">days without a touch</span></div>
+    <div class="row"><span style="font-size:12.5px;color:var(--muted)">Mark stale after</span><input id="staleN" type="number" min="1" max="30" value="1" style="width:64px" onchange="localStorage.setItem('crm_staleN', Math.max(1, parseInt(this.value)||1)); renderQueue()" /><span style="font-size:12.5px;color:var(--muted)">days without a touch</span></div>
     <div id="queueWrap" style="margin-top:8px"></div>
   </section>
   <section id="v-activity" style="display:none">
@@ -633,7 +633,7 @@ function setValue(id, v){
 const DAY = 86400000;
 function queueGroups(){
   const now = Date.now();
-  const N = parseInt(localStorage.getItem('crm_staleN')||'3');
+  let N = parseInt(localStorage.getItem('crm_staleN')); if (!N || N < 1) N = 1;
   const touch = l => l.la || l.a || 0;
   const active = myLeads.filter(l => !['Paid & Closed','Dead'].includes(l.st||'New'));
   const fuDue = active.filter(l => l.fu && l.fu <= now).sort((a,b)=>a.fu-b.fu);
