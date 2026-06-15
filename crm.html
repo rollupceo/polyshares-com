@@ -7,9 +7,9 @@
 <meta name="robots" content="noindex, nofollow" />
 <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-<link rel="icon" href="/favicon.ico" sizes="any" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png" />
+<link rel="icon" href="/favicon.ico?v=2" sizes="any" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png?v=2" />
 <style>
 :root{--paper:#F7F5F0;--paper2:#EFECE4;--ink:#16140F;--ink2:#4A463C;--muted:#8A8474;--line:#DDD8CC;--dark:#16140F;--accent:#4A6FA5;--green:#5E8C61;--red:#A55050;--serif:'Fraunces',serif;--sans:'Inter',sans-serif}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -116,6 +116,9 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .comp-foot{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-top:1px solid var(--line2)}
 .comp-hint{font-size:11.5px;color:var(--muted)}
 .subhead2{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 12px;font-weight:500}
+.seg{display:inline-flex;background:var(--paper2);border-radius:9px;padding:3px;gap:2px}
+.seg-btn{background:none;border:none;font-size:13px;padding:7px 16px;border-radius:7px;color:var(--ink2);cursor:pointer}
+.seg-btn.on{background:#fff;color:var(--ink);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .fld{margin-bottom:10px;font-size:13px}
 .fld b{display:inline-block;width:84px;color:var(--muted);font-weight:500}
 .fld a{color:var(--accent)}
@@ -252,8 +255,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   <div class="brand"><svg viewBox="0 0 96 96" fill="none"><rect x="18" y="18" width="42" height="42" stroke="currentColor" stroke-width="7"/><rect x="36" y="36" width="42" height="42" stroke="currentColor" stroke-width="7"/></svg>Polyshares CRM</div>
   <nav>
     <button data-v="board" class="on">Board</button>
-    <button data-v="queue">Queue</button>
-    <button data-v="activity">Activity</button>
+    <button data-v="work">Work</button>
     <button data-v="leads">Leads</button>
     <button data-v="metrics">Metrics</button>
     <button data-v="team" id="teamTab">Admin</button>
@@ -266,6 +268,9 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <div class="row"><input id="qsearch" placeholder="Search leads…" style="flex:1;min-width:160px" oninput="renderBoard()" /><select id="boardRep" onchange="setBoardRep(this.value)" style="padding:8px;display:none"></select><button class="btn" onclick="newLead()">+ New lead</button></div>
     <div id="boardBanner" style="display:none;align-items:center;gap:10px;background:var(--paper3);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-top:10px;font-size:13px"><span></span><button class="btn sm ghost" style="margin-left:auto" onclick="document.getElementById('boardRep').value='';setBoardRep('')">Back to my board</button></div>
     <div class="board" id="board" style="margin-top:14px"></div>
+  </section>
+  <section id="v-work" style="display:none">
+    <div class="seg"><button id="seg-todo" class="seg-btn on" onclick="workSub('queue')">To-do</button><button id="seg-act" class="seg-btn" onclick="workSub('activity')">Activity log</button></div>
   </section>
   <section id="v-queue" style="display:none">
     <div class="row"><span style="font-size:12.5px;color:var(--muted)">Mark stale after</span><input id="staleN" type="number" min="1" max="30" value="1" style="width:64px" onchange="localStorage.setItem('crm_staleN', Math.max(1, parseInt(this.value)||1)); renderQueue()" /><span style="font-size:12.5px;color:var(--muted)">days without a touch</span></div>
@@ -531,15 +536,27 @@ function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('
 document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
   document.querySelectorAll('header nav button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
-  ['board','queue','activity','leads','metrics','templates','team'].forEach(v => document.getElementById('v-'+v).style.display = (v===b.dataset.v?'':'none'));
+  const v=b.dataset.v;
+  ['board','work','leads','metrics','team'].forEach(x => document.getElementById('v-'+x).style.display = (x===v?'':'none'));
+  document.getElementById('v-queue').style.display='none';
+  document.getElementById('v-activity').style.display='none';
   // lead panel is only contextually correct on Board and Leads; close it elsewhere
-  if (!['board','leads'].includes(b.dataset.v)) closeDrawer();
-  if (b.dataset.v==='metrics') renderMetrics();
-  if (b.dataset.v==='leads') renderTable();
-  if (b.dataset.v==='team') { refreshPool(); renderProbEditor(); }
-  if (b.dataset.v==='queue') renderQueue();
-  if (b.dataset.v==='activity') renderActivity();
+  if (!['board','leads'].includes(v)) closeDrawer();
+  if (v==='metrics') renderMetrics();
+  if (v==='leads') renderTable();
+  if (v==='team') { refreshPool(); renderProbEditor(); }
+  if (v==='work') workSub(workCur);
 });
+let workCur='queue';
+function workSub(which){
+  workCur=which;
+  document.getElementById('v-queue').style.display = which==='queue'?'':'none';
+  document.getElementById('v-activity').style.display = which==='activity'?'':'none';
+  document.getElementById('seg-todo').classList.toggle('on', which==='queue');
+  document.getElementById('seg-act').classList.toggle('on', which==='activity');
+  if(which==='queue') renderQueue(); else renderActivity();
+}
+function goWork(which){ document.querySelector('[data-v=work]').click(); workSub(which||'queue'); }
 
 /* ---------- board ---------- */
 function leadName(l){ return (l.fn+' '+l.ln).trim() || l.em || l.co; }
@@ -642,12 +659,15 @@ function queueGroups(){
   const outDue = myOutbox.filter(o => o.st==='queued' && (!o.at || o.at <= now)).sort((a,b)=>(a.at||0)-(b.at||0));
   return {fuDue, stale, fresh, outDue, N};
 }
-function updateQueueBadge(){
+function updateWorkBadge(){
   const g = queueGroups();
-  const n = g.fuDue.length + g.stale.length + g.fresh.length + g.outDue.length;
-  const btn = document.querySelector('[data-v=queue]');
-  if (btn) btn.textContent = 'Queue' + (n ? ` (${n})` : '');
+  const qn = g.fuDue.length + g.stale.length + g.fresh.length + g.outDue.length;
+  const now = Date.now();
+  const an = myTasks.filter(t=>!t.done && t.due<=now+DAY).length;
+  const btn = document.querySelector('[data-v=work]');
+  if (btn) btn.textContent = 'Work' + ((qn+an) ? ` (${qn+an})` : '');
 }
+function updateQueueBadge(){ updateWorkBadge(); }
 function qRows(list, dueText){
   const now = Date.now();
   return list.map(l => `<tr>
@@ -740,10 +760,7 @@ function completeTask(tid){
 }
 function delTask(tid){ const i=myTasks.findIndex(x=>x.id===tid); if(i<0)return; myTasks.splice(i,1); markDirty('tasks'); updateActivityBadge(); if(document.getElementById('v-activity').style.display!=='none')renderActivity(); }
 function openTasks(leadId){ return myTasks.filter(t=>t.l===leadId && !t.done).sort((a,b)=>a.due-b.due); }
-function updateActivityBadge(){
-  const now=Date.now(); const due = myTasks.filter(t=>!t.done && t.due<=now+DAY).length;
-  const btn=document.querySelector('[data-v=activity]'); if(btn) btn.textContent='Activity'+(due?` (${due})`:'');
-}
+function updateActivityBadge(){ updateWorkBadge(); }
 function whenText(ts){ const d=Math.round((ts-Date.now())/DAY); if(d<-1)return Math.abs(d)+' days overdue'; if(d===-1)return 'yesterday'; if(d===0)return 'today'; if(d===1)return 'tomorrow'; return 'in '+d+' days'; }
 const TL_IC={call:'📞',email:'✉️',li:'in',note:'📝',stage:'◆',meeting:'🗓️',todo:'✓'};
 const TL_LB={call:'Logged a call',email:'Logged an email',li:'LinkedIn touch',meeting:'Meeting',todo:'Task'};
@@ -783,7 +800,7 @@ async function renderActivity(){
       <td style="width:120px">${taskLabel(a.ty)}</td>
       <td onclick="openDrawer('${a.l}')" style="cursor:pointer">${esc(a.n||'')}${a.d?`<div style="color:var(--muted);font-size:11.5px">${esc(a.d)}</div>`:''}</td>
       <td style="color:var(--muted);white-space:nowrap">${new Date(a.t).toLocaleString()}</td></tr>`).join('')}</tbody></table>`;
-  const empty = (msg) => `<div class="emptystate"><div class="es-title">${msg}</div><div class="es-sub">This is your task list — calls, emails, follow-ups, and to-dos you've scheduled against leads. Open a lead and use "Schedule activity," or work your Queue.</div><button class="btn" onclick="document.querySelector('[data-v=queue]').click()">Go to Queue →</button></div>`;
+  const empty = (msg) => `<div class="emptystate"><div class="es-title">${msg}</div><div class="es-sub">A log of everything you've scheduled and done. Open a lead and use "Schedule activity," or check your To-do list for who to work next.</div><button class="btn" onclick="workSub('queue')">Go to To-do →</button></div>`;
   let html='', count=0;
   if (f==='done'){ const done=[...acts].sort((a,b)=>b.t-a.t); count=done.length; html = done.length?rowsDone(done):empty('No completed activity yet.'); }
   else if (f==='all'){ const o=open; count=o.length+acts.length; html = (o.length||acts.length) ? (`<div class="subhead">Scheduled (${o.length})</div>`+(o.length?rowsT(o):'<div style="color:var(--muted);font-size:13px;margin-bottom:6px">None scheduled.</div>')+`<div class="subhead" style="margin-top:18px">Completed (${acts.length})</div>`+([...acts].sort((a,b)=>b.t-a.t).length?rowsDone([...acts].sort((a,b)=>b.t-a.t)):'<div style="color:var(--muted)">None.</div>')) : empty('Nothing here yet.'); }
@@ -1278,8 +1295,7 @@ function tourStepsFor(){
     {sel:'[data-v=board]', title:'Board', body:'Your pipeline. Leads sit in stage columns — drag a card from one stage to the next as a deal progresses.'},
     {sel:'#pipebar', title:'Pipeline at a glance', body:'Your open pipeline value, a weighted forecast (by stage probability), and what you\'ve won.'},
     {sel:'#board .card', title:'A lead', body:'Each card is a lead. Click it to open the full deal view. The Call / Email / in Connect buttons pop up the contact info so you can reach out and auto-log it.'},
-    {sel:'[data-v=queue]', title:'Queue — your daily list', body:'Work this top to bottom each morning: follow-ups due, leads going stale, and fresh untouched leads. "Snooze" pushes one a few days out.'},
-    {sel:'[data-v=activity]', title:'Activity', body:'Every task and touch in one list — scheduled, overdue, due today, or completed. Schedule calls, emails, meetings and to-dos from any lead.'},
+    {sel:'[data-v=work]', title:'Work — your daily driver', body:'Two tabs in one: "To-do" is who to work now (follow-ups due, leads going stale, fresh leads), and "Activity log" is everything you\'ve scheduled and completed. Start here every morning.'},
     {sel:'[data-v=leads]', title:'Leads', body:'A searchable, filterable table of all your leads. Select rows for bulk actions (set stage, assign, follow-up).'},
     {sel:'[data-v=metrics]', title:'Metrics', body:'Your numbers and the team leaderboard — calls, emails, meetings, pipeline and win rate, over any date range.'},
     {sel:'#teamTab', title:'Admin', body:'Manage users and roles, set stage probabilities, assign leads from the pool, and import CSVs.', adminOnly:true},
