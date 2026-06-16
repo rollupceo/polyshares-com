@@ -366,8 +366,12 @@ function genPass(){
 }
 
 /* ---------- github api ---------- */
+function fetchT(url, opts={}, ms=15000){
+  const c = new AbortController(); const id = setTimeout(()=>c.abort(), ms);
+  return fetch(url, {...opts, signal:c.signal}).finally(()=>clearTimeout(id));
+}
 async function gh(path, opts={}){
-  const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+  const r = await fetchT(`https://api.github.com/repos/${REPO}/contents/${path}`, {
     ...opts, headers:{ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json', ...(opts.headers||{}) }
   });
   if (r.status===401){ toast('Session invalid — log in again'); logout(); throw new Error('401'); }
@@ -406,10 +410,23 @@ const SIGNUP_URL = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/m
 function showSignup(){ document.getElementById('signinStep').style.display='none'; document.getElementById('signupStep').style.display='block'; document.getElementById('loginErr').textContent=''; document.getElementById('suName').focus(); }
 function showSignin(){ document.getElementById('signupStep').style.display='none'; document.getElementById('signinStep').style.display='block'; document.getElementById('loginErr').textContent=''; }
 async function fetchLogins(){
-  let r = await fetch(LOGINS_URL + '?t=' + Date.now());
-  if (!r.ok) r = await fetch('crm-logins.json?t=' + Date.now());
-  const d = await r.json();
-  return Array.isArray(d.users) ? d.users : [];
+  // read the credential list from GitHub's API first (reflects changes instantly — no CDN cache),
+  // falling back to the raw CDN, then the Pages copy. Public repo, so no auth needed for the read.
+  const tries = [
+    'https://api.github.com/repos/'+SITE_REPO+'/contents/crm-logins.json?ref=main&t='+Date.now(),
+    LOGINS_URL + '?t=' + Date.now(),
+    'crm-logins.json?t=' + Date.now()
+  ];
+  for (let i=0;i<tries.length;i++){
+    try {
+      const headers = i===0 ? {'Accept':'application/vnd.github.raw'} : {};
+      const r = await fetchT(tries[i], {headers}, 12000);
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (Array.isArray(d.users)) return d.users;
+    } catch(e){ /* try next source */ }
+  }
+  throw new Error('login service unreachable');
 }
 async function signIn(){
   const err = document.getElementById('loginErr'); err.textContent='';
@@ -428,7 +445,8 @@ async function signIn(){
   try { reps = await load('meta/reps.json'); } catch(e){ err.textContent='Could not reach data.'; btn.textContent='Sign in'; return; }
   me = reps.find(r=>r.id===u.id) || { id:u.id, name:u.name, email, role:u.role||'sales', admin:false };
   if (me.active===false){ err.textContent='This account is deactivated.'; btn.textContent='Sign in'; return; }
-  await enterApp();
+  try { await enterApp(); }
+  catch(e){ err.textContent='Could not load your workspace — please try again.'; btn.textContent='Sign in'; }
 }
 async function signUp(){
   const err = document.getElementById('loginErr'); err.textContent='';
@@ -443,7 +461,7 @@ async function signUp(){
   const btn = document.getElementById('signupBtn'); btn.textContent='Creating…';
   // 1) team code unlocks the shared token
   let signupDoc;
-  try { let r = await fetch(SIGNUP_URL + '?t=' + Date.now()); if(!r.ok) r = await fetch('crm-signup.json?t=' + Date.now()); signupDoc = await r.json(); }
+  try { let r = await fetchT('https://api.github.com/repos/'+SITE_REPO+'/contents/crm-signup.json?ref=main&t='+Date.now(), {headers:{'Accept':'application/vnd.github.raw'}}, 12000); if(!r.ok) r = await fetchT(SIGNUP_URL + '?t=' + Date.now()); signupDoc = await r.json(); }
   catch(e){ err.textContent='Could not reach signup service.'; btn.textContent='Create account & enter'; return; }
   try { token = await decryptToken(code, signupDoc.enc); }
   catch(e){ err.textContent='Invalid team signup code.'; btn.textContent='Create account & enter'; return; }
@@ -517,8 +535,9 @@ async function saveLogins(doc, sha, msg){
 async function enterApp(){
   try { stages = await load('meta/stages.json'); } catch(e){ stages=['New','Prospecting','Connected','Meeting Booked','Meeting Attended','Proposal Sent','Paid & Closed','Dead']; }
   try { stageProb = await load('meta/stageprob.json'); } catch(e){ stageProb={}; }
-  myLeads = await load(`reps/${me.id}/leads.json`);
-  myActs  = await load(`reps/${me.id}/activities.json`);
+  // resilient loads: a transient failure on one file must not blank the whole app
+  try { myLeads = await load(`reps/${me.id}/leads.json`); } catch(e){ myLeads = []; toast('Could not load your leads — check connection and refresh'); }
+  try { myActs  = await load(`reps/${me.id}/activities.json`); } catch(e){ myActs = []; }
   try { myOutbox = await load(`reps/${me.id}/outbox.json`); } catch(e){ myOutbox = []; shas[`reps/${me.id}/outbox.json`] = null; }
   try { myTasks = await load(`reps/${me.id}/tasks.json`); } catch(e){ myTasks = []; shas[`reps/${me.id}/tasks.json`] = null; }
   document.getElementById('login').style.display='none';
