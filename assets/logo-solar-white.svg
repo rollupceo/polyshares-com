@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- rounded badge -->
+  <path d="M18 7h12a11 11 0 0 1 11 11v12a11 11 0 0 1-11 11H18A11 11 0 0 1 7 30V18A11 11 0 0 1 18 7z" fill="none" stroke="white" stroke-width="2.5"/>
+  <!-- solar panel grid, tilted -->
+  <g transform="rotate(-18 24 23)" fill="white">
+    <rect x="15.5" y="15" width="5.2" height="5.2" rx="0.6"/>
+    <rect x="22.3" y="15" width="5.2" height="5.2" rx="0.6"/>
+    <rect x="29.1" y="15" width="5.2" height="5.2" rx="0.6"/>
+    <rect x="15.5" y="21.8" width="5.2" height="5.2" rx="0.6"/>
+    <rect x="22.3" y="21.8" width="5.2" height="5.2" rx="0.6"/>
+    <rect x="29.1" y="21.8" width="5.2" height="5.2" rx="0.6"/>
+  </g>
+</svg>
