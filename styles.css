@@ -154,6 +154,10 @@ section{padding:132px 0;position:relative}
 .quote .by{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:22px}
 
 .team{display:grid;grid-template-columns:repeat(2,1fr);gap:0;margin-top:50px;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.team .member:last-child:nth-child(odd){grid-column:1 / -1;text-align:center}
+.team .member:last-child:nth-child(odd) .m-head{justify-content:center}
+.team .member:last-child:nth-child(odd) .chips{justify-content:center}
+.team .member:last-child:nth-child(odd) p{max-width:540px;margin-left:auto;margin-right:auto}
 .member{padding:36px 34px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
 .m-head{display:flex;align-items:center;gap:16px;margin-bottom:18px}
 .member .photo{width:66px;height:66px;border-radius:50%;object-fit:cover;flex:none;background:var(--paper3);filter:grayscale(1) contrast(1.02)}
@@ -201,6 +205,10 @@ html.js .reveal.in{opacity:1;transform:none}
   .stat:nth-child(2){border-left:none}
   .stat:nth-child(3){grid-column:1/-1;border-left:none;border-top:1px solid rgba(255,255,255,.08)}
   .g3,.g2,.steps,.team{grid-template-columns:1fr}
+  .team .member:last-child:nth-child(odd){text-align:left}
+  .team .member:last-child:nth-child(odd) .m-head{justify-content:flex-start}
+  .team .member:last-child:nth-child(odd) .chips{justify-content:flex-start}
+  .team .member:last-child:nth-child(odd) p{max-width:none}
   .step,.cell,.member{border-right:none}
   .cs-bullets{grid-template-columns:1fr}
   section{padding:72px 0}
