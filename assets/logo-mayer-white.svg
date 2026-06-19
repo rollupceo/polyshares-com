@@ -1,18 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 48" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 48" fill="none">
   <!-- sunburst of dots -->
   <g fill="white">
-    <circle cx="38" cy="24" r="1.3"/>
-    <circle cx="36.1" cy="31" r="1.5"/>
-    <circle cx="31" cy="36.1" r="1.7"/>
-    <circle cx="24" cy="38" r="1.9"/>
-    <circle cx="17" cy="36.1" r="2.1"/>
-    <circle cx="11.9" cy="31" r="2.3"/>
-    <circle cx="10" cy="24" r="2.5"/>
-    <circle cx="11.9" cy="17" r="2.6"/>
-    <circle cx="17" cy="11.9" r="2.4"/>
-    <circle cx="24" cy="10" r="2.1"/>
-    <circle cx="31" cy="11.9" r="1.8"/>
-    <circle cx="36.1" cy="17" r="1.5"/>
+    <circle cx="35" cy="24" r="1.1"/>
+    <circle cx="33.4" cy="29.6" r="1.3"/>
+    <circle cx="29.2" cy="33.8" r="1.5"/>
+    <circle cx="23.5" cy="35.4" r="1.7"/>
+    <circle cx="17.8" cy="33.8" r="1.9"/>
+    <circle cx="13.6" cy="29.6" r="2.0"/>
+    <circle cx="12" cy="24" r="2.1"/>
+    <circle cx="13.6" cy="18.4" r="2.0"/>
+    <circle cx="17.8" cy="14.2" r="1.8"/>
+    <circle cx="23.5" cy="12.6" r="1.6"/>
+    <circle cx="29.2" cy="14.2" r="1.4"/>
+    <circle cx="33.4" cy="18.4" r="1.2"/>
   </g>
-  <text x="52" y="32" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="21" font-weight="600" fill="white" letter-spacing="1.5">MAYER</text>
+  <text x="48" y="31" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="18" font-weight="600" fill="white" letter-spacing="1.2">MAYER</text>
 </svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 188 48" fill="none">
+  <!-- badge icon -->
+  <path d="M16 9h6a10 10 0 0 1 10 10v6a10 10 0 0 1-10 10h-6A10 10 0 0 1 6 25v-6A10 10 0 0 1 16 9z" fill="none" stroke="white" stroke-width="2.2"/>
+  <g transform="rotate(-18 19 24)" fill="white">
+    <rect x="12.5" y="17.5" width="4" height="4" rx="0.5"/>
+    <rect x="17.8" y="17.5" width="4" height="4" rx="0.5"/>
+    <rect x="23.1" y="17.5" width="4" height="4" rx="0.5"/>
+    <rect x="12.5" y="22.8" width="4" height="4" rx="0.5"/>
+    <rect x="17.8" y="22.8" width="4" height="4" rx="0.5"/>
+    <rect x="23.1" y="22.8" width="4" height="4" rx="0.5"/>
+  </g>
+  <line x1="44" y1="11" x2="44" y2="37" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+  <text x="54" y="21" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="11" font-weight="700" fill="white" letter-spacing="1.5">SIMPLICITY</text>
+  <text x="54" y="37" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="10" font-weight="400" fill="rgba(255,255,255,0.65)" letter-spacing="1.5">SOLAR</text>
+</svg>

@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 48" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 124 48" fill="none">
   <!-- peanut -->
-  <g fill="none" stroke="white" stroke-width="2.5">
-    <circle cx="14" cy="19" r="8"/>
-    <circle cx="22" cy="29" r="8"/>
+  <g fill="none" stroke="white" stroke-width="2.2">
+    <circle cx="14" cy="20" r="7"/>
+    <circle cx="21" cy="28" r="7"/>
   </g>
-  <line x1="38" y1="10" x2="38" y2="38" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
-  <text x="46" y="22" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="14" font-weight="700" fill="white" letter-spacing="0.3">Advanced</text>
-  <text x="46" y="38" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="14" font-weight="700" fill="rgba(255,255,255,0.7)" letter-spacing="0.3">Trailer</text>
+  <line x1="35" y1="11" x2="35" y2="37" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+  <text x="43" y="22" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="13" font-weight="700" fill="white" letter-spacing="0.3">Advanced</text>
+  <text x="43" y="37" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="13" font-weight="700" fill="rgba(255,255,255,0.7)" letter-spacing="0.3">Trailer</text>
 </svg>
