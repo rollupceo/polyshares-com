@@ -1,0 +1,17 @@
+name = "polyshares-crm-auth"
+main = "worker.js"
+compatibility_date = "2026-06-21"
+
+# Browser origins allowed to call the gateway (CORS). Add/remove as needed.
+[vars]
+ALLOWED_ORIGINS = "https://polyshares.com,https://www.polyshares.com"
+
+# KV namespace holding the private credential store + lockout counters.
+# Create it once with:  npx wrangler kv namespace create CRM_AUTH
+# then paste the printed id below.
+[[kv_namespaces]]
+binding = "CRM_AUTH"
+id = "PASTE_KV_NAMESPACE_ID_HERE"
+
+# The shared GitHub PAT is NOT stored here — it is a secret, set with:
+#   npx wrangler secret put GH_TOKEN

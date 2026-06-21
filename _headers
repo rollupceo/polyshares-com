@@ -1,0 +1,21 @@
+# Security headers for polyshares.com
+# ---------------------------------------------------------------------------
+# IMPORTANT: This file is honored by Cloudflare Pages and Netlify ONLY.
+# GitHub Pages (where the site is hosted today) IGNORES this file completely —
+# it does not support custom response headers in any form. To get these headers
+# live you must move hosting to Cloudflare Pages or Netlify (both deploy the
+# same static repo with zero code changes). Until then, the CRM's in-page
+# frame-buster + <meta nosniff> are the only protections in effect.
+# ---------------------------------------------------------------------------
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=()
+  # CSP allows exactly the origins the site + CRM talk to. 'unsafe-inline' is
+  # required for script-src because the CRM is a single-file app with inline
+  # scripts (and gtag's inline config) — removing it means refactoring all
+  # inline JS into external files first.
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://www.googleapis.com https://gmail.googleapis.com https://accounts.google.com https://www.googletagmanager.com https://*.google-analytics.com; frame-src https://accounts.google.com; form-action 'self'
