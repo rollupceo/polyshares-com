@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Polyshares CRM</title>
 <meta name="robots" content="noindex, nofollow" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<!-- Clickjacking defense: X-Frame-Options/frame-ancestors can't be set on GitHub Pages (no custom headers, and they're ignored via <meta>). Bust out of any frame instead. -->
+<script>try{if(self!==top){document.documentElement.style.display='none';top.location=self.location.href;}}catch(e){document.documentElement.style.display='none';}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
@@ -150,6 +154,28 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .mailmeta .mailwho{font-weight:600;color:var(--ink)}
 .mailsubj{font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:4px}
 .mailbody{font-size:13.5px;line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.comp-modes{display:flex;gap:4px;padding:8px 8px 0;flex-wrap:wrap}
+.cmode{background:none;border:1px solid transparent;font-size:12.5px;padding:6px 12px;border-radius:8px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.cmode span{font-size:13px}
+.cmode:hover{background:var(--paper3)}
+.cmode.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+.feed{display:flex;flex-direction:column;gap:11px}
+.fmail{border:1px solid var(--line);border-radius:11px;padding:11px 13px;max-width:90%}
+.fmail.out{background:#eef4ff;border-color:#d6e3fb;align-self:flex-end}
+.fmail.in{background:#fff;align-self:flex-start}
+.fmail-meta{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted);margin-bottom:4px}
+.fmail-who{font-weight:600;color:var(--ink)}
+.fmail-subj{font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.fmail-body{font-size:13.5px;line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word}
+.fnote{background:#fffdf7;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:9px 13px}
+.fnote-text{font-size:14px;line-height:1.55;color:var(--ink);white-space:pre-wrap;word-break:break-word;margin-top:3px}
+.frow{display:flex;gap:11px;align-items:flex-start;padding:2px 0}
+.frow-ic{width:22px;text-align:center;flex-shrink:0}
+.frow-title{font-size:13.5px;color:var(--ink)}
+.frow-meta{font-size:11.5px;color:var(--muted);margin-top:1px}
+.reddot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red)}
+.navbadge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--red);color:#fff;font-size:10.5px;font-weight:600;vertical-align:middle}
+#gmailBtn.gmail-ok{opacity:.65}
 #cardpop{position:fixed;z-index:70;width:240px;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 16px 44px rgba(0,0,0,.22);padding:14px;display:none;flex-direction:column;gap:8px}
 #cardpop.open{display:flex}
 #cardpop .cp-h{font-weight:600;font-size:13px;margin-bottom:2px}
@@ -265,11 +291,12 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   <nav>
     <button data-v="board" class="on">Board</button>
     <button data-v="work">Work</button>
+    <button data-v="replies" id="repliesTab">Replies<span id="repliesBadge" class="navbadge" style="display:none">0</span></button>
     <button data-v="leads">Leads</button>
     <button data-v="metrics">Metrics</button>
     <button data-v="team" id="teamTab">Admin</button>
   </nav>
-  <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="startTour()" title="Take the tour">? Tour</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="changeMyPass()">Password</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
+  <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button id="gmailBtn" class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="connectGmail()" title="Connect your Gmail to send and read replies in the CRM">Connect Gmail</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="startTour()" title="Take the tour">? Tour</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="changeMyPass()">Password</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
 </header>
 <main>
   <section id="v-board">
@@ -288,6 +315,10 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   <section id="v-activity" style="display:none">
     <div class="row"><select id="actFilter" onchange="renderActivity()" style="padding:8px"><option value="open">Scheduled (open)</option><option value="overdue">Overdue</option><option value="today">Due today</option><option value="done">Completed</option><option value="all">Everything</option></select><select id="actRep" onchange="renderActivity()" style="padding:8px;display:none"></select><span id="actCount" style="color:var(--muted);font-size:12.5px"></span></div>
     <div id="activityWrap" style="margin-top:10px"></div>
+  </section>
+  <section id="v-replies" style="display:none">
+    <div class="row"><span style="font-weight:500;font-size:15px">Replies</span><span id="repCount" style="color:var(--muted);font-size:12.5px"></span><button class="btn sm ghost" style="margin-left:auto" onclick="refreshReplies()">Refresh</button></div>
+    <div id="repliesWrap" style="margin-top:12px"></div>
   </section>
   <section id="v-leads" style="display:none">
     <div class="row"><input id="tsearch" placeholder="Filter by name, company, title, state, industry…" style="width:300px" oninput="renderTable()" /><select id="tstage" onchange="renderTable()" style="padding:8px"><option value="">All stages</option></select><button class="btn ghost" onclick="newLead()">+ New lead</button><span id="tcount" style="color:var(--muted);font-size:12.5px"></span></div>
@@ -351,21 +382,24 @@ let shas={}, dirty={leads:false,acts:false,outbox:false,tasks:false}, saveTimer=
 /* ---------- crypto ---------- */
 const ub64 = s => Uint8Array.from(atob(s), c=>c.charCodeAt(0));
 const sha = async s => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))).map(b=>b.toString(16).padStart(2,'0')).join('');
-async function deriveKey(pass, salt, usage){
+const PBKDF2_ITER = 600000;        // NIST 2023+ recommendation for PBKDF2-HMAC-SHA256
+const PBKDF2_LEGACY_ITER = 310000; // blobs written before 2026-06-21 (no `iter` field) used this
+async function deriveKey(pass, salt, usage, iter){
   const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:310000, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, false, [usage]);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:iter, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, false, [usage]);
 }
 async function decryptToken(pass, enc){
-  const key = await deriveKey(pass, ub64(enc.s), 'decrypt');
+  // legacy blobs omit `iter` and were derived at 310k; new blobs stamp their own count
+  const key = await deriveKey(pass, ub64(enc.s), 'decrypt', enc.iter || PBKDF2_LEGACY_ITER);
   const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:ub64(enc.iv)}, key, ub64(enc.ct));
   return new TextDecoder().decode(pt);
 }
 async function encryptToken(pass, tok){
   const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveKey(pass, salt, 'encrypt');
+  const key = await deriveKey(pass, salt, 'encrypt', PBKDF2_ITER);
   const ct = new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(tok)));
   const b64 = a => btoa(String.fromCharCode(...a));
-  return { s: b64(salt), iv: b64(iv), ct: b64(ct) };
+  return { s: b64(salt), iv: b64(iv), ct: b64(ct), iter: PBKDF2_ITER };
 }
 function genPass(){
   const a = new Uint8Array(12); crypto.getRandomValues(a);
@@ -556,6 +590,8 @@ async function enterApp(){
   const bRep = document.getElementById('boardRep');
   if (me.admin){ bRep.style.display=''; bRep.innerHTML = '<option value="">My board</option>' + reps.filter(r=>r.id!==me.id).map(r=>`<option value="${r.id}">${esc(r.name)}'s pipeline</option>`).join(''); }
   renderBoard(); fillAdmin(); updateQueueBadge(); updateActivityBadge();
+  updateRepliesBadge(false);          // seed badge from cached lastReplyTs/mailSeen (no toast)
+  gmailSilentConnect();               // re-grant Gmail without a popup if connected before; starts reply polling
   if (!localStorage.getItem('crm_tour_done_'+me.id)) setTimeout(startTour, 700);
 }
 function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); localStorage.removeItem('crm_email'); localStorage.removeItem('crm_rep'); location.reload(); }
@@ -565,13 +601,14 @@ document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
   document.querySelectorAll('header nav button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   const v=b.dataset.v;
-  ['board','work','leads','metrics','team'].forEach(x => document.getElementById('v-'+x).style.display = (x===v?'':'none'));
+  ['board','work','replies','leads','metrics','team'].forEach(x => document.getElementById('v-'+x).style.display = (x===v?'':'none'));
   document.getElementById('v-queue').style.display='none';
   document.getElementById('v-activity').style.display='none';
-  // lead panel is only contextually correct on Board and Leads; close it elsewhere
-  if (!['board','leads'].includes(v)) closeDrawer();
+  // lead panel is only contextually correct on Board, Leads and Replies; close it elsewhere
+  if (!['board','leads','replies'].includes(v)) closeDrawer();
   if (v==='metrics') renderMetrics();
   if (v==='leads') renderTable();
+  if (v==='replies') renderReplies();
   if (v==='team') { refreshPool(); renderProbEditor(); }
   if (v==='work') workSub(workCur);
 });
@@ -809,21 +846,55 @@ function renderTimeline(hist, whoName){
   }).join('')+'</div>';
 }
 function fmtMailWhen(ts){ try{ const d=new Date(ts); return d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; } }
-function renderThread(l, repName){
-  const mail = (l && l.mail) || [];
-  if(!mail.length) return '';
+// strip quoted reply history + signatures so a bubble shows only the new message
+function stripQuoted(body){
+  if(!body) return '';
+  const lines = body.replace(/\r/g,'').split('\n');
+  let cut = lines.length;
+  for(let i=0;i<lines.length;i++){
+    const t = lines[i].trim();
+    if(t.startsWith('>') ||
+       /^-{2,}\s*Original Message\s*-{2,}/i.test(t) ||
+       /^_{10,}$/.test(t) ||
+       (/^On\b/.test(t) && /(wrote:|<.+@.+>)\s*$/.test(t)) ||
+       /^From:\s.+\b(Sent|To|Subject):/i.test(t)){
+      cut = i; break;
+    }
+  }
+  let kept = lines.slice(0, cut);
+  while(kept.length){
+    const t = kept[kept.length-1].trim();
+    if(t==='' || /^On\b/.test(t) || /^wrote:$/.test(t) || /<.+@.+>$/.test(t)) kept.pop(); else break;
+  }
+  let text = kept.join('\n').trim();
+  const sig = text.search(/\n--\s*\n/); if(sig>=0) text = text.slice(0,sig).trim();
+  return text || body.trim();
+}
+// one unified, newest-first feed: emails (bubbles) + notes/calls/stage changes (rows)
+function renderFeed(l, hist, repName){
   const rep = repName || (l && l.repName) || ((me&&me.name)?me.name:'Rep');
-  const rows = mail.map(m=>{
-    const inbound = m.dir==='in';
-    const label = inbound ? esc(l.nm||l.co||(m.from||'').replace(/<.*>/,'').trim()||'Lead') : esc(rep);
-    const body = esc(m.body||'').replace(/\n/g,'<br>');
-    return `<div class="mailmsg ${inbound?'in':'out'}">
-      <div class="mailmeta"><span class="mailwho">${inbound?'← '+label:label+' →'}</span><span class="mailwhen">${fmtMailWhen(m.ts)}</span></div>
-      ${m.subject?`<div class="mailsubj">${esc(m.subject)}</div>`:''}
-      <div class="mailbody">${body}</div>
-    </div>`;
+  const hasThread = !!(l.mail && l.mail.length);
+  const items = [];
+  (l.mail||[]).forEach(m => items.push({k:'mail', ts:m.ts, m}));
+  (hist||[]).forEach(a => { if(a.ty==='email' && hasThread) return; items.push({k:'act', ts:a.t, a}); });
+  items.sort((x,y)=> y.ts - x.ts);
+  if(!items.length) return `<div class="subhead2">Activity</div><div class="tl-empty">Nothing yet — send an email, log a call, or add a note above.</div>`;
+  const rows = items.map(it=>{
+    if(it.k==='mail'){
+      const m = it.m, inbound = m.dir==='in';
+      const label = inbound ? esc(l.nm||l.co||(m.from||'').replace(/<.*>/,'').trim()||'Lead') : esc(rep);
+      const body = esc(stripQuoted(m.body||'')).replace(/\n/g,'<br>');
+      return `<div class="fmail ${inbound?'in':'out'}">
+        <div class="fmail-meta"><span class="fmail-who">${inbound?'↙ '+label:label+' ↗'}</span><span>${fmtMailWhen(m.ts)}</span></div>
+        ${m.subject?`<div class="fmail-subj">${esc(m.subject)}</div>`:''}
+        <div class="fmail-body">${body}</div></div>`;
+    }
+    const a = it.a, meta = fmtWhen(a.t) + (rep?(' · '+esc(rep)):'');
+    if(a.ty==='note') return `<div class="fnote"><div class="frow-meta">${meta}</div><div class="fnote-text">${esc(a.d||'')}</div></div>`;
+    const title = a.ty==='stage' ? ('Moved to '+esc(a.d||'')) : ((TL_LB[a.ty]||esc(a.ty))+(a.d?(' · '+esc(a.d)):''));
+    return `<div class="frow"><div class="frow-ic">${TL_IC[a.ty]||'•'}</div><div><div class="frow-title">${title}</div><div class="frow-meta">${meta}</div></div></div>`;
   }).join('');
-  return `<div class="subhead2" style="margin-top:18px">Email conversation</div><div class="mailthread">${rows}</div>`;
+  return `<div class="subhead2">Activity <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">· newest first</span></div><div class="feed">${rows}</div>`;
 }
 async function renderActivity(){
   updateActivityBadge();
@@ -863,18 +934,84 @@ function gmailReady(){ return !!GMAIL_CLIENT_ID; }
 function gmailClient(){
   if (gmailTC) return gmailTC;
   if (!(window.google && google.accounts && google.accounts.oauth2)) return null;
-  gmailTC = google.accounts.oauth2.initTokenClient({ client_id: GMAIL_CLIENT_ID, scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly', callback: ()=>{} });
+  gmailTC = google.accounts.oauth2.initTokenClient({ client_id: GMAIL_CLIENT_ID, scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly', hint: (typeof me!=='undefined'&&me&&me.email)||'', callback: ()=>{} });
   return gmailTC;
 }
 function gmailGetToken(interactive){
   return new Promise((resolve, reject)=>{
     if (gmailTok && Date.now() < gmailTokExp-60000) return resolve(gmailTok);
     const tc = gmailClient(); if (!tc) return reject(new Error('Google sign-in still loading — try again in a sec'));
-    tc.callback = (resp)=>{ if (resp && resp.error) return reject(new Error(resp.error)); gmailTok = resp.access_token; gmailTokExp = Date.now() + (resp.expires_in||3600)*1000; resolve(gmailTok); };
+    tc.callback = (resp)=>{ if (resp && resp.error) return reject(new Error(resp.error)); gmailTok = resp.access_token; gmailTokExp = Date.now() + (resp.expires_in||3600)*1000; updateGmailBtn(); resolve(gmailTok); };
     try { tc.requestAccessToken({ prompt: interactive ? 'consent' : '' }); } catch(e){ reject(e); }
   });
 }
-async function connectGmail(){ try { await gmailGetToken(true); toast('Gmail connected'); if(document.getElementById('gmailState')) document.getElementById('gmailState').textContent='Sends as you · '+(me.email||''); } catch(e){ toast('Connect failed: '+e.message); } }
+function updateGmailBtn(){
+  const b = document.getElementById('gmailBtn'); if(!b) return;
+  const ok = gmailTok && Date.now() < gmailTokExp-60000;
+  b.textContent = ok ? 'Gmail ✓' : 'Connect Gmail';
+  b.classList.toggle('gmail-ok', !!ok);
+}
+async function connectGmail(){ try { await gmailGetToken(true); localStorage.setItem('crm_gmail_connected','1'); toast('Gmail connected'); updateGmailBtn(); startReplyPoll(); if(document.getElementById('gmailState')) document.getElementById('gmailState').textContent='Sends as you · '+(me.email||''); } catch(e){ toast('Connect failed: '+e.message); } }
+// re-grant silently on load (no popup) if the rep has connected before; then start watching for replies
+async function gmailSilentConnect(){
+  updateGmailBtn();
+  if(localStorage.getItem('crm_gmail_connected')!=='1') return;
+  try{ await gmailGetToken(false); updateGmailBtn(); startReplyPoll(); }catch(e){ updateGmailBtn(); }
+}
+/* ---------- replies: background poll + badge + inbox ---------- */
+let lastReplyCount = 0, pollTimer = null; const polledIds = new Set();
+function unreadReplies(){ return myLeads.filter(l => l.em && (l.lastReplyTs||0) > (l.mailSeen||0)).sort((a,b)=>(b.lastReplyTs||0)-(a.lastReplyTs||0)); }
+function updateRepliesBadge(notify){
+  const n = unreadReplies().length;
+  const badge = document.getElementById('repliesBadge');
+  if(badge){ badge.textContent = n; badge.style.display = n ? '' : 'none'; }
+  if(notify && n > lastReplyCount){ const d = n - lastReplyCount; toast('📬 '+d+' new repl'+(d>1?'ies':'y')+' — open the Replies tab'); }
+  lastReplyCount = n;
+  const rv = document.getElementById('v-replies');
+  if(rv && rv.style.display!=='none') renderReplies();
+}
+async function pollReplies(){
+  if(!gmailReady() || !myLeads || !myLeads.length) return;
+  let tok; try{ tok = await gmailGetToken(false); }catch(e){ return; }
+  try{
+    const byEmail = {}; myLeads.forEach(l=>{ if(l.em) byEmail[l.em.toLowerCase()] = l; });
+    const lr = await fetchT(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=40&q=${encodeURIComponent('in:inbox newer_than:3d')}`,{headers:{'Authorization':'Bearer '+tok}},15000);
+    if(!lr.ok) return;
+    const lj = await lr.json(); const ids=(lj.messages||[]).map(m=>m.id); let changed=false;
+    for(const mid of ids){
+      if(polledIds.has(mid)) continue; polledIds.add(mid);
+      const mr = await fetchT(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${mid}?format=metadata&metadataHeaders=From`,{headers:{'Authorization':'Bearer '+tok}},15000);
+      if(!mr.ok) continue; const m = await mr.json();
+      const from = (hdr(m.payload&&m.payload.headers,'from')||'').toLowerCase(); const ts = Number(m.internalDate)||Date.now();
+      let lead=null; for(const em in byEmail){ if(from.includes(em)){ lead=byEmail[em]; break; } }
+      if(lead && ts > (lead.lastReplyTs||0)){ lead.lastReplyTs = ts; changed = true; }
+    }
+    if(changed) markDirty('leads');
+    updateRepliesBadge(true);
+  }catch(e){}
+}
+function startReplyPoll(){ if(pollTimer) return; pollReplies(); pollTimer = setInterval(pollReplies, 90000); }
+function refreshReplies(){ pollReplies(); toast('Checking for replies…'); }
+function renderReplies(){
+  const wrap = document.getElementById('repliesWrap'); if(!wrap) return;
+  const unread = unreadReplies(); const unreadSet = new Set(unread.map(l=>l.i));
+  const withMail = myLeads.filter(l => l.lastReplyTs || (l.mail&&l.mail.length)).sort((a,b)=>(b.lastReplyTs||0)-(a.lastReplyTs||0));
+  const cc = document.getElementById('repCount'); if(cc) cc.textContent = unread.length+' unread';
+  if(!gmailTok && localStorage.getItem('crm_gmail_connected')!=='1'){
+    wrap.innerHTML = `<div class="emptystate"><div class="es-title">Connect Gmail to see replies</div><div class="es-sub">Click “Connect Gmail” in the top bar. Then any time a lead replies to an email you sent from the CRM, it shows up here automatically.</div><button class="btn" onclick="connectGmail()">Connect Gmail</button></div>`; return;
+  }
+  if(!withMail.length){ wrap.innerHTML = `<div class="emptystate"><div class="es-title">No replies yet.</div><div class="es-sub">When a lead replies, it appears here — newest first — and the Replies tab lights up.</div></div>`; return; }
+  wrap.innerHTML = `<table class="tbl"><tbody>${withMail.slice(0,150).map(l=>{
+    const u = unreadSet.has(l.i);
+    const latestIn = (l.mail||[]).filter(m=>m.dir==='in').slice(-1)[0];
+    const snip = latestIn ? esc(stripQuoted(latestIn.body||'').replace(/\n/g,' ').slice(0,100)) : '';
+    return `<tr onclick="openDrawer('${l.i}')" style="cursor:pointer">
+      <td style="width:16px">${u?'<span class="reddot"></span>':''}</td>
+      <td><b style="${u?'':'font-weight:400'}">${esc(leadName(l))}</b><div style="color:var(--muted);font-size:11.5px">${esc(l.co||'')}</div></td>
+      <td style="color:var(--muted);font-size:12.5px">${snip}</td>
+      <td style="color:var(--muted);white-space:nowrap;font-size:12px">${l.lastReplyTs?fmtMailWhen(l.lastReplyTs):''}</td></tr>`;
+  }).join('')}</tbody></table>`;
+}
 function b64url(s){ return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 // RFC 2047 encoded-word so non-ASCII (em dashes, accents, emoji) survive in headers
 function encHeader(s){ s=s||''; if(/^[\x00-\x7F]*$/.test(s)) return s; return '=?UTF-8?B?'+btoa(unescape(encodeURIComponent(s)))+'?='; }
@@ -929,7 +1066,11 @@ async function gmailSync(id, force){
     }
     msgs.sort((a,b)=>a.ts-b.ts);
     l.mail = msgs; l.mailSync = Date.now();
+    const lastIn = msgs.filter(m=>m.dir==='in').reduce((mx,m)=>Math.max(mx,m.ts),0);
+    if(lastIn) l.lastReplyTs = Math.max(l.lastReplyTs||0, lastIn);
+    l.mailSeen = Date.now();   // we just rendered the full thread to the rep
     markDirty('leads');
+    updateRepliesBadge(false);
     if(document.getElementById('drawer').classList.contains('open')) openDrawer(id);
   }catch(e){ /* silent — keep cached thread */ }
   finally{ gmailSyncing[id]=false; }
@@ -1028,21 +1169,19 @@ function openDrawer(id){
     ${l.lreason?`<div class="fld"><b>Lost reason</b>${esc(l.lreason)}</div>`:''}${l.wnote?`<div class="fld"><b>Won note</b>${esc(l.wnote)}</div>`:''}
     <div class="fld"><b>Follow up</b><input type="date" value="${l.fu?new Date(l.fu).toISOString().slice(0,10):''}" onchange="setFu('${l.i}', this.value)" /></div>
     ${me.admin ? `<div class="fld"><b>Rep</b><select onchange="moveLead('${l.i}', this.value)">${reps.map(r=>`<option value="${r.id}" ${r.id===me.id?'selected':''}>${r.name}</option>`).join('')}</select></div>` : ''}
-    <div class="logrow" style="flex-wrap:wrap;gap:7px"><button class="btn sm" onclick="emailLead('${l.i}')">✉️ Compose</button><button class="btn sm ghost" onclick="liLead('${l.i}')">in Connect</button><button class="btn sm ghost" onclick="quickLog('${l.i}','call')">📞 Log call</button></div>`;
+    ${l.li?`<div class="logrow" style="flex-wrap:wrap;gap:7px"><button class="btn sm ghost" onclick="liLead('${l.i}')">Open LinkedIn ↗</button></div>`:''}`;
 
+  const canEmail = gmailReady() && !!l.em;
+  const dmode = canEmail ? 'email' : 'note';
   const right = `
     <div class="composer">
-      <div class="comp-tabs"><button class="comp-tab on" id="ct-note" onclick="compTab('note')">Note</button><button class="comp-tab" id="ct-act" onclick="compTab('act')">Activity</button>${gmailReady()?`<button class="comp-tab" id="ct-email" onclick="compTab('email')">Email</button>`:''}</div>
-      <div id="comp-note">
-        <textarea id="noteBox" placeholder="Write a note…"></textarea>
-        <div class="comp-foot"><span class="comp-hint">Saved to the timeline</span><button class="btn sm" onclick="addNote('${l.i}', document.getElementById('noteBox').value); document.getElementById('noteBox').value=''">Add note</button></div>
+      <div class="comp-modes">
+        ${canEmail?`<button class="cmode${dmode==='email'?' on':''}" data-m="email" onclick="compMode('email','${l.i}')"><span>✉</span> Email</button>`:''}
+        <button class="cmode${dmode==='note'?' on':''}" data-m="note" onclick="compMode('note','${l.i}')"><span>📝</span> Note</button>
+        <button class="cmode" data-m="log" onclick="compMode('log','${l.i}')"><span>📞</span> Log</button>
+        <button class="cmode" data-m="task" onclick="compMode('task','${l.i}')"><span>◷</span> Task</button>
       </div>
-      <div id="comp-act" style="display:none">
-        <div style="padding:10px 12px"><div class="schedrow"><select id="tk_ty">${TASK_TYPES.map(([v,lb])=>`<option value="${v}">${lb}</option>`).join('')}</select><input type="date" id="tk_date" /></div>
-        <input id="tk_note" placeholder="Optional note" style="width:100%;margin-top:8px" /></div>
-        <div class="comp-foot"><span class="comp-hint">Adds to your Activity queue</span><button class="btn sm" onclick="addTask('${l.i}')">Schedule</button></div>
-      </div>
-      ${gmailReady()?`<div id="comp-email" style="display:none">
+      ${canEmail?`<div id="cm-email" style="display:${dmode==='email'?'':'none'}">
         <div style="padding:10px 12px">
           <input id="ec_to" value="${esc(l.em||'')}" placeholder="To" style="width:100%;margin-bottom:7px" />
           <input id="ec_su" placeholder="Subject" style="width:100%;margin-bottom:7px" />
@@ -1050,14 +1189,37 @@ function openDrawer(id){
         </div>
         <div class="comp-foot"><span class="comp-hint" id="gmailState">Sends from your Gmail, as you</span><span style="display:flex;gap:6px"><button class="btn sm ghost" onclick="connectGmail()">Connect Gmail</button><button class="btn sm" id="ec_send" onclick="sendGmail('${l.i}')">Send</button></span></div>
       </div>`:''}
+      <div id="cm-note" style="display:${dmode==='note'?'':'none'}">
+        <textarea id="noteBox" placeholder="Write a note…"></textarea>
+        <div class="comp-foot"><span class="comp-hint">Saved to the activity feed</span><button class="btn sm" onclick="addNote('${l.i}', document.getElementById('noteBox').value); document.getElementById('noteBox').value=''">Add note</button></div>
+      </div>
+      <div id="cm-log" style="display:none">
+        <div style="padding:10px 12px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+            <button class="btn sm ghost" onclick="quickLogC('${l.i}','call')">📞 Call</button>
+            <button class="btn sm ghost" onclick="quickLogC('${l.i}','email')">✉️ Email</button>
+            <button class="btn sm ghost" onclick="quickLogC('${l.i}','li')">in LinkedIn</button>
+            <button class="btn sm ghost" onclick="quickLogC('${l.i}','meeting')">🗓️ Meeting</button>
+          </div>
+          <input id="lg_note" placeholder="Optional note (what happened)…" style="width:100%" />
+        </div>
+        <div class="comp-foot"><span class="comp-hint">Logs a touch to the feed now — pick the type above</span></div>
+      </div>
+      <div id="cm-task" style="display:none">
+        <div style="padding:10px 12px"><div class="schedrow"><select id="tk_ty">${TASK_TYPES.map(([v,lb])=>`<option value="${v}">${lb}</option>`).join('')}</select><input type="date" id="tk_date" /></div>
+        <input id="tk_note" placeholder="Optional note" style="width:100%;margin-top:8px" /></div>
+        <div class="comp-foot"><span class="comp-hint">Adds to your To-do queue</span><button class="btn sm" onclick="addTask('${l.i}')">Schedule</button></div>
+      </div>
     </div>
-    ${tasks.length ? `<div class="subhead2">Upcoming</div>`+tasks.map(t=>`<div class="tkrow"><span>${taskLabel(t.ty)}${t.note?' · '+esc(t.note):''}</span><span class="when">${whenText(t.due)}</span><button class="btn sm" onclick="completeTask('${t.id}')">Done</button><button class="btn sm ghost" onclick="delTask('${t.id}');openDrawer('${l.i}')">✕</button></div>`).join('') : ''}
-    ${renderThread(l)}
-    <div class="subhead2" style="margin-top:18px">Timeline</div>
-    ${renderTimeline(hist)}`;
+    ${tasks.length ? `<div class="subhead2">Upcoming</div>`+tasks.map(t=>`<div class="tkrow"><span>${taskLabel(t.ty)}${t.note?' · '+esc(t.note):''}</span><span class="when">${whenText(t.due)}</span><button class="btn sm" onclick="completeTask('${t.id}')">Done</button><button class="btn sm ghost" onclick="delTask('${t.id}');openDrawer('${l.i}')">✕</button></div>`).join('')+'<div style="height:18px"></div>' : ''}
+    ${renderFeed(l, hist)}`;
 
   document.getElementById('dBody').innerHTML = `<div class="stepper">${stepper}</div><div class="dealgrid"><div class="dealcol-left">${left}</div><div class="dealcol-right">${right}</div></div>`;
   document.getElementById('drawer').classList.add('open'); document.getElementById('drawerback').classList.add('open');
+  // viewing the lead clears its "unread reply" state
+  const prevSeen = l.mailSeen||0; l.mailSeen = Date.now();
+  if((l.lastReplyTs||0) > prevSeen) markDirty('leads');
+  updateRepliesBadge(false);
   if(l.em && gmailReady()) gmailSync(l.i, false);
 }
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerback').classList.remove('open'); }
@@ -1075,14 +1237,22 @@ function openRODrawer(id){
     <div class="fld"><b>Industry</b>${esc(l.in||'—')} ${l.sz?`<span class="tag">${esc(l.sz)} emp</span>`:''}</div>
     <div class="fld"><b>Stage</b><span class="tag">${esc(l.st||'New')}</span></div>
     <div class="fld"><b>Deal value</b>${l.v?moneyFull(l.v):'—'}</div>`;
-  const right = `${renderThread(l, repName) || '<div class="tl-empty">No emails synced for this lead yet.</div>'}
-    <div class="subhead2" style="margin-top:18px">Timeline</div>
-    ${renderTimeline(hist, repName)}`;
+  const right = renderFeed(l, hist, repName);
   document.getElementById('dBody').innerHTML = `<div style="background:var(--paper3);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:12.5px;color:var(--muted)">Read-only — viewing ${esc(repName)}'s lead</div><div class="dealgrid"><div class="dealcol-left">${left}</div><div class="dealcol-right">${right}</div></div>`;
   document.getElementById('drawer').classList.add('open'); document.getElementById('drawerback').classList.add('open');
 }
-function compTab(which){
-  ['note','act','email'].forEach(k=>{ const el=document.getElementById('comp-'+k); if(el) el.style.display = (k===which?'':'none'); const tb=document.getElementById('ct-'+k); if(tb) tb.classList.toggle('on', k===which); });
+function compMode(which, id){
+  ['email','note','log','task'].forEach(k=>{ const el=document.getElementById('cm-'+k); if(el) el.style.display = (k===which?'':'none'); });
+  document.querySelectorAll('.cmode').forEach(b=> b.classList.toggle('on', b.dataset.m===which));
+  const focusId = {email:'ec_su', note:'noteBox'}[which];
+  if(focusId){ const f=document.getElementById(focusId); if(f) setTimeout(()=>f.focus(),0); }
+}
+function quickLogC(id, ty){
+  const l = myLeads.find(x=>x.i===id); if(!l) return;
+  const note = ((document.getElementById('lg_note')||{}).value||'').trim();
+  l.la = Date.now(); logAct(l, ty, note); markDirty('leads');
+  toast((TL_LB[ty]||'Logged')+' — '+leadName(l));
+  openDrawer(id);
 }
 function saveNote(id, v){ const l = myLeads.find(x=>x.i===id); if(l && (l.nt||'')!==v){ l.nt=v; logAct(l,'note', v.slice(0,80)); markDirty('leads'); } }
 async function moveLead(id, repId){
