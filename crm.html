@@ -371,6 +371,19 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 const REPO = 'rollupceo/polyshares-crm-data';
 const SITE_REPO = 'rollupceo/polyshares-com';
 const LOGINS_URL = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-logins.json';
+// Auth gateway (Cloudflare Worker). Set to the deployed Worker URL to route all
+// credential operations through the rate-limited, server-side gateway. Leave ''
+// to use the legacy public-file path. See cloudflare/README.md.
+const CRM_GATEWAY = '';
+const useGateway = () => !!CRM_GATEWAY;
+async function gw(path, body, auth){
+  const headers = { 'Content-Type':'application/json' };
+  if (auth) headers['Authorization'] = 'Bearer ' + token;
+  const r = await fetchT(CRM_GATEWAY.replace(/\/$/,'') + path, { method:'POST', headers, body: JSON.stringify(body) }, 15000);
+  let d = {}; try { d = await r.json(); } catch(e){}
+  if (!r.ok) throw new Error(d.error || ('gateway ' + r.status));
+  return d;
+}
 let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], myOutbox=[], myTasks=[], stageProb={};
 const DEFAULT_PROB = {'New':5,'Prospecting':10,'Connected':20,'Meeting Booked':40,'Meeting Attended':60,'Proposal Sent':80,'Paid & Closed':100,'Dead':0};
 function prob(st){ if (stageProb && st in stageProb) return stageProb[st]; if (st in DEFAULT_PROB) return DEFAULT_PROB[st]; if (st==='Dead') return 0; const i=stages.indexOf(st); return i<0?0:Math.round(i/Math.max(1,stages.length-1)*100); }
@@ -477,16 +490,23 @@ async function signIn(){
   const pass = document.getElementById('liPass').value;
   if (!email || !pass) { err.textContent='Enter your email and password.'; return; }
   const btn = document.getElementById('signinBtn'); btn.textContent='Signing in…';
-  let users;
-  try { users = await fetchLogins(); } catch(e){ err.textContent='Could not reach login service.'; btn.textContent='Sign in'; return; }
-  const u = users.find(x => (x.email||'').toLowerCase() === email);
-  if (!u){ err.textContent='No account for that email. Create one below.'; btn.textContent='Sign in'; return; }
-  try { token = await decryptToken(pass, u.enc); }
-  catch(e){ err.textContent='Wrong password.'; btn.textContent='Sign in'; return; }
+  let uid, uname, urole;
+  if (useGateway()){
+    try { const d = await gw('/login', { email, password: pass }); token = d.token; uid = d.user.id; uname = d.user.name; urole = d.user.role; }
+    catch(e){ err.textContent = e.message || 'Sign in failed.'; btn.textContent='Sign in'; return; }
+  } else {
+    let users;
+    try { users = await fetchLogins(); } catch(e){ err.textContent='Could not reach login service.'; btn.textContent='Sign in'; return; }
+    const u = users.find(x => (x.email||'').toLowerCase() === email);
+    if (!u){ err.textContent='No account for that email. Create one below.'; btn.textContent='Sign in'; return; }
+    try { token = await decryptToken(pass, u.enc); }
+    catch(e){ err.textContent='Wrong password.'; btn.textContent='Sign in'; return; }
+    uid = u.id; uname = u.name; urole = u.role;
+  }
   const store = document.getElementById('remember').checked ? localStorage : sessionStorage;
   store.setItem('crm_t', token); localStorage.setItem('crm_email', email);
   try { reps = await load('meta/reps.json'); } catch(e){ err.textContent='Could not reach data.'; btn.textContent='Sign in'; return; }
-  me = reps.find(r=>r.id===u.id) || { id:u.id, name:u.name, email, role:u.role||'sales', admin:false };
+  me = reps.find(r=>r.id===uid) || { id:uid, name:uname, email, role:urole||'sales', admin:false };
   if (me.active===false){ err.textContent='This account is deactivated.'; btn.textContent='Sign in'; return; }
   try { await enterApp(); }
   catch(e){ err.textContent='Could not load your workspace — please try again.'; btn.textContent='Sign in'; }
@@ -498,10 +518,29 @@ async function signUp(){
   const p1 = document.getElementById('suPass1').value, p2 = document.getElementById('suPass2').value;
   const code = document.getElementById('suCode').value.trim();
   if (!name || !email.includes('@')) { err.textContent='Enter your name and a valid email.'; return; }
-  if (p1.length < 8) { err.textContent='Password must be at least 8 characters.'; return; }
+  if (p1.length < 12) { err.textContent='Password must be at least 12 characters.'; return; }
   if (p1 !== p2) { err.textContent="Passwords don't match."; return; }
   if (!code) { err.textContent='Enter the team signup code.'; return; }
   const btn = document.getElementById('signupBtn'); btn.textContent='Creating…';
+  if (useGateway()){
+    let d;
+    try { d = await gw('/signup', { name, email, password: p1, code }); }
+    catch(e){ err.textContent = e.message || 'Could not create account.'; btn.textContent='Create account & enter'; if((e.message||'').includes('already exists')) showSignin(); return; }
+    token = d.token; const id = d.user.id, role = d.user.role;
+    try {
+      try { reps = await load('meta/reps.json'); } catch(e){ reps = []; }
+      const colors = ['#4A6FA5','#7A9E7E','#A55050','#C9A227','#6B5B95','#3E7C8F'];
+      let rep = reps.find(r=>r.id===id);
+      if (!rep){ rep = { id, name, email, role, admin: role==='founder', color: colors[reps.length%colors.length], active:true }; reps.push(rep); }
+      else { rep.name = name; rep.email = email; rep.role = role; }
+      await save('meta/reps.json', reps, 'crm: rep '+id);
+      for (const f of ['leads','activities','outbox']){ const p=`reps/${id}/${f}.json`; if(shas[p]===undefined){ try{ await load(p); }catch(e){ shas[p]=null; await save(p, [], 'crm: init '+p); } } }
+      const store = document.getElementById('remember').checked ? localStorage : sessionStorage;
+      store.setItem('crm_t', token); localStorage.setItem('crm_email', email);
+      me = rep; await enterApp();
+    } catch(e){ err.textContent='Could not create account: '+e.message; btn.textContent='Create account & enter'; }
+    return;
+  }
   // 1) team code unlocks the shared token
   let signupDoc;
   try { let r = await fetchT('https://api.github.com/repos/'+SITE_REPO+'/contents/crm-signup.json?ref=main&t='+Date.now(), {headers:{'Accept':'application/vnd.github.raw'}}, 12000); if(!r.ok) r = await fetchT(SIGNUP_URL + '?t=' + Date.now()); signupDoc = await r.json(); }
@@ -536,10 +575,15 @@ async function signUp(){
   }catch(e){ err.textContent='Could not create account: '+e.message; btn.textContent='Create account & enter'; }
 }
 async function changeMyPass(){
-  const p1 = prompt('New password (8+ characters):'); if (p1===null) return;
-  if (p1.trim().length < 8) return toast('Use at least 8 characters');
+  const p1 = prompt('New password (12+ characters):'); if (p1===null) return;
+  if (p1.trim().length < 12) return toast('Use at least 12 characters');
   const p2 = prompt('Confirm new password:'); if (p2===null) return;
   if (p1.trim() !== p2.trim()) return toast("Passwords don't match");
+  if (useGateway()){
+    try { await gw('/set-password', { targetId: me.id, password: p1.trim() }, true); toast('Password updated'); }
+    catch(e){ toast('Failed: '+e.message); }
+    return;
+  }
   try{
     const { doc, sha } = await loadLogins();
     let u = doc.users.find(x=>x.id===me.id);
@@ -868,7 +912,10 @@ function stripQuoted(body){
   }
   let text = kept.join('\n').trim();
   const sig = text.search(/\n--\s*\n/); if(sig>=0) text = text.slice(0,sig).trim();
-  return text || body.trim();
+  if(text) return text;
+  // quote-only reply (or heuristic over-stripped): show a compact de-quoted snippet, not the whole chain
+  const fb = body.replace(/\r/g,'').split('\n').map(l=>l.replace(/^>+\s?/,'').trim()).filter(Boolean).join(' ').trim();
+  return fb.length>240 ? fb.slice(0,240)+'…' : fb;
 }
 // one unified, newest-first feed: emails (bubbles) + notes/calls/stage changes (rows)
 function renderFeed(l, hist, repName){
@@ -1441,14 +1488,22 @@ async function saveReps(msg){ try{ await save('meta/reps.json', reps, msg||'crm:
 async function setAdmin(i, v){ reps[i].admin = v; await saveReps('crm: admin '+reps[i].id); toast('Updated'); }
 async function setRole(i, v){
   reps[i].role = v;
-  try{ const { doc, sha } = await loadLogins(); const u = doc.users.find(x=>x.id===reps[i].id); if (u){ u.role = v; await saveLogins(doc, sha, 'crm: role '+reps[i].id); } }catch(e){}
+  try{
+    if (useGateway()){ await gw('/set-role', { id: reps[i].id, role: v }, true); }
+    else { const { doc, sha } = await loadLogins(); const u = doc.users.find(x=>x.id===reps[i].id); if (u){ u.role = v; await saveLogins(doc, sha, 'crm: role '+reps[i].id); } }
+  }catch(e){}
   await saveReps('crm: role '+reps[i].id); toast(reps[i].name+' → '+v);
 }
 async function resetPass(i){
   const r = reps[i];
-  const pass = prompt('Set a new password for '+r.name+' (8+ characters). They use it with their email '+(r.email||'')+'. Their old password stops working immediately:', '');
+  const pass = prompt('Set a new password for '+r.name+' (12+ characters). They use it with their email '+(r.email||'')+'. Their old password stops working immediately:', '');
   if (pass===null) return;
-  if (pass.trim().length < 8) return toast('Password must be 8+ characters');
+  if (pass.trim().length < 12) return toast('Password must be 12+ characters');
+  if (useGateway()){
+    try { await gw('/set-password', { targetId: r.id, password: pass.trim(), name: r.name, email: r.email, role: r.role }, true); toast('Password set for '+r.name); }
+    catch(e){ toast('Reset failed: '+e.message); }
+    return;
+  }
   try{
     const { doc, sha: lsha } = await loadLogins();
     const enc = await encryptToken(pass.trim(), token);
@@ -1477,9 +1532,8 @@ async function delRep(i){
     reps.splice(i,1);
     await saveReps('crm: remove rep '+r.id);
     try{
-      const { doc, sha: lsha } = await loadLogins();
-      doc.users = doc.users.filter(l=>l.id!==r.id);
-      await saveLogins(doc, lsha, 'crm: revoke login '+r.id);
+      if (useGateway()){ await gw('/remove-user', { id: r.id }, true); }
+      else { const { doc, sha: lsha } = await loadLogins(); doc.users = doc.users.filter(l=>l.id!==r.id); await saveLogins(doc, lsha, 'crm: revoke login '+r.id); }
     }catch(e){}
     refreshPool(); toast('Removed '+r.name);
   }catch(e){ toast('Remove failed: '+e.message); }
@@ -1527,7 +1581,26 @@ async function addRep(){
   const role = document.getElementById('rRole').value;
   const pass = document.getElementById('rPass').value.trim();
   if (!name || !email.includes('@')) return toast('Name and email required');
-  if (pass.length < 8) return toast('Temp password must be 8+ characters');
+  if (pass.length < 12) return toast('Temp password must be 12+ characters');
+  if (useGateway()){
+    let base = email.split('@')[0].replace(/[^a-z0-9]+/g,'') || 'rep';
+    let id = base, n=1; const taken = new Set(reps.map(r=>r.id)); while (taken.has(id)) id = base + (++n);
+    const colors = ['#4A6FA5','#7A9E7E','#A55050','#C9A227','#6B5B95','#3E7C8F'];
+    const rep = { id, name, email, role, admin: role==='founder', color: colors[reps.length%colors.length], active: true };
+    try{
+      await gw('/add-user', { id, email, name, role, password: pass }, true);
+      reps.push(rep);
+      await save('meta/reps.json', reps, 'crm: add rep '+id);
+      shas[`reps/${id}/leads.json`]=null; shas[`reps/${id}/activities.json`]=null; shas[`reps/${id}/outbox.json`]=null;
+      await save(`reps/${id}/leads.json`, [], 'crm: init '+id);
+      await save(`reps/${id}/activities.json`, [], 'crm: init '+id);
+      await save(`reps/${id}/outbox.json`, [], 'crm: init '+id);
+      fillAdmin(); toast('Added '+name);
+      prompt(name+" can sign in now with email "+email+" and this temporary password (they can change it):", pass);
+      document.getElementById('rName').value=''; document.getElementById('rEmail').value=''; document.getElementById('rPass').value='';
+    }catch(e){ toast('Failed: '+e.message); }
+    return;
+  }
   try{
     const { doc, sha: lsha } = await loadLogins();
     if (doc.users.find(u=>(u.email||'').toLowerCase()===email)) return toast('That email already has an account');
@@ -1552,7 +1625,12 @@ async function addRep(){
 async function showSignupCode(){
   const cur = prompt("The team signup code is secret (not stored in readable form). To set or rotate it, type a new code here and everyone will use it to self-register. Leave blank to cancel:", '');
   if (cur===null || !cur.trim()) return;
-  if (cur.trim().length < 6) return toast('Use at least 6 characters');
+  if (cur.trim().length < 8) return toast('Use at least 8 characters');
+  if (useGateway()){
+    try { await gw('/rotate-signup-code', { code: cur.trim() }, true); toast('Signup code updated'); }
+    catch(e){ toast('Failed: '+e.message); }
+    return;
+  }
   try{
     // re-encrypt the shared token under the new signup code
     const enc = await encryptToken(cur.trim(), token);
