@@ -125,17 +125,40 @@ section{padding:132px 0;position:relative}
 .ov-foot .acts{display:flex;gap:12px;flex-wrap:wrap}
 .sec-top{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
 
-.cs{margin-top:40px}
-.cs-card{border-top:1px solid var(--line);padding:46px 0}
-.cs-head{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:flex-start}
-.cs-head .tag{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.cs-head h3{font-size:30px;margin:8px 0 5px;font-weight:400}
-.cs-meta{font-size:13.5px;color:var(--muted)}
-.cs-pill{text-align:right}
-.cs-pill .big{font-family:var(--serif);font-size:34px;font-weight:300}
-.cs-pill small{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:5px}
-.cs-desc{font-family:var(--serif);font-size:20px;font-weight:300;margin:20px 0 22px;max-width:680px}
-.cs-bullets{display:grid;grid-template-columns:1fr 1fr;gap:11px 30px;margin-bottom:26px}
+/* Case Studies — filterable index grid of clickable cards */
+.csfilter{display:flex;flex-wrap:wrap;gap:10px}
+.fbtn{font-family:var(--sans);font-size:13px;color:var(--ink2);background:transparent;border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer;transition:background .2s,border-color .2s,color .2s}
+.fbtn:hover{border-color:var(--ink)}
+.fbtn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+.csgrid{display:grid;grid-template-columns:repeat(2,1fr);margin-top:30px;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.cscard{display:flex;flex-direction:column;padding:38px 34px 30px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);color:inherit;transition:background .25s}
+.cscard.hide{display:none}
+.cscard:hover{background:var(--paper2)}
+.cscard .tag{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.cscard h3{font-family:var(--serif);font-size:26px;font-weight:400;margin:13px 0 6px;letter-spacing:-.015em}
+.cscard .meta{font-size:13px;color:var(--muted)}
+.cscard .blurb{font-family:var(--serif);font-weight:300;font-size:18px;line-height:1.42;margin:18px 0 28px;color:var(--ink)}
+.cscard .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:18px;padding-top:22px;border-top:1px solid var(--line2)}
+.cscard .foot .m{display:flex;flex-direction:column}
+.cscard .foot .m b{font-family:var(--serif);font-weight:300;font-size:24px;line-height:1.1}
+.cscard .foot .m small{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.cscard .view{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink);white-space:nowrap}
+.cscard .view svg{transition:transform .25s}
+.cscard:hover .view svg{transform:translateX(3px)}
+
+/* Case study detail page */
+.cs-detail-head .backlink{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,.6);margin-bottom:22px;transition:color .2s}
+.cs-detail-head .backlink:hover{color:#fff}
+.cs-bullets-lg{margin-bottom:0}
+.cs-bullets-lg li{font-size:16px}
+.cs-related{display:flex;flex-direction:column;gap:3px;margin-top:34px;padding:22px 24px;border:1px solid var(--line);border-radius:10px;background:var(--paper2);color:var(--ink);max-width:520px;transition:border-color .2s}
+.cs-related:hover{border-color:var(--ink)}
+.cs-related span{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.cs-related svg{vertical-align:middle}
+.cs-nav{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:44px;padding-top:32px;border-top:1px solid var(--line)}
+
+.cs-bullets{display:grid;grid-template-columns:1fr 1fr;gap:13px 30px;margin-bottom:26px}
 .cs-bullets li{list-style:none;color:var(--ink2);font-size:14.5px;padding-left:20px;position:relative}
 .cs-bullets li::before{content:"—";position:absolute;left:0;color:var(--muted)}
 .rollup{width:100%;border-collapse:collapse;font-size:14px;border:1px solid var(--line)}
@@ -212,7 +235,9 @@ html.js .reveal.in{opacity:1;transform:none}
   .step,.cell,.member{border-right:none}
   .cs-bullets{grid-template-columns:1fr}
   section{padding:72px 0}
-  .cs-pill{text-align:left}
+  .csgrid{grid-template-columns:1fr}
+  .cscard{border-right:none}
+  .cs-nav .btn{flex:1;justify-content:center}
   .rollup{font-size:12.5px}.rollup th,.rollup td{padding:10px 11px}
   .cmp{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;font-size:13.5px}
   .cmp th,.cmp td{padding:14px 12px;white-space:nowrap}

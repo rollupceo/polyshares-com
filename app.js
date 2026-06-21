@@ -10,5 +10,15 @@ document.querySelectorAll('.faq-q').forEach(q=>q.addEventListener('click',()=>{
   document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
   if(!open)it.classList.add('open');
 }));
+const csf=document.getElementById('csfilter');
+if(csf){
+  const cards=document.querySelectorAll('#csgrid .cscard');
+  csf.querySelectorAll('.fbtn').forEach(b=>b.addEventListener('click',()=>{
+    csf.querySelectorAll('.fbtn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const f=b.dataset.f;
+    cards.forEach(c=>c.classList.toggle('hide',f!=='all'&&c.dataset.cat!==f));
+  }));
+}
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.1});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
