@@ -876,6 +876,8 @@ function gmailGetToken(interactive){
 }
 async function connectGmail(){ try { await gmailGetToken(true); toast('Gmail connected'); if(document.getElementById('gmailState')) document.getElementById('gmailState').textContent='Sends as you · '+(me.email||''); } catch(e){ toast('Connect failed: '+e.message); } }
 function b64url(s){ return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+// RFC 2047 encoded-word so non-ASCII (em dashes, accents, emoji) survive in headers
+function encHeader(s){ s=s||''; if(/^[\x00-\x7F]*$/.test(s)) return s; return '=?UTF-8?B?'+btoa(unescape(encodeURIComponent(s)))+'?='; }
 async function sendGmail(id){
   const l = myLeads.find(x=>x.i===id); if(!l) return;
   const to=(document.getElementById('ec_to').value||'').trim(), su=(document.getElementById('ec_su').value||'').trim(), body=document.getElementById('ec_body').value||'';
@@ -884,7 +886,7 @@ async function sendGmail(id){
   const btn=document.getElementById('ec_send'); btn.disabled=true; btn.textContent='Sending…';
   try{
     const tok=await gmailGetToken(false);
-    const mime=['To: '+to,'Subject: '+su,'Content-Type: text/plain; charset=UTF-8','MIME-Version: 1.0','',body].join('\r\n');
+    const mime=['To: '+to,'Subject: '+encHeader(su),'Content-Type: text/plain; charset=UTF-8','MIME-Version: 1.0','',body].join('\r\n');
     const r=await fetchT('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({raw:b64url(mime)})},20000);
     if(!r.ok){ if(r.status===401){ gmailTok=null; throw new Error('Gmail needs reconnecting'); } throw new Error('send failed '+r.status); }
     l.la=Date.now(); logAct(l,'email', su||'(no subject)'); markDirty('leads');
