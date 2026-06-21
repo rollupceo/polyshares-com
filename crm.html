@@ -142,6 +142,14 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .tl-note .tl-meta{margin:0 0 6px}
 .tl-note .tl-text{font-size:14px;line-height:1.55;color:var(--ink);white-space:pre-wrap;word-break:break-word}
 .tl-empty{color:var(--muted);font-size:13px}
+.mailthread{display:flex;flex-direction:column;gap:9px}
+.mailmsg{border:1px solid var(--line);border-radius:10px;padding:11px 13px;max-width:88%}
+.mailmsg.out{background:#eef4ff;border-color:#d6e3fb;align-self:flex-end}
+.mailmsg.in{background:#fff;align-self:flex-start}
+.mailmeta{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted);margin-bottom:4px}
+.mailmeta .mailwho{font-weight:600;color:var(--ink)}
+.mailsubj{font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.mailbody{font-size:13.5px;line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word}
 #cardpop{position:fixed;z-index:70;width:240px;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 16px 44px rgba(0,0,0,.22);padding:14px;display:none;flex-direction:column;gap:8px}
 #cardpop.open{display:flex}
 #cardpop .cp-h{font-weight:600;font-size:13px;margin-bottom:2px}
@@ -592,11 +600,12 @@ function renderPipelineBar(){
     <div class="pstat"><div class="pl">Weighted forecast</div><div class="pn">${moneyFull(Math.round(weighted))}</div><div class="pl">by stage probability</div></div>
     <div class="pstat"><div class="pl">Won</div><div class="pn">${moneyFull(won)}</div><div class="pl">${src.filter(l=>l.st==='Paid & Closed').length} closed</div></div>`;
 }
-let boardLeads = null, viewingRepId = null;   // admin "view another rep's pipeline" (read-only)
+let boardLeads = null, viewingRepId = null, viewingActs = [];   // admin "view another rep's pipeline" (read-only)
 async function setBoardRep(id){
   if (!id){ boardLeads = null; viewingRepId = null; renderBoard(); return; }
   viewingRepId = id;
   try { boardLeads = await load(`reps/${id}/leads.json`); } catch(e){ boardLeads = []; }
+  try { viewingActs = await load(`reps/${id}/activities.json`); } catch(e){ viewingActs = []; }
   renderBoard();
 }
 function renderBoard(){
@@ -618,7 +627,9 @@ function renderBoard(){
     for (const l of leads.slice(0,lim)){
       const c = document.createElement('div'); c.className='card'; c.dataset.id=l.i;
       if (readOnly){
-        c.innerHTML = `<div class="nm">${esc(leadName(l))}</div><div class="co">${esc(l.co)}</div><div class="ti">${esc(l.ti)}</div>${l.v?`<div class="cv">${moneyFull(l.v)}</div>`:''}`;
+        c.style.cursor='pointer';
+        c.innerHTML = `<div class="nm">${esc(leadName(l))}</div><div class="co">${esc(l.co)}</div><div class="ti">${esc(l.ti)}</div>${l.v?`<div class="cv">${moneyFull(l.v)}</div>`:''}${(l.mail&&l.mail.length)?`<div class="ti" style="color:var(--accent)">✉ ${l.mail.length} email${l.mail.length>1?'s':''}</div>`:''}`;
+        c.onclick = () => openRODrawer(l.i);
       } else {
         c.draggable=true;
         c.innerHTML = `<div class="nm">${esc(leadName(l))}</div><div class="co">${esc(l.co)}</div><div class="ti">${esc(l.ti)}</div>
@@ -785,9 +796,9 @@ function whenText(ts){ const d=Math.round((ts-Date.now())/DAY); if(d<-1)return M
 const TL_IC={call:'📞',email:'✉️',li:'in',note:'📝',stage:'◆',meeting:'🗓️',todo:'✓'};
 const TL_LB={call:'Logged a call',email:'Logged an email',li:'LinkedIn touch',meeting:'Meeting',todo:'Task'};
 function fmtWhen(t){ return new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
-function renderTimeline(hist){
+function renderTimeline(hist, whoName){
   if(!hist.length) return '<div class="tl-empty">No activity logged yet — log a call, email, or note and it will appear here.</div>';
-  const who = (me&&me.name) ? me.name : '';
+  const who = (whoName!=null) ? whoName : ((me&&me.name) ? me.name : '');
   return '<div class="tl">'+hist.map(a=>{
     const meta = fmtWhen(a.t) + (who?(' · '+esc(who)):'');
     if(a.ty==='note'){
@@ -796,6 +807,23 @@ function renderTimeline(hist){
     const title = a.ty==='stage' ? ('Moved to '+esc(a.d||'')) : ((TL_LB[a.ty]||esc(a.ty))+(a.d?(' · '+esc(a.d)):''));
     return `<div class="tl-row"><div class="tl-ic">${TL_IC[a.ty]||'•'}</div><div class="tl-main"><div class="tl-title">${title}</div><div class="tl-meta">${meta}</div></div></div>`;
   }).join('')+'</div>';
+}
+function fmtMailWhen(ts){ try{ const d=new Date(ts); return d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; } }
+function renderThread(l, repName){
+  const mail = (l && l.mail) || [];
+  if(!mail.length) return '';
+  const rep = repName || (l && l.repName) || ((me&&me.name)?me.name:'Rep');
+  const rows = mail.map(m=>{
+    const inbound = m.dir==='in';
+    const label = inbound ? esc(l.nm||l.co||(m.from||'').replace(/<.*>/,'').trim()||'Lead') : esc(rep);
+    const body = esc(m.body||'').replace(/\n/g,'<br>');
+    return `<div class="mailmsg ${inbound?'in':'out'}">
+      <div class="mailmeta"><span class="mailwho">${inbound?'← '+label:label+' →'}</span><span class="mailwhen">${fmtMailWhen(m.ts)}</span></div>
+      ${m.subject?`<div class="mailsubj">${esc(m.subject)}</div>`:''}
+      <div class="mailbody">${body}</div>
+    </div>`;
+  }).join('');
+  return `<div class="subhead2" style="margin-top:18px">Email conversation</div><div class="mailthread">${rows}</div>`;
 }
 async function renderActivity(){
   updateActivityBadge();
@@ -835,7 +863,7 @@ function gmailReady(){ return !!GMAIL_CLIENT_ID; }
 function gmailClient(){
   if (gmailTC) return gmailTC;
   if (!(window.google && google.accounts && google.accounts.oauth2)) return null;
-  gmailTC = google.accounts.oauth2.initTokenClient({ client_id: GMAIL_CLIENT_ID, scope: 'https://www.googleapis.com/auth/gmail.send', callback: ()=>{} });
+  gmailTC = google.accounts.oauth2.initTokenClient({ client_id: GMAIL_CLIENT_ID, scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly', callback: ()=>{} });
   return gmailTC;
 }
 function gmailGetToken(interactive){
@@ -860,8 +888,49 @@ async function sendGmail(id){
     const r=await fetchT('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify({raw:b64url(mime)})},20000);
     if(!r.ok){ if(r.status===401){ gmailTok=null; throw new Error('Gmail needs reconnecting'); } throw new Error('send failed '+r.status); }
     l.la=Date.now(); logAct(l,'email', su||'(no subject)'); markDirty('leads');
-    toast('Email sent ✓'); openDrawer(id);
+    toast('Email sent ✓');
+    setTimeout(()=>gmailSync(id, true), 1500);  // pull the just-sent message into the thread
+    openDrawer(id);
   }catch(e){ btn.disabled=false; btn.textContent='Send'; toast('Send failed: '+e.message); }
+}
+function hdr(h, name){ const x=(h||[]).find(z=>z.name.toLowerCase()===name); return x?x.value:''; }
+function decodeB64Url(s){ try{ return decodeURIComponent(escape(atob((s||'').replace(/-/g,'+').replace(/_/g,'/')))); }catch(e){ try{ return atob((s||'').replace(/-/g,'+').replace(/_/g,'/')); }catch(e2){ return ''; } } }
+function extractBody(payload){
+  if(!payload) return '';
+  if(payload.mimeType==='text/plain' && payload.body && payload.body.data) return decodeB64Url(payload.body.data);
+  if(payload.parts){ for(const p of payload.parts){ const t=extractBody(p); if(t) return t; } }
+  if(payload.body && payload.body.data) return decodeB64Url(payload.body.data);
+  return '';
+}
+let gmailSyncing={};
+async function gmailSync(id, force){
+  const l = myLeads.find(x=>x.i===id); if(!l || !l.em) return;
+  if(!gmailReady() || !GMAIL_CLIENT_ID) return;
+  if(gmailSyncing[id]) return;
+  const last = l.mailSync||0;
+  if(!force && Date.now()-last < 120000) return;  // throttle: at most every 2 min per lead
+  gmailSyncing[id]=true;
+  try{
+    const tok = await gmailGetToken(false);
+    const q = encodeURIComponent(`{to:${l.em} from:${l.em}}`);
+    const lr = await fetchT(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=25&q=${q}`,{headers:{'Authorization':'Bearer '+tok}},15000);
+    if(!lr.ok){ if(lr.status===403) toast('Gmail read not authorized — click Connect Gmail to grant access'); throw new Error('list '+lr.status); }
+    const lj = await lr.json(); const ids=(lj.messages||[]).map(m=>m.id);
+    const myAddr=(me.email||'').toLowerCase(), leadAddr=l.em.toLowerCase();
+    const msgs=[];
+    for(const mid of ids.slice(0,25)){
+      const mr=await fetchT(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${mid}?format=full`,{headers:{'Authorization':'Bearer '+tok}},15000);
+      if(!mr.ok) continue; const m=await mr.json();
+      const h=m.payload&&m.payload.headers; const from=hdr(h,'from'), to=hdr(h,'to');
+      const dir = from.toLowerCase().includes(leadAddr) ? 'in' : 'out';
+      msgs.push({ id:mid, dir, from, to, ts: Number(m.internalDate)||Date.now(), subject: hdr(h,'subject'), body: (extractBody(m.payload)||m.snippet||'').slice(0,4000) });
+    }
+    msgs.sort((a,b)=>a.ts-b.ts);
+    l.mail = msgs; l.mailSync = Date.now();
+    markDirty('leads');
+    if(document.getElementById('drawer').classList.contains('open')) openDrawer(id);
+  }catch(e){ /* silent — keep cached thread */ }
+  finally{ gmailSyncing[id]=false; }
 }
 function emailLead(id){
   const l = myLeads.find(x=>x.i===id); if(!l) return;
@@ -981,13 +1050,35 @@ function openDrawer(id){
       </div>`:''}
     </div>
     ${tasks.length ? `<div class="subhead2">Upcoming</div>`+tasks.map(t=>`<div class="tkrow"><span>${taskLabel(t.ty)}${t.note?' · '+esc(t.note):''}</span><span class="when">${whenText(t.due)}</span><button class="btn sm" onclick="completeTask('${t.id}')">Done</button><button class="btn sm ghost" onclick="delTask('${t.id}');openDrawer('${l.i}')">✕</button></div>`).join('') : ''}
-    <div class="subhead2" style="margin-top:${tasks.length?'18px':'0'}">Timeline</div>
+    ${renderThread(l)}
+    <div class="subhead2" style="margin-top:18px">Timeline</div>
     ${renderTimeline(hist)}`;
 
   document.getElementById('dBody').innerHTML = `<div class="stepper">${stepper}</div><div class="dealgrid"><div class="dealcol-left">${left}</div><div class="dealcol-right">${right}</div></div>`;
   document.getElementById('drawer').classList.add('open'); document.getElementById('drawerback').classList.add('open');
+  if(l.em && gmailReady()) gmailSync(l.i, false);
 }
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerback').classList.remove('open'); }
+function openRODrawer(id){
+  const l = (boardLeads||[]).find(x=>x.i===id); if(!l) return;
+  const repName = ((reps.find(r=>r.id===viewingRepId)||{}).name)||viewingRepId;
+  document.getElementById('dName').textContent = leadName(l);
+  document.getElementById('dCo').textContent = [l.ti, l.co, '· '+repName+"'s lead"].filter(Boolean).join(' ');
+  const hist = (viewingActs||[]).filter(a=>a.l===id).sort((a,b)=>b.t-a.t).slice(0,40);
+  const left = `
+    <div class="fld"><b>Email</b>${l.em?esc(l.em):'—'}</div>
+    <div class="fld"><b>Phone</b>${l.ph?esc(l.ph):'—'}</div>
+    <div class="fld"><b>LinkedIn</b>${l.li?`<a href="${esc(l.li)}" target="_blank" rel="noopener">profile ↗</a>`:'—'}</div>
+    <div class="fld"><b>Location</b>${esc([l.ci,l.stt].filter(Boolean).join(', ')) || '—'}</div>
+    <div class="fld"><b>Industry</b>${esc(l.in||'—')} ${l.sz?`<span class="tag">${esc(l.sz)} emp</span>`:''}</div>
+    <div class="fld"><b>Stage</b><span class="tag">${esc(l.st||'New')}</span></div>
+    <div class="fld"><b>Deal value</b>${l.v?moneyFull(l.v):'—'}</div>`;
+  const right = `${renderThread(l, repName) || '<div class="tl-empty">No emails synced for this lead yet.</div>'}
+    <div class="subhead2" style="margin-top:18px">Timeline</div>
+    ${renderTimeline(hist, repName)}`;
+  document.getElementById('dBody').innerHTML = `<div style="background:var(--paper3);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:12.5px;color:var(--muted)">Read-only — viewing ${esc(repName)}'s lead</div><div class="dealgrid"><div class="dealcol-left">${left}</div><div class="dealcol-right">${right}</div></div>`;
+  document.getElementById('drawer').classList.add('open'); document.getElementById('drawerback').classList.add('open');
+}
 function compTab(which){
   ['note','act','email'].forEach(k=>{ const el=document.getElementById('comp-'+k); if(el) el.style.display = (k===which?'':'none'); const tb=document.getElementById('ct-'+k); if(tb) tb.classList.toggle('on', k===which); });
 }
