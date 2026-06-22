@@ -116,22 +116,29 @@ const CASES = [
     cat: 'bespoke',
     name: 'Simplicity Power',
     meta: 'Residential installation · $35M revenue · acquired by NXT Level Homes, 2025',
-    metricBig: '$500K–$650K',
-    metricUnit: 'EBITDA / location / yr',
+    metricBig: '~$624K',
+    metricUnit: 'Annual EBITDA impact',
     blurb: 'Scheduling engine replaces guesswork with math. $12K/week in hidden labor — recovered.',
-    lead: 'A scheduling engine that replaces dispatcher guesswork with an ILP solver — optimizing crew-to-job assignment across cost, skill and geography, and recovering $12K/week of hidden labor inefficiency on day one.',
+    lead: 'A scheduling engine that replaces dispatcher guesswork with an ILP solver — optimizing crew-to-job assignment across cost, skill and geography, and recovering $12K/week of hidden labor inefficiency at a single $35M-revenue operator.',
     bullets: [
       'ILP solver optimizes crew-to-job assignment across cost, skill & geography',
       '$12K/week in labor inefficiency eliminated on day one',
       'Dozens of construction-manager hours returned per week',
       'Deployed and live within the engagement',
     ],
-    rollupHead: ['Platform Size', 'EBITDA Impact', 'EV (8–10x)'],
-    rollup: [
-      ['5 locations', '$2.5M – $3.25M', '$20M – $32.5M'],
-      ['10 locations', '$5M – $6.5M', '$40M – $65M'],
-      ['25 locations', '$12.5M – $16.25M', '$100M – $162.5M'],
-    ],
+    scale: {
+      eyebrow: 'The business case',
+      leadHtml: 'A single <em>middle-market</em> operator.',
+      head: ['Metric', 'Result'],
+      rows: [
+        ['Labor inefficiency recovered', '$12K / week'],
+        ['Annualized EBITDA impact', '~$624K / year'],
+        ['Construction-manager hours returned', 'Dozens / week'],
+        ['Business revenue', '$35M'],
+        ['Time to live', 'Within the engagement'],
+      ],
+      note: 'Figures reflect a single ~$35M-revenue operator — not a portfolio rollup.',
+    },
     related: { slug: 'case-simplicity-invoicing', label: 'Invoice verification at Simplicity Power' },
   },
   {
@@ -140,22 +147,28 @@ const CASES = [
     cat: 'automation',
     name: 'Simplicity Power',
     meta: 'Residential installation · $35M revenue · acquired by NXT Level Homes, 2025',
-    metricBig: '$100K–$156K',
-    metricUnit: 'EBITDA / location / yr',
+    metricBig: '$104K–$156K',
+    metricUnit: 'Annual EBITDA impact',
     blurb: 'Supplier invoice verification. Expert judgment automated, offshore-executable.',
-    lead: 'Supplier invoice verification turned into an automated check against contracted pricing — moving expert judgment off the senior construction manager and onto an offshore bookkeeper, with no loss of accuracy.',
+    lead: 'Supplier invoice verification turned into an automated check against contracted pricing — moving expert judgment off the senior construction manager and onto an offshore bookkeeper, with no loss of accuracy, at a single $35M-revenue operator.',
     bullets: [
       'Every supplier invoice auto-checked against contracted pricing',
       '$2–3K/week in mispricing and overbilling recovered',
       'Review moved from senior CM to offshore bookkeeper — same accuracy',
-      'Scales across every acquired location with no added senior headcount',
+      'Repeatable every week with no added senior headcount',
     ],
-    rollupHead: ['Platform Size', 'EBITDA Impact', 'EV (8–10x)'],
-    rollup: [
-      ['10 locations', '$1M – $1.56M', '$8M – $15.6M'],
-      ['25 locations', '$2.5M – $3.9M', '$20M – $39M'],
-      ['50 locations', '$5M – $7.8M', '$40M – $78M'],
-    ],
+    scale: {
+      eyebrow: 'The business case',
+      leadHtml: 'A single <em>middle-market</em> operator.',
+      head: ['Metric', 'Result'],
+      rows: [
+        ['Mispricing & overbilling recovered', '$2–3K / week'],
+        ['Annualized EBITDA impact', '$104K–$156K / year'],
+        ['Review cost', 'Senior CM → offshore bookkeeper'],
+        ['Business revenue', '$35M'],
+      ],
+      note: 'Figures reflect a single ~$35M-revenue operator — not a portfolio rollup.',
+    },
     related: { slug: 'case-simplicity-scheduling', label: 'Scheduling engine at Simplicity Power' },
   },
   {
@@ -278,7 +291,7 @@ function buildIndex() {
   <div class="csgrid" id="csgrid">
 ${cards}
   </div>
-  <p class="note">EV assumes 8–10x EBITDA multiple at exit. Click any case study for the full breakdown and platform-scale math.</p>
+  <p class="note">Portfolio figures assume an 8–10x EBITDA multiple at exit. Click any case study for the full breakdown.</p>
 </section>
 
 <section class="final">
@@ -298,10 +311,21 @@ function buildDetail(c) {
   const next = CASES[(idx + 1) % CASES.length];
 
   const bullets = c.bullets.map((b) => `<li>${esc(b)}</li>`).join('');
-  const rollHead = c.rollupHead.map((h) => `<th>${esc(h)}</th>`).join('');
-  const rollBody = c.rollup
+
+  // Default cases use the platform-scale rollup; a case can override with its
+  // own `scale` block (e.g. a single middle-market operator, not a rollup).
+  const sc = c.scale || {
+    eyebrow: 'At platform scale',
+    leadHtml: 'What it means across a <em>portfolio.</em>',
+    head: c.rollupHead,
+    rows: c.rollup,
+    note: 'EV assumes 8–10x EBITDA multiple at exit.',
+  };
+  const rollHead = sc.head.map((h) => `<th>${esc(h)}</th>`).join('');
+  const rollBody = sc.rows
     .map((r) => `<tr>${r.map((d) => `<td>${esc(d)}</td>`).join('')}</tr>`)
     .join('');
+  const noteHtml = sc.note ? `  <p class="note">${esc(sc.note)}</p>\n` : '';
 
   const related = c.related
     ? `      <a class="cs-related" href="${c.related.slug}"><span>Related engagement</span>${esc(c.related.label)} ${arrow}</a>\n`
@@ -334,13 +358,12 @@ function buildDetail(c) {
 </section>
 
 <section class="wrap reveal">
-  <div class="sec-head"><div class="eyebrow lined">At platform scale</div><h2 class="lead">What it means across a <em>portfolio.</em></h2></div>
+  <div class="sec-head"><div class="eyebrow lined">${esc(sc.eyebrow)}</div><h2 class="lead">${sc.leadHtml}</h2></div>
   <table class="rollup">
     <thead><tr>${rollHead}</tr></thead>
     <tbody>${rollBody}</tbody>
   </table>
-  <p class="note">EV assumes 8–10x EBITDA multiple at exit.</p>
-${related}  <div class="cs-nav">
+${noteHtml}${related}  <div class="cs-nav">
     <a class="btn btn-outline" href="case-studies">← All case studies</a>
     <a class="btn btn-outline" href="${next.slug}">Next: ${esc(next.name)} →</a>
   </div>
