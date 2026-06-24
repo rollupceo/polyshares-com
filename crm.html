@@ -301,7 +301,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 <main>
   <section id="v-board">
     <div id="pipebar" class="pipebar"></div>
-    <div class="row"><input id="qsearch" placeholder="Search leads…" style="flex:1;min-width:160px" oninput="renderBoard()" /><select id="boardRep" onchange="setBoardRep(this.value)" style="padding:8px;display:none"></select><button class="btn" onclick="newLead()">+ New lead</button></div>
+    <div class="row"><input id="qsearch" placeholder="Search by name, email, phone…" style="flex:1;min-width:160px" oninput="renderBoard()" /><select id="boardRep" onchange="setBoardRep(this.value)" style="padding:8px;display:none"></select><button class="btn" onclick="newLead()">+ New lead</button></div>
     <div id="boardBanner" style="display:none;align-items:center;gap:10px;background:var(--paper3);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-top:10px;font-size:13px"><span></span><button class="btn sm ghost" style="margin-left:auto" onclick="document.getElementById('boardRep').value='';setBoardRep('')">Back to my board</button></div>
     <div class="board" id="board" style="margin-top:14px"></div>
   </section>
@@ -321,9 +321,9 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <div id="repliesWrap" style="margin-top:12px"></div>
   </section>
   <section id="v-leads" style="display:none">
-    <div class="row"><input id="tsearch" placeholder="Filter by name, company, title, state, industry…" style="width:300px" oninput="renderTable()" /><select id="tstage" onchange="renderTable()" style="padding:8px"><option value="">All stages</option></select><button class="btn ghost" onclick="newLead()">+ New lead</button><span id="tcount" style="color:var(--muted);font-size:12.5px"></span></div>
+    <div class="row"><input id="tsearch" placeholder="Search by name, email, phone, company, title…" style="width:300px" oninput="renderTable()" /><select id="tstage" onchange="renderTable()" style="padding:8px"><option value="">All stages</option></select><select id="tlist" onchange="renderTable()" style="padding:8px"><option value="">All lists</option></select><button class="btn ghost" onclick="newLead()">+ New lead</button><span id="tcount" style="color:var(--muted);font-size:12.5px"></span></div>
     <div id="bulkBar" style="display:none" class="row" style="margin-top:8px"></div>
-    <div style="overflow-x:auto;margin-top:8px"><table class="tbl"><thead><tr><th style="width:28px"><input type="checkbox" id="selAll" onchange="toggleSelAll(this.checked)" style="width:auto" /></th><th>Name</th><th>Company</th><th>Title</th><th>State</th><th>Value</th><th>Stage</th><th>Last activity</th></tr></thead><tbody id="tbody"></tbody></table></div>
+    <div style="overflow-x:auto;margin-top:8px"><table class="tbl"><thead><tr><th style="width:28px"><input type="checkbox" id="selAll" onchange="toggleSelAll(this.checked)" style="width:auto" /></th><th>Name</th><th>Company</th><th>Title</th><th>State</th><th>Value</th><th>List</th><th>Stage</th><th>Last activity</th></tr></thead><tbody id="tbody"></tbody></table></div>
   </section>
   <section id="v-metrics" style="display:none">
     <div class="row"><b style="font-family:var(--serif);font-size:20px">Analytics</b><select id="mRange" onchange="computeMetrics()" style="padding:8px;margin-left:auto"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option><option value="0">All time</option></select></div>
@@ -348,13 +348,17 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
       <div id="probEditor"></div>
       <button class="btn sm" style="margin-top:12px" onclick="saveProb()">Save probabilities</button>
     </div>
-    <div class="panel"><h3>Assign leads from pool</h3>
-      <div class="row"><select id="aRep"></select><input id="aCount" type="number" value="2000" min="1" max="5000" style="width:90px" /><button class="btn" id="aGo" onclick="assignLeads()">Assign from pool</button></div>
-      <div style="font-size:12.5px;color:var(--muted)">Pool remaining: <span id="poolN">…</span></div>
+    <div class="panel"><h3>Lead lists</h3>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Each uploaded CSV is its own list. Assign different lists to different reps below.</div>
+      <div id="listsTable"></div>
+    </div>
+    <div class="panel"><h3>Assign leads</h3>
+      <div class="row"><select id="aList" style="padding:8px;min-width:180px"></select><select id="aRep"></select><input id="aCount" type="number" value="2000" min="1" max="50000" style="width:100px" /><label style="font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:5px"><input type="checkbox" id="aAll" style="width:auto" onchange="document.getElementById('aCount').disabled=this.checked" /> all</label><button class="btn" id="aGo" onclick="assignLeads()">Assign</button></div>
+      <div style="font-size:12.5px;color:var(--muted)">Pulls leads from the chosen list into the rep's board. Assigned leads are tagged with the list name.</div>
     </div>
     <div class="panel"><h3>Import leads (CSV)</h3>
-      <div class="row"><input type="file" id="csvFile" accept=".csv" /><button class="btn" onclick="importCsv()">Import to pool</button></div>
-      <div style="font-size:12.5px;color:var(--muted)">HubSpot-style headers (First Name, Last Name, Email, Job Title, Company Name…). Added to the unassigned pool.</div>
+      <div class="row"><input type="file" id="csvFile" accept=".csv" /><select id="impList" style="padding:8px" onchange="document.getElementById('impName').style.display=this.value==='__new'?'':'none'"><option value="__new">+ New list…</option></select><input id="impName" placeholder="New list name" style="width:170px" /><button class="btn" onclick="importCsv()">Import</button></div>
+      <div style="font-size:12.5px;color:var(--muted)">HubSpot-style headers (First Name, Last Name, Email, Job Title, Company Name…). Each upload becomes a named list you can assign separately.</div>
     </div>
     <div id="log"></div>
   </section>
@@ -653,7 +657,7 @@ document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
   if (v==='metrics') renderMetrics();
   if (v==='leads') renderTable();
   if (v==='replies') renderReplies();
-  if (v==='team') { refreshPool(); renderProbEditor(); }
+  if (v==='team') { refreshLists(); renderProbEditor(); }
   if (v==='work') workSub(workCur);
 });
 let workCur='queue';
@@ -669,7 +673,9 @@ function goWork(which){ document.querySelector('[data-v=work]').click(); workSub
 
 /* ---------- board ---------- */
 function leadName(l){ return (l.fn+' '+l.ln).trim() || l.em || l.co; }
-function matches(l, q){ if(!q) return true; q=q.toLowerCase(); return [l.fn,l.ln,l.co,l.ti,l.st_,l.st,l.in,l.em].some(v => (v||'').toLowerCase().includes(q)); }
+function matches(l, q){ if(!q) return true; q=q.toLowerCase();
+  if ([l.fn,l.ln,l.co,l.ti,l.st_,l.st,l.in,l.em,l.ph].some(v => (v||'').toLowerCase().includes(q))) return true;
+  const qd = q.replace(/\D/g,''); return qd.length>=3 && (l.ph||'').replace(/\D/g,'').includes(qd); }
 function renderPipelineBar(){
   const bar = document.getElementById('pipebar'); if (!bar) return;
   const src = viewingRepId ? (boardLeads||[]) : myLeads;
@@ -1212,6 +1218,7 @@ function openDrawer(id){
     <div class="fld"><b>Website</b>${l.ws?`<a href="https://${esc(l.ws.replace(/^https?:\/\//,''))}" target="_blank" rel="noopener">${esc(l.ws)}</a>`:'—'}</div>
     <div class="fld"><b>Location</b>${esc([l.ci,l.stt].filter(Boolean).join(', ')) || esc(l.ci||'—')}</div>
     <div class="fld"><b>Industry</b>${esc(l.in||'—')} ${l.sz?`<span class="tag">${esc(l.sz)} emp</span>`:''}</div>
+    ${l.lstName?`<div class="fld"><b>List</b><span class="tag">${esc(l.lstName)}</span></div>`:''}
     <div class="fld" style="margin-top:10px"><b>Deal value</b>$<input type="number" min="0" step="500" value="${l.v||''}" placeholder="0" onchange="setValue('${l.i}', this.value)" style="width:110px" /> <span style="color:var(--muted);font-size:11.5px">${prob(cur)}% likely</span></div>
     ${l.lreason?`<div class="fld"><b>Lost reason</b>${esc(l.lreason)}</div>`:''}${l.wnote?`<div class="fld"><b>Won note</b>${esc(l.wnote)}</div>`:''}
     <div class="fld"><b>Follow up</b><input type="date" value="${l.fu?new Date(l.fu).toISOString().slice(0,10):''}" onchange="setFu('${l.i}', this.value)" /></div>
@@ -1321,13 +1328,17 @@ let sel = new Set();
 function renderTable(){
   const sf = document.getElementById('tstage');
   if (sf && sf.options.length<=1) sf.innerHTML = '<option value="">All stages</option>' + stages.map(s=>`<option>${s}</option>`).join('');
+  const lf = document.getElementById('tlist');
+  if (lf){ const names=[...new Set(myLeads.map(l=>l.lstName).filter(Boolean))].sort(); const cur=lf.value; lf.innerHTML='<option value="">All lists</option>'+names.map(n=>`<option ${n===cur?'selected':''}>${esc(n)}</option>`).join(''); }
   const q = document.getElementById('tsearch').value.trim();
   const stg = sf ? sf.value : '';
-  const rows = myLeads.filter(l=>matches(l,q) && (!stg || (l.st||'New')===stg)).slice(0,500);
+  const lst = lf ? lf.value : '';
+  const rows = myLeads.filter(l=>matches(l,q) && (!stg || (l.st||'New')===stg) && (!lst || l.lstName===lst)).slice(0,500);
   document.getElementById('tcount').textContent = `${rows.length}${rows.length===500?'+':''} of ${myLeads.length}`;
   document.getElementById('tbody').innerHTML = rows.map(l=>`<tr style="cursor:pointer">
     <td onclick="event.stopPropagation()"><input type="checkbox" ${sel.has(l.i)?'checked':''} onchange="toggleSel('${l.i}', this.checked)" style="width:auto" /></td>
     <td onclick="openDrawer('${l.i}')"><b>${esc(leadName(l))}</b></td><td onclick="openDrawer('${l.i}')">${esc(l.co)}</td><td onclick="openDrawer('${l.i}')">${esc(l.ti)}</td><td onclick="openDrawer('${l.i}')">${esc(l.stt||l.st_||'')}</td><td onclick="openDrawer('${l.i}')">${l.v?moneyFull(l.v):'—'}</td>
+    <td onclick="openDrawer('${l.i}')">${l.lstName?`<span class="tag">${esc(l.lstName)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
     <td onclick="openDrawer('${l.i}')"><span class="tag">${esc(l.st||'New')}</span></td><td onclick="openDrawer('${l.i}')" style="color:var(--muted)">${l.la?new Date(l.la).toLocaleDateString():'—'}</td></tr>`).join('');
   renderBulkBar();
 }
@@ -1462,7 +1473,7 @@ function computeMetrics(){
 /* ---------- admin ---------- */
 function fillAdmin(){
   document.getElementById('aRep').innerHTML = reps.filter(r=>r.active!==false).map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
-  if (me && me.admin){ renderReps(); renderProbEditor(); }
+  if (me && me.admin){ renderReps(); renderProbEditor(); refreshLists(); }
 }
 function renderProbEditor(){
   const box = document.getElementById('probEditor'); if(!box) return;
@@ -1517,17 +1528,19 @@ async function resetPass(i){
 async function toggleActive(i){ reps[i].active = reps[i].active===false; await saveReps('crm: active '+reps[i].id); }
 async function delRep(i){
   const r = reps[i];
-  if (!confirm('Remove '+r.name+'? Their assigned leads return to the pool.')) return;
+  if (!confirm('Remove '+r.name+'? Their assigned leads return to their source lists.')) return;
   try{
     const leads = await load(`reps/${r.id}/leads.json`);
     if (leads.length){
-      const idx = await load('pool/index.json');
-      const fname = `pool/pool-${String(idx.chunks.length).padStart(3,'0')}.json`;
-      shas[fname] = null;
-      leads.forEach(l => { delete l.st; delete l.a; delete l.la; delete l.nt; });
-      await save(fname, leads, `crm: return ${leads.length} leads from ${r.id}`);
-      idx.chunks.push({file:fname, count:leads.length}); idx.total += leads.length;
-      await save('pool/index.json', idx, 'crm: pool index');
+      const doc = await ensureLists();
+      leads.forEach(l => { delete l.st; delete l.a; delete l.la; delete l.nt; delete l.mail; delete l.mailSync; delete l.mailSeen; delete l.lastReplyTs; });
+      const groups = {};
+      leads.forEach(l => { const k = l.lst || '__ret'; (groups[k] = groups[k] || []).push(l); });
+      for (const k in groups){
+        if (k==='__ret') await addLeadsToList(doc, 'returned', groups[k], 'Returned leads');
+        else await addLeadsToList(doc, k, groups[k], groups[k][0].lstName || 'Returned leads');
+      }
+      await save('pool/lists.json', doc, `crm: return ${leads.length} leads from ${r.id}`);
     }
     reps.splice(i,1);
     await saveReps('crm: remove rep '+r.id);
@@ -1535,25 +1548,71 @@ async function delRep(i){
       if (useGateway()){ await gw('/remove-user', { id: r.id }, true); }
       else { const { doc, sha: lsha } = await loadLogins(); doc.users = doc.users.filter(l=>l.id!==r.id); await saveLogins(doc, lsha, 'crm: revoke login '+r.id); }
     }catch(e){}
-    refreshPool(); toast('Removed '+r.name);
+    refreshLists(); toast('Removed '+r.name);
   }catch(e){ toast('Remove failed: '+e.message); }
 }
-async function refreshPool(){
-  try { const idx = await load('pool/index.json'); document.getElementById('poolN').textContent = idx.total.toLocaleString() + ' unassigned'; }
-  catch(e){ document.getElementById('poolN').textContent = '?'; }
+// ---- lead lists (multiple named datasets; replaces the single pool) ----
+async function ensureLists(){
+  try { return await load('pool/lists.json'); }
+  catch(e){
+    // migrate the legacy single pool into one named list (no file moves — just reference its chunks)
+    const lists = [];
+    try { const idx = await load('pool/index.json'); if (idx && idx.chunks && idx.total>0) lists.push({ id:'original', name:'Original pool', total:idx.total, chunks:idx.chunks, createdAt:Date.now() }); } catch(_){}
+    const doc = { lists };
+    shas['pool/lists.json'] = null;
+    await save('pool/lists.json', doc, 'crm: init lead lists');
+    return doc;
+  }
+}
+function newListId(name){ let b=(name||'list').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,24)||'list'; return b+'-'+hash12(name+Date.now()).slice(0,4); }
+function listChunkName(list){ return `pool/${list.id}-${String(list.chunks.length).padStart(3,'0')}.json`; }
+async function addLeadsToList(doc, id, leads, fallbackName){
+  let list = doc.lists.find(l=>l.id===id);
+  if (!list){ list = { id: id||newListId(fallbackName||'returned'), name: fallbackName||'Returned leads', total:0, chunks:[], createdAt:Date.now() }; doc.lists.push(list); }
+  const fname = listChunkName(list); shas[fname] = null;
+  await save(fname, leads, `crm: +${leads.length} to ${list.id}`);
+  list.chunks.push({ file:fname, count:leads.length }); list.total += leads.length;
+  return list;
+}
+async function refreshLists(){
+  let doc; try { doc = await ensureLists(); } catch(e){ return; }
+  const lists = doc.lists || [];
+  const aList = document.getElementById('aList');
+  if (aList) aList.innerHTML = lists.length ? lists.map(l=>`<option value="${l.id}">${esc(l.name)} (${(l.total||0).toLocaleString()})</option>`).join('') : '<option value="">No lists yet</option>';
+  const impList = document.getElementById('impList');
+  if (impList) impList.innerHTML = '<option value="__new">+ New list…</option>' + lists.map(l=>`<option value="${l.id}">Add to: ${esc(l.name)}</option>`).join('');
+  const tbl = document.getElementById('listsTable');
+  if (tbl) tbl.innerHTML = lists.length
+    ? '<table class="tbl"><thead><tr><th>List</th><th>Unassigned</th><th>Created</th><th></th></tr></thead><tbody>'+lists.map(l=>`<tr><td><b>${esc(l.name)}</b></td><td>${(l.total||0).toLocaleString()}</td><td style="color:var(--muted)">${l.createdAt?new Date(l.createdAt).toLocaleDateString():'—'}</td><td><button class="btn sm ghost" style="color:var(--red)" onclick="deleteList('${l.id}')">Delete</button></td></tr>`).join('')+'</tbody></table>'
+    : '<div style="color:var(--muted);font-size:13px">No lists yet — import a CSV below to create one.</div>';
+}
+async function deleteList(id){
+  if (!confirm('Delete this list and its UNASSIGNED leads? Leads already assigned to reps are not affected.')) return;
+  try{
+    const doc = await ensureLists();
+    const i = doc.lists.findIndex(l=>l.id===id); if (i<0) return;
+    doc.lists.splice(i,1);
+    await save('pool/lists.json', doc, 'crm: delete list '+id);
+    toast('List deleted'); refreshLists();
+  }catch(e){ toast('Failed: '+e.message); }
 }
 function alog(s){ document.getElementById('log').textContent += s + '\n'; }
 async function assignLeads(){
   const repId = document.getElementById('aRep').value;
-  let n = Math.min(parseInt(document.getElementById('aCount').value)||0, 5000);
+  const listSel = document.getElementById('aList').value;
+  const all = document.getElementById('aAll').checked;
+  let n = all ? Infinity : Math.min(parseInt(document.getElementById('aCount').value)||0, 50000);
+  if (!listSel) return toast('Pick a list');
   if (n<1) return;
   const btn = document.getElementById('aGo'); btn.disabled=true; document.getElementById('log').textContent='';
   try{
-    const idx = await load('pool/index.json');
+    const doc = await ensureLists();
+    const list = doc.lists.find(l=>l.id===listSel);
+    if (!list){ alog('List not found.'); btn.disabled=false; return; }
     const path = `reps/${repId}/leads.json`;
     const target = repId===me.id ? myLeads : await load(path);
     let taken = [];
-    for (const ch of idx.chunks){
+    for (const ch of list.chunks){
       if (n<=0) break;
       if (ch.count<=0) continue;
       alog(`Pulling from ${ch.file} (${ch.count} available)…`);
@@ -1561,17 +1620,17 @@ async function assignLeads(){
       const grab = chunk.splice(0, Math.min(n, chunk.length));
       n -= grab.length; ch.count = chunk.length;
       taken.push(...grab);
-      await save(ch.file, chunk, `crm: assign ${grab.length} to ${repId}`);
+      await save(ch.file, chunk, `crm: assign ${grab.length} from ${list.id} to ${repId}`);
     }
     const ts = Date.now();
-    taken.forEach(l => { l.st='New'; l.a=ts; });
+    taken.forEach(l => { l.st='New'; l.a=ts; l.lst=list.id; l.lstName=list.name; });
     target.push(...taken);
-    idx.total = idx.chunks.reduce((s,c)=>s+c.count,0);
+    list.total = list.chunks.reduce((s,c)=>s+c.count,0);
     await save(path, target, `crm: assign ${taken.length} leads to ${repId}`);
-    await save('pool/index.json', idx, 'crm: update pool index');
+    await save('pool/lists.json', doc, 'crm: update lists after assign');
     if (repId===me.id){ myLeads = target; renderBoard(); }
-    alog(`Done — assigned ${taken.length} leads to ${(reps.find(r=>r.id===repId)||{}).name}.`);
-    refreshPool();
+    alog(`Done — assigned ${taken.length} from "${list.name}" to ${(reps.find(r=>r.id===repId)||{}).name}.`);
+    refreshLists();
   }catch(e){ alog('FAILED: '+e.message); }
   btn.disabled=false;
 }
@@ -1658,14 +1717,25 @@ async function importCsv(){
     return { i: hash12(key), fn:g(map.fn), ln:g(map.ln), em, ti:g(map.ti), co:g(map.co).replace(/^"|"$/g,''), ph:g(map.ph)||g(map.mo), li:g(map.li), ci:g(map.ci), stt:g(map.stt), ws:g(map.ws), in:g(map.in), sz:g(map.sz) };
   }).filter(Boolean);
   try{
-    const idx = await load('pool/index.json');
-    const fname = `pool/pool-${String(idx.chunks.length).padStart(3,'0')}.json`;
-    shas[fname] = null;
-    await save(fname, leads, `crm: import ${leads.length} leads`);
-    idx.chunks.push({file:fname, count:leads.length});
-    idx.total += leads.length;
-    await save('pool/index.json', idx, 'crm: import index update');
-    alog(`Imported ${leads.length} leads into pool (${fname}).`); refreshPool();
+    const doc = await ensureLists();
+    const sel = document.getElementById('impList').value;
+    let list;
+    if (sel==='__new'){
+      const nm = (document.getElementById('impName').value||'').trim() || ('List '+(doc.lists.length+1));
+      list = { id:newListId(nm), name:nm, total:0, chunks:[], createdAt:Date.now() };
+      doc.lists.push(list);
+    } else {
+      list = doc.lists.find(l=>l.id===sel);
+      if (!list){ alog('List not found.'); return; }
+    }
+    const fname = listChunkName(list); shas[fname] = null;
+    await save(fname, leads, `crm: import ${leads.length} to ${list.id}`);
+    list.chunks.push({file:fname, count:leads.length}); list.total += leads.length;
+    await save('pool/lists.json', doc, 'crm: import → '+list.id);
+    alog(`Imported ${leads.length} leads into "${list.name}".`);
+    document.getElementById('impName').value='';
+    document.getElementById('csvFile').value='';
+    refreshLists();
   }catch(e){ alog('Import failed: '+e.message); }
 }
 function parseCsv(text){
