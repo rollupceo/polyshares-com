@@ -47,6 +47,7 @@ a.card:hover{border-color:var(--ink);transform:translateY(-1px)}
 .tag{font-size:11px;font-weight:500;padding:3px 9px;border-radius:999px;white-space:nowrap}
 .t-live{background:#E6EEE6;color:#3F6342}
 .t-int{background:#E6ECF4;color:#3A5A86}
+.t-cli{background:#E6EEE6;color:#3F6342}
 .t-part{background:#F6EFD8;color:#7A5D13}
 .t-none{background:var(--paper2);color:var(--muted)}
 
@@ -105,33 +106,50 @@ a.card:hover{border-color:var(--ink);transform:translateY(-1px)}
       <div class="foot"><span class="go">Open the CRM →</span><span>· login required</span></div>
     </a>
 
-    <div class="card dim">
-      <div class="top"><h3>Sourcing agent</h3><span class="tag t-part">Partly built</span></div>
+    <div class="card">
+      <div class="top"><h3>Sourcer</h3><span class="tag t-cli">Built · CLI</span></div>
       <div class="what">
-        Target identification and first-touch outreach. The lead pool, list management and send
-        pipeline live in the CRM today; what does not exist yet is an agent that scores a target
-        against our thesis and decides who is worth a conversation.
+        Deal origination. Builds the target universe, scores every company 1&ndash;10 against the deal
+        box with a one-line thesis, buckets A/B/C, and drafts the three-touch direct-to-owner sequence
+        in Nathan&rsquo;s voice. Writes to the shared pipeline DB; the CRM is where those leads are
+        then worked.
       </div>
-      <div class="foot"><span>Inside the CRM for now</span></div>
+      <div class="foot"><span>Terminal &mdash; no web view yet</span></div>
     </div>
 
-    <div class="card dim">
-      <div class="top"><h3>Diligence associate</h3><span class="tag t-none">Not built</span></div>
+    <div class="card">
+      <div class="top"><h3>Analyst</h3><span class="tag t-cli">Built · CLI</span></div>
       <div class="what">
-        Deal memos, data-room review, quality-of-earnings support. Deliberately not started: the memo
-        is not the work. Customer concentration, contract assignability and the tech debt we would be
-        inheriting are the work, and drafting the write-up faster does not reduce that risk.
+        Deal underwriting. Spreads a CIM into a normalized EBITDA with every add-back itemised and
+        rated accept / challenge / reject, builds the automation margin bridge, runs base/bear/bull
+        returns, solves for the highest price that still clears 3.0x MOIC, and writes the one-page IC
+        memo. Always ends on a number, never &ldquo;it depends&rdquo;.
       </div>
-      <div class="foot"><span>No date</span></div>
+      <div class="foot"><span>Terminal &mdash; no web view yet</span></div>
     </div>
 
   </div>
 
+  <!--
+    Correcting the record: this tile previously read "Diligence associate — not
+    built", with a note that the memo is not the work. The memo isn't, and the
+    Analyst doesn't stop there — the spreading, the add-back ratings and the
+    max-price solve ARE the work, and those are what it does. The status label
+    and the reasoning both needed replacing, not just the label.
+  -->
+  <div class="note" style="margin-top:16px">
+    <strong>Sourcer and Analyst are dormant by default.</strong> No schedulers, no daemons, nothing
+    sends. Every run is a manual command, drafts are stored rather than delivered, and the whole
+    pipeline runs offline against a mocked model for $0 &mdash; they only make a paid call when a key
+    is set explicitly. They switch on when capital is raised, not before.
+  </div>
+
   <div class="note">
-    <strong>Status labels are honest.</strong> &ldquo;Not built&rdquo; means not built — there is no
-    hidden build behind a tile on this page. The same rule applies inside Poly, where any figure we
-    have not measured is shown as unmeasured rather than estimated. A console that flatters itself is
-    not useful to the person reading it.
+    <strong>Status labels are honest.</strong> &ldquo;Built&rdquo; means it runs today, and
+    &ldquo;CLI&rdquo; means exactly that &mdash; a terminal tool with no web view, not a screen we
+    have simply not linked. Nothing on this page is a placeholder for work that has not happened. The
+    same rule applies inside Poly, where any figure we have not measured is shown as unmeasured
+    rather than estimated. A console that flatters itself is not useful to the person reading it.
   </div>
 </main>
 
