@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Polyshares Internal</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<!-- Same frame-buster as the CRM: X-Frame-Options can't be set on GitHub Pages. -->
+<script>try{if(self!==top){document.documentElement.style.display='none';top.location=self.location.href;}}catch(e){document.documentElement.style.display='none';}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="/favicon.ico?v=2" sizes="any" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png?v=2" />
+<style>
+:root{--paper:#F7F5F0;--paper2:#EFECE4;--ink:#16140F;--ink2:#4A463C;--muted:#8A8474;--line:#DDD8CC;--dark:#16140F;--accent:#4A6FA5;--green:#5E8C61;--amber:#C9A227;--red:#A55050;--serif:'Fraunces',serif;--sans:'Inter',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+a{color:inherit;text-decoration:none}
+button{font-family:var(--sans);cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:7px;padding:8px 14px;font-size:13.5px;color:var(--ink)}
+button:hover:not(:disabled){border-color:var(--ink)}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+input{font-family:var(--sans);font-size:14px;border:1px solid var(--line);border-radius:7px;padding:9px 11px;background:#fff;color:var(--ink);width:100%}
+label{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:12px 0 5px;font-weight:500}
+
+header{background:var(--dark);color:#fff;display:flex;align-items:center;gap:22px;padding:0 22px;height:54px}
+header .brand{font-family:var(--serif);font-size:19px}
+header .brand small{font-family:var(--sans);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-left:12px}
+header .right{margin-left:auto;font-size:12.5px;color:rgba(255,255,255,.6)}
+
+main{max-width:1080px;margin:0 auto;padding:38px 22px 70px}
+.lede{max-width:660px;margin-bottom:34px}
+.lede h1{font-family:var(--serif);font-weight:400;font-size:30px;letter-spacing:-.01em;margin-bottom:10px}
+.lede p{color:var(--ink2);font-size:15px;line-height:1.65}
+
+h2.sec{font-family:var(--serif);font-weight:500;font-size:15px;margin:34px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line);letter-spacing:.02em}
+h2.sec span{font-family:var(--sans);font-size:12px;color:var(--muted);font-weight:400;margin-left:10px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 19px;display:flex;flex-direction:column;transition:border-color .15s,transform .15s}
+a.card:hover{border-color:var(--ink);transform:translateY(-1px)}
+.card .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:7px}
+.card h3{font-family:var(--serif);font-weight:500;font-size:18px;letter-spacing:-.01em}
+.card .what{color:var(--ink2);font-size:13.5px;line-height:1.55;flex:1}
+.card .foot{margin-top:14px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.card .go{color:var(--accent);font-weight:500}
+
+.tag{font-size:11px;font-weight:500;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.t-live{background:#E6EEE6;color:#3F6342}
+.t-int{background:#E6ECF4;color:#3A5A86}
+
+.note{margin-top:34px;background:var(--paper2);border-radius:10px;padding:16px 18px;color:var(--ink2);font-size:13.5px;line-height:1.6;max-width:760px}
+.note strong{color:var(--ink)}
+
+/* ── Login gate ── */
+#gate{position:fixed;inset:0;background:var(--paper);z-index:100;display:flex;align-items:center;justify-content:center}
+#gate .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:30px 28px;width:360px;display:block}
+#gate h3{font-family:var(--serif);font-weight:500;font-size:21px;margin-bottom:4px}
+#gate .sub{font-size:13px;color:var(--muted);margin-bottom:6px}
+#gate .err{color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px}
+#gate .alt{font-size:12.5px;color:var(--accent);cursor:pointer;margin-top:14px;display:inline-block}
+#hub{display:none}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="card">
+    <h3>Polyshares Internal</h3>
+    <div class="sub">Sign in with your CRM login &mdash; one login for every product.</div>
+    <form onsubmit="event.preventDefault();doLogin()">
+      <div id="userFields">
+        <label>Email</label>
+        <input type="email" id="gEmail" autocomplete="email" autofocus />
+        <label>Password</label>
+        <input type="password" id="gPass" autocomplete="current-password" />
+      </div>
+      <div id="codeFields" style="display:none">
+        <label>Team code</label>
+        <input type="password" id="gCode" autocomplete="off" />
+      </div>
+      <button class="primary" style="width:100%;margin-top:16px" id="gBtn">Sign in</button>
+      <div class="err" id="gErr"></div>
+    </form>
+    <span class="alt" id="gAlt" onclick="toggleMode()">Use the team code instead</span>
+  </div>
+</div>
+
+<div id="hub">
+<header>
+  <span class="brand">Polyshares<small>Internal</small></span>
+  <span class="right" id="whoami">Internal — not linked publicly</span>
+</header>
+
+<main>
+  <div class="lede">
+    <h1>Every system in one place</h1>
+    <p>
+      Polyshares acquires MSPs and runs them on our own software. This is the way in to all of it —
+      the systems that operate the companies we own, and the systems we use to buy them. Most people
+      will only ever need one row of this page.
+    </p>
+  </div>
+
+  <!--
+    Split by WHO the user is, not by what we happened to build. Operating-side
+    tools create margin inside a company we own; deal-side tools help us acquire
+    one.
+  -->
+  <h2 class="sec">Operating <span>runs inside the companies we own — where the margin comes from</span></h2>
+  <div class="grid">
+
+    <a class="card" href="./demo/">
+      <div class="top"><h3>Poly</h3><span class="tag t-live">Live demo</span></div>
+      <div class="what">
+        Our MSP delivery agent. Reads the incoming ticket queue, resolves what it can safely resolve,
+        verifies the fix actually landed, and hands the rest to a technician with its findings
+        attached. Recorded run, replayable, with the guardrails and measurements shown.
+      </div>
+      <div class="foot"><span class="go">Open the demo →</span></div>
+    </a>
+
+  </div>
+
+  <h2 class="sec">Deal <span>how we find, work and close acquisitions</span></h2>
+  <div class="grid">
+
+    <a class="card" href="./crm">
+      <div class="top"><h3>CRM</h3><span class="tag t-int">Internal</span></div>
+      <div class="what">
+        The deal pipeline. Lead lists, per-rep assignment, stage tracking with weighted forecast, and
+        two-way Gmail so every email to a target is logged against it. Where sourcing actually happens
+        today.
+      </div>
+      <div class="foot"><span class="go">Open the CRM →</span><span>· same login as this page</span></div>
+    </a>
+
+    <a class="card" href="./agents#sourcer">
+      <div class="top"><h3>Sourcer</h3><span class="tag t-live">Live</span></div>
+      <div class="what">
+        Deal origination. Builds the target universe, scores every company 1&ndash;10 against the deal
+        box with a one-line thesis, buckets A/B/C, and drafts the three-touch direct-to-owner sequence
+        in Nathan&rsquo;s voice. Writes to the shared pipeline DB; the CRM is where those leads are
+        then worked.
+      </div>
+      <div class="foot"><span class="go">Open Sourcer &rarr;</span></div>
+    </a>
+
+    <a class="card" href="./analyst">
+      <div class="top"><h3>Analyst</h3><span class="tag t-live">Live</span></div>
+      <div class="what">
+        Deal underwriting on live deals &mdash; Project Maturity, a national dental-focused MSP, is
+        loaded and priced against the Polyshares buy box. Audits every arithmetic claim in the teaser,
+        decomposes the earnings bridge, and prices across the range the undisclosed add-backs could
+        span. No figure is produced by a language model.
+      </div>
+      <div class="foot"><span class="go">Open Analyst &rarr;</span><span>&middot; unlocks with this login</span></div>
+    </a>
+
+  </div>
+
+  <div class="note">
+    <strong>One login, honestly scoped.</strong> Signing in here proves you hold a CRM credential
+    &mdash; the same email and password, verified the same way &mdash; and hands your browser the keys
+    to the gated products for this tab session. The Analyst&rsquo;s deal material is encrypted, not
+    hidden; this page decrypts it for you rather than asking for a second passcode. The CRM will still
+    ask you to sign in on its own page, because its login is what decrypts its data access &mdash;
+    use the same email and password.
+  </div>
+
+  <div class="note">
+    <strong>Status labels are honest.</strong> &ldquo;Live&rdquo; means you can open it right now.
+    Nothing on this page is a placeholder for work that has not happened. A console that flatters
+    itself is not useful to the person reading it.
+  </div>
+</main>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   Polyshares Internal — gated hub.
+
+   Authentication is the CRM's, not a copy of it: fetch the same
+   crm-logins.json, derive the same PBKDF2 key from the typed password, and
+   attempt to decrypt that user's credential blob. AES-GCM authentication
+   makes a wrong password fail loudly. Anyone the CRM admin adds — now or
+   later — can sign in here with zero extra setup, because there is nothing
+   here to keep in sync.
+
+   Product keys: internal-keys.json holds each gated product's passcode
+   encrypted under the shared credential recovered at login. On a successful
+   login this page decrypts them and drops them in sessionStorage, where the
+   product pages' own gates pick them up — one login, every product, same tab.
+
+   Self-provisioning: if internal-keys.json does not exist yet (or was wrapped
+   under a since-rotated credential), the first successful login rebuilds and
+   commits it via the GitHub API — the same in-browser write path the CRM
+   admin tab uses. The one-time bootstrap asks for the team code, because the
+   product passcode has to enter the system once from somewhere; after that
+   no one is asked again.
+   ══════════════════════════════════════════════════════════════════════════ */
+const LOGINS_URL = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-logins.json';
+const SIGNUP_URL = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-signup.json';
+const KEYS_URL   = 'https://raw.githubusercontent.com/rollupceo/polyshares-com/main/internal-keys.json';
+const SITE_REPO  = 'rollupceo/polyshares-com';
+const PBKDF2_ITER = 600000, PBKDF2_LEGACY_ITER = 310000;
+
+const ub64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u)));
+
+async function deriveKey(pass, salt, usage, iter) {
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, km,
+    { name: 'AES-GCM', length: 256 }, false, [usage]);
+}
+async function decryptBlob(pass, enc) {
+  const key = await deriveKey(pass, ub64(enc.s), 'decrypt', enc.iter || PBKDF2_LEGACY_ITER);
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ub64(enc.iv) }, key, ub64(enc.ct));
+  return new TextDecoder().decode(pt);
+}
+async function encryptBlob(pass, text) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(pass, salt, 'encrypt', PBKDF2_ITER);
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(text));
+  return { s: b64(salt), iv: b64(iv), ct: b64(ct), iter: PBKDF2_ITER };
+}
+
+let mode = 'user';
+function toggleMode() {
+  mode = mode === 'user' ? 'code' : 'user';
+  document.getElementById('userFields').style.display = mode === 'user' ? '' : 'none';
+  document.getElementById('codeFields').style.display = mode === 'code' ? '' : 'none';
+  document.getElementById('gAlt').textContent = mode === 'user' ? 'Use the team code instead' : 'Use email + password instead';
+  document.getElementById('gErr').textContent = '';
+}
+
+async function doLogin() {
+  const btn = document.getElementById('gBtn'), err = document.getElementById('gErr');
+  btn.disabled = true; err.textContent = '';
+  try {
+    let cred, who, teamCode = null;
+    if (mode === 'user') {
+      const email = document.getElementById('gEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('gPass').value;
+      const doc = await (await fetch(LOGINS_URL + '?t=' + Date.now())).json();
+      const u = (doc.users || []).find(x => (x.email || '').toLowerCase() === email && x.active !== false);
+      if (!u) throw new Error('No account with that email.');
+      cred = await decryptBlob(pass, u.enc).catch(() => { throw new Error('Wrong password.'); });
+      who = u.name || u.email;
+    } else {
+      teamCode = document.getElementById('gCode').value;
+      const doc = await (await fetch(SIGNUP_URL + '?t=' + Date.now())).json();
+      cred = await decryptBlob(teamCode, doc.enc).catch(() => { throw new Error('That is not the team code.'); });
+      who = 'team code';
+    }
+    await handoffKeys(cred, teamCode);
+    sessionStorage.setItem('internal_who', who);
+    enter(who);
+  } catch (e) {
+    err.textContent = e.message || 'Sign-in failed.';
+    btn.disabled = false;
+  }
+}
+
+/* Decrypt product keys under the recovered credential; self-provision the
+   keys file when it is missing or stale. The credential never touches
+   storage — only the product passcodes do, per-tab. */
+async function handoffKeys(cred, teamCode) {
+  let keys = null;
+  try { const r = await fetch(KEYS_URL + '?t=' + Date.now()); if (r.ok) keys = await r.json(); } catch (e) {}
+  if (keys && keys.analyst) {
+    try {
+      sessionStorage.setItem('an_p', await decryptBlob(cred, keys.analyst));
+      return;
+    } catch (e) { /* wrapped under a rotated credential — fall through and rebuild */ }
+  }
+  keys = await provisionKeys(cred, teamCode);
+  sessionStorage.setItem('an_p', await decryptBlob(cred, keys.analyst));
+}
+
+async function provisionKeys(cred, teamCode) {
+  /* The analyst passcode equals the team code by convention (2026-07-27).
+     If this login came in via the team code we already hold it; otherwise ask
+     once. It has to enter the system once from somewhere — after this write,
+     no one is asked again. */
+  let passcode = teamCode;
+  if (!passcode) {
+    passcode = prompt('First-time setup: enter the team code once to provision product keys for everyone.');
+    if (!passcode) throw new Error('Setup needs the team code once.');
+  }
+  const signup = await (await fetch(SIGNUP_URL + '?t=' + Date.now())).json();
+  try { await decryptBlob(passcode, signup.enc); }
+  catch (e) { throw new Error('That is not the team code.'); }
+
+  const keys = { note: 'Product keys, encrypted under the shared credential. Decryptable only after login.',
+                 analyst: await encryptBlob(cred, passcode) };
+  /* Commit via the GitHub API — same write path the CRM admin tab uses. If it
+     fails (offline, races another session), the in-memory keys still work. */
+  try {
+    const path = 'https://api.github.com/repos/' + SITE_REPO + '/contents/internal-keys.json';
+    let sha;
+    try { const r = await fetch(path + '?ref=main&t=' + Date.now(), { headers: { Authorization: 'Bearer ' + cred } });
+          if (r.ok) sha = (await r.json()).sha; } catch (e) {}
+    await fetch(path, { method: 'PUT',
+      headers: { Authorization: 'Bearer ' + cred, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'internal: provision product keys', sha,
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(keys, null, 2)))) }) });
+  } catch (e) {}
+  return keys;
+}
+
+function enter(who) {
+  const g = document.getElementById('gate');
+  if (g) g.remove();
+  document.getElementById('hub').style.display = 'block';
+  document.getElementById('whoami').textContent = who + ' — internal, not linked publicly';
+}
+
+/* Same-tab refresh: a product key in sessionStorage means an earlier login. */
+if (sessionStorage.getItem('an_p') && sessionStorage.getItem('internal_who')) {
+  enter(sessionStorage.getItem('internal_who'));
+}
+</script>
+</body>
+</html>
