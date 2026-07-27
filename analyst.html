@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Polyshares Analyst</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<script>try{if(self!==top){document.documentElement.style.display='none';top.location=self.location.href;}}catch(e){document.documentElement.style.display='none';}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="/favicon.ico?v=2" sizes="any" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+<style>
+:root{--paper:#F7F5F0;--paper2:#EFECE4;--paper3:#E7E3D9;--ink:#16140F;--ink2:#4A463C;--muted:#8A8474;--line:#DDD8CC;--dark:#16140F;--accent:#4A6FA5;--green:#5E8C61;--amber:#A07B1C;--red:#A55050;--serif:'Fraunces',serif;--sans:'Inter',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55}
+a{color:inherit}
+button{font-family:var(--sans);cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:7px;padding:7px 13px;font-size:13px;color:var(--ink)}
+button:hover:not(:disabled){border-color:var(--ink)}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+input,select,textarea{font-family:var(--sans);font-size:14px;border:1px solid var(--line);border-radius:7px;padding:8px 10px;background:#fff;color:var(--ink);width:100%}
+label{display:block;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-weight:500}
+.num{font-variant-numeric:tabular-nums}
+
+header{background:var(--dark);color:#fff;display:flex;align-items:center;gap:20px;padding:0 20px;height:54px;position:sticky;top:0;z-index:30}
+header .brand{font-family:var(--serif);font-size:19px;white-space:nowrap}
+header .brand small{font-family:var(--sans);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-left:9px}
+header nav{display:flex;gap:3px}
+header nav button{background:none;border:none;color:rgba(255,255,255,.62);padding:7px 12px;border-radius:6px;font-size:13.5px}
+header nav button.on{background:rgba(255,255,255,.14);color:#fff;font-weight:500}
+header .right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12.5px;color:rgba(255,255,255,.6)}
+.pill{font-size:11px;font-weight:500;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.p-det{background:rgba(94,140,97,.25);color:#A8D0AA}
+
+.wrap{display:grid;grid-template-columns:270px 1fr;gap:16px;max-width:1400px;margin:0 auto;padding:18px 20px 70px;align-items:start}
+@media(max-width:1000px){.wrap{grid-template-columns:1fr}}
+aside{position:sticky;top:70px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:14px;overflow:hidden}
+.panel h2{font-family:var(--serif);font-weight:500;font-size:13.5px;padding:11px 15px;background:var(--paper2);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.panel h2 span{font-family:var(--sans);font-size:11px;color:var(--muted);font-weight:400}
+.body{padding:15px}
+.view{display:none}.view.on{display:block}
+h1{font-family:var(--serif);font-weight:400;font-size:25px;letter-spacing:-.01em}
+.deck{color:var(--ink2);font-size:14px;margin:4px 0 16px;max-width:720px}
+
+table{width:100%;border-collapse:collapse}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--paper2);font-weight:500;white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--paper2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.r,th.r{text-align:right}
+tfoot td{background:var(--paper2);font-weight:600;border-top:1px solid var(--line)}
+
+.tag{display:inline-block;font-size:10.5px;font-weight:500;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.t-ok{background:#E6EEE6;color:#3F6342}.t-warn{background:#F6EFD8;color:#7A5D13}.t-bad{background:#F4E2E1;color:#833F3F}.t-neu{background:var(--paper2);color:var(--muted)}
+.cite{font-size:11px;color:var(--accent);cursor:help;border-bottom:1px dotted var(--accent);white-space:nowrap}
+.stats{display:flex;flex-wrap:wrap}
+.stat{padding:13px 16px;border-right:1px solid var(--line);flex:1;min-width:135px}
+.stat:last-child{border-right:none}
+.stat .l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.stat .v{font-family:var(--serif);font-size:22px;margin-top:2px;line-height:1.15}
+.stat .n{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+.slider{margin-bottom:13px}
+.slider .top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}
+.slider .top b{font-variant-numeric:tabular-nums;font-weight:600}
+input[type=range]{width:100%;accent-color:var(--accent);padding:0;border:none;background:none}
+.rule{display:flex;gap:10px;padding:10px 15px;border-bottom:1px solid var(--paper2);align-items:flex-start}
+.rule:last-child{border-bottom:none}
+.rule .ic{width:18px;flex:none;font-weight:700;text-align:center}
+.rule .tx{flex:1;font-size:13px}
+.rule .tx b{display:block;margin-bottom:1px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.col{padding:14px 16px;border-right:1px solid var(--line)}
+.col:last-child{border-right:none}
+.col .h{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:3px}
+.col .big{font-family:var(--serif);font-size:25px;line-height:1.1}
+.col .sm{font-size:12px;color:var(--ink2);margin-top:5px}
+.memo{padding:20px;white-space:pre-wrap;font-size:14px;line-height:1.7;max-height:70vh;overflow:auto}
+.note{background:var(--paper2);border-radius:9px;padding:13px 15px;color:var(--ink2);font-size:12.5px;line-height:1.6;margin-top:14px}
+.drop{border:2px dashed var(--line);border-radius:9px;padding:20px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer}
+.drop.over{border-color:var(--accent);background:#fff}
+.file{display:flex;gap:9px;align-items:center;padding:8px 15px;border-bottom:1px solid var(--paper2);font-size:12.5px}
+.file:last-child{border-bottom:none}
+.file .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sens td.hi{background:#E6EEE6;font-weight:600}
+.sens td.lo{background:#F4E2E1;color:#833F3F}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="brand">Polyshares<small>Analyst</small></span>
+  <nav>
+    <button id="n-reconcile" class="on" onclick="show('reconcile')">Reconcile</button>
+    <button id="n-addbacks" onclick="show('addbacks')">Add-backs</button>
+    <button id="n-model" onclick="show('model')">Model</button>
+    <button id="n-dealbox" onclick="show('dealbox')">Deal box</button>
+    <button id="n-memo" onclick="show('memo')">Memo</button>
+  </nav>
+  <span class="right">
+    <span class="pill p-det">deterministic</span>
+    <a href="/console" style="color:rgba(255,255,255,.6);text-decoration:none">← console</a>
+  </span>
+</header>
+
+<div class="wrap">
+
+<!-- ───────────────── DATA ROOM ───────────────── -->
+<aside>
+  <div class="panel">
+    <h2>Data room <span id="fileCount"></span></h2>
+    <div id="fileList"></div>
+    <div class="body" style="border-top:1px solid var(--line)">
+      <div class="drop" id="drop" onclick="document.getElementById('fileIn').click()">
+        Drop files or click<br><span style="font-size:11.5px">PDF · CSV · XLSX · TXT · MD</span>
+      </div>
+      <input type="file" id="fileIn" multiple style="display:none"
+             accept=".pdf,.csv,.xlsx,.xls,.txt,.md" onchange="ingest(this.files)" />
+      <div id="ingestMsg" style="font-size:12px;color:var(--muted);margin-top:9px"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Room completeness <span id="gapScore"></span></h2>
+    <div id="gapList"></div>
+  </div>
+</aside>
+
+<main>
+
+<!-- ───────────────── RECONCILE ───────────────── -->
+<section id="v-reconcile" class="view on">
+  <h1>Three numbers, one business</h1>
+  <p class="deck">
+    The CIM, the broker&rsquo;s own recasting, and our underwriting disagree about what Enpowertek
+    earns. Every figure below is traced to the document it came from &mdash; hover any citation.
+  </p>
+
+  <div class="panel">
+    <h2>Earnings, as claimed vs as computed</h2>
+    <div class="grid3" id="threeCol"></div>
+    <div class="body" style="border-top:1px solid var(--line)" id="bridgeNote"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Contradictions found <span id="contraCount"></span></h2>
+    <div id="contraList"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Recast history <span>as filed by the broker</span></h2>
+    <table id="histTable"></table>
+  </div>
+</section>
+
+<!-- ───────────────── ADD-BACKS ───────────────── -->
+<section id="v-addbacks" class="view">
+  <h1>Add-back schedule</h1>
+  <p class="deck">
+    The broker&rsquo;s recasting adds every one of these back. Toggle a ruling and every number in
+    the model recomputes instantly &mdash; no model call, no waiting, same answer every time.
+  </p>
+  <div class="panel">
+    <h2>2025 add-backs <span>Broker&rsquo;s Opinion of Market Value, p.6</span></h2>
+    <table id="abTable"></table>
+  </div>
+  <div class="note">
+    <strong>Rulings are yours, arithmetic is ours.</strong> Accept keeps the add-back in earnings,
+    challenge halves it pending diligence, reject removes it. The normalized EBITDA, the entry price,
+    the returns and the max price all follow from these toggles by arithmetic &mdash; there is no
+    model deciding what a number should be.
+  </div>
+</section>
+
+<!-- ───────────────── MODEL ───────────────── -->
+<section id="v-model" class="view">
+  <h1>Underwriting model</h1>
+  <p class="deck">
+    A deterministic LBO. Move any assumption and every output recomputes in the same frame. The max
+    price is solved by binary search against your MOIC hurdle, not estimated.
+  </p>
+
+  <div class="panel">
+    <h2>Assumptions</h2>
+    <div class="body" style="display:grid;grid-template-columns:1fr 1fr;gap:0 26px">
+      <div id="sliders1"></div><div id="sliders2"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Outputs <span>recomputed on every change · zero model calls</span></h2>
+    <div class="stats" id="outStats"></div>
+    <div class="stats" id="outStats2" style="border-top:1px solid var(--line)"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Max price <span>binary search against the MOIC hurdle</span></h2>
+    <div class="body" id="maxPrice"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Sensitivity <span>base MOIC · entry multiple × exit multiple</span></h2>
+    <table class="sens" id="sensTable"></table>
+  </div>
+</section>
+
+<!-- ───────────────── DEAL BOX ───────────────── -->
+<section id="v-dealbox" class="view">
+  <h1>Deal box</h1>
+  <p class="deck">
+    Rules checked in code against the extracted facts, not asked of a model. A kill is a kill
+    regardless of how the rest of the deal looks.
+  </p>
+  <div class="panel"><h2>Checks <span id="ruleSummary"></span></h2><div id="ruleList"></div></div>
+  <div class="panel">
+    <h2>Thesis-specific</h2>
+    <div id="thesisList"></div>
+  </div>
+</section>
+
+<!-- ───────────────── MEMO ───────────────── -->
+<section id="v-memo" class="view">
+  <h1>IC memo</h1>
+  <p class="deck">
+    Generated from the computed model &mdash; every figure is the one on the Model tab, not a
+    re-derivation. Change an add-back ruling and regenerate; the memo follows.
+  </p>
+  <div class="panel">
+    <h2>One page <span id="memoStamp"></span></h2>
+    <div class="memo" id="memoOut"></div>
+    <div class="body" style="border-top:1px solid var(--line)">
+      <button onclick="navigator.clipboard.writeText(document.getElementById('memoOut').textContent)">Copy memo</button>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   Polyshares ANALYST
+
+   The design rule that separates this from a chat wrapper: THE MODEL NEVER
+   DOES ARITHMETIC. An LLM's job here is extraction — pull a figure off a page
+   and cite where it came from. Every number downstream (the SDE→EBITDA bridge,
+   the LBO, MOIC, the max-price solve, the sensitivity grid) is computed here,
+   deterministically, in the same frame as the input change.
+
+   That buys three things a wrapper cannot have: the numbers are auditable
+   (each traces to a source), reproducible (same inputs, same answer, always),
+   and free to explore (moving a slider costs nothing and returns instantly).
+
+   Loaded deal: Enpowertek, LLC — real figures transcribed from the Murphy
+   Business CIM (June 2026) and the Broker's Opinion of Market Value
+   (04/30/2026), with page citations on every line.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── The deal ──────────────────────────────────────────────────────────── */
+const DEAL = {
+  name: 'Enpowertek, LLC',
+  desc: 'Enterprise managed services · Frisco, Texas · hybrid U.S./India delivery',
+  broker: 'Murphy Business Sales — Richardson, TX',
+
+  docs: [
+    { file: 'msp high custo concentration cim.pdf', label: 'CIM', pages: 47, kind: 'cim' },
+    { file: 'high concentration plano msp financials.pdf', label: "Broker's Opinion of Market Value", pages: 8, kind: 'financials' },
+  ],
+
+  /* Broker's Income Statement Recasting, verbatim. */
+  years: {
+    2024: { src: 'Tax Return', page: 7, months: 12, revenue: 3625840, cogs: 0,
+            grossProfit: 3625840, totalExp: 3497110, addbacks: 676181, netIncome: 128730, sde: 804911 },
+    2025: { src: 'P/L Statement', page: 6, months: 12, revenue: 4532150, cogs: 2832074,
+            grossProfit: 1700076, totalExp: 1243103, addbacks: 582907, netIncome: 456973, sde: 1039880 },
+    2026: { src: 'P/L Statement', page: 5, months: 4, revenue: 1846371, cogs: 1112970,
+            grossProfit: 733401, totalExp: 282964, addbacks: 73260, netIncome: 450437, sde: 523697 },
+  },
+
+  /* 2025 add-backs, line by line, with our ruling and the reason for it. */
+  addbacks: [
+    { id: 'salaries', item: 'Salaries and Wages', amt: 175000, note: 'E1', page: 6,
+      ruling: 'challenge',
+      why: 'A $175K salary add-back in a services business is delivery labour until proven otherwise. Needs the name, the role and the leave date; if the person delivered client work, the cost returns with the revenue.' },
+    { id: 'charity', item: 'Charitable Contributions', amt: 118, note: 'E2', page: 6,
+      ruling: 'accept', why: 'Discretionary and immaterial.' },
+    { id: 'meals', item: 'Meals @50%', amt: 17435, note: 'E3', page: 6,
+      ruling: 'challenge',
+      why: 'Client-facing services firms run real entertainment spend. Half is a fair placeholder until the expense detail is produced.' },
+    { id: 'travel', item: 'Travel', amt: 63444, note: 'E4', page: 6,
+      ruling: 'reject',
+      why: 'This is a hybrid U.S./India delivery model. Travel between the two is operational cost, not owner discretion — and it does not disappear on close.' },
+    { id: 'auto', item: 'Auto and truck', amt: 90436, note: 'E5', page: 6,
+      ruling: 'reject',
+      why: '$90,436 of vehicle expense in an MSP with no field-service fleet described anywhere in the CIM. Absent a mileage log this is personal, and personal spend that the buyer will not incur is not earnings the buyer will receive.' },
+    { id: 'member', item: 'Member pay out', amt: 210949, note: 'E6', page: 6,
+      ruling: 'reject',
+      why: 'THIS IS THE OWNER BEING PAID. The recasting also shows Owner’s Salary of $0 in every year — so this line is the owner’s compensation, and adding it back while claiming no owner salary counts the same economics twice. A buyer must replace this person.' },
+    { id: 'ptax', item: 'Payroll taxes', amt: 25525, note: '—', page: 6,
+      ruling: 'challenge',
+      why: 'Payroll tax follows payroll. It can only be added back in the proportion the underlying wages are, and those are contested above.' },
+  ],
+
+  /* Claims made in the CIM that the financials do not support. */
+  claims: [
+    { metric: 'Annualized YTD SDE', cim: 1850000, page: 'CIM stat block',
+      computed: () => DEAL.years[2026].sde * 12 / DEAL.years[2026].months,
+      label: 'annualising the broker’s own 2026 YTD recast (4 months to 30 Apr)' },
+  ],
+
+  facts: {
+    concentrationDisclosed: true,
+    concentrationPct: null,   // CIM discloses but does not quantify — that is itself the finding
+    indiaDelivery: true,
+    ownerSalary: 0,
+    gpNotComparable: true,
+  },
+};
+
+/* Diligence room checklist — what underwriting this actually requires. */
+const REQUIRED = [
+  { id: 'cim', label: 'CIM / teaser', have: true },
+  { id: 'recast', label: 'Recast P&L', have: true },
+  { id: 'tax', label: 'Tax returns (3yr)', have: 'partial', note: '2024 only, via recast' },
+  { id: 'concentration', label: 'Revenue by client', have: false, blocking: true },
+  { id: 'contracts', label: 'Top-10 contracts', have: false, blocking: true },
+  { id: 'payroll', label: 'Payroll register', have: false, blocking: true },
+  { id: 'churn', label: 'Churn / retention cohorts', have: false, blocking: true },
+  { id: 'expense', label: 'Expense detail (auto, travel)', have: false, blocking: true },
+  { id: 'headcount', label: 'Headcount by function', have: false },
+  { id: 'ar', label: 'AR ageing', have: false },
+];
+
+/* ── Assumptions (the only free variables) ─────────────────────────────── */
+const A = {
+  entryMult: 4.5, leverage: 2.5, mgrComp: 185000, hold: 5,
+  exitMult: 5.0, revGrowth: 6, marginUplift: 4, hurdle: 3.0, debtRate: 10,
+};
+const SPECS = [
+  { k: 'entryMult', l: 'Entry multiple', min: 2, max: 8, step: .1, fmt: v => v.toFixed(1) + 'x', col: 1 },
+  { k: 'mgrComp', l: 'Market manager comp', min: 0, max: 350000, step: 5000, fmt: v => usd(v), col: 1 },
+  { k: 'leverage', l: 'Leverage (x EBITDA)', min: 0, max: 4, step: .1, fmt: v => v.toFixed(1) + 'x', col: 1 },
+  { k: 'debtRate', l: 'Debt cost', min: 5, max: 15, step: .5, fmt: v => v.toFixed(1) + '%', col: 1 },
+  { k: 'revGrowth', l: 'Revenue growth p.a.', min: -5, max: 20, step: 1, fmt: v => v + '%', col: 2 },
+  { k: 'marginUplift', l: 'Margin uplift by exit', min: 0, max: 20, step: 1, fmt: v => '+' + v + ' pts', col: 2 },
+  { k: 'exitMult', l: 'Exit multiple', min: 2, max: 9, step: .1, fmt: v => v.toFixed(1) + 'x', col: 2 },
+  { k: 'hold', l: 'Hold period', min: 3, max: 7, step: 1, fmt: v => v + ' yrs', col: 2 },
+  { k: 'hurdle', l: 'MOIC hurdle', min: 2, max: 5, step: .1, fmt: v => v.toFixed(1) + 'x', col: 2 },
+];
+
+/* ── THE ENGINE — every number below is arithmetic ─────────────────────── */
+function normalizedEbitda(over) {
+  const y = DEAL.years[2025];
+  const rulings = over || rulingMap();
+  let disallowed = 0;
+  for (const b of DEAL.addbacks) {
+    const r = rulings[b.id];
+    if (r === 'reject') disallowed += b.amt;
+    else if (r === 'challenge') disallowed += b.amt / 2;
+  }
+  const adjSde = y.sde - disallowed;          // SDE after our rulings
+  const ebitda = adjSde - A.mgrComp;          // the bridge the broker never crosses
+  return { sde: y.sde, disallowed, adjSde, ebitda, revenue: y.revenue,
+           margin: ebitda / y.revenue * 100 };
+}
+
+function model(entryMult, over) {
+  const n = normalizedEbitda(over);
+  const e = n.ebitda;
+  if (e <= 0) return { dead: true, n };
+  const ev = e * entryMult;
+  const debt = Math.min(A.leverage * e, ev * 0.75);
+  const equity = Math.max(ev - debt, 1);
+
+  // Exit: revenue compounds, margin expands by the uplift, debt amortises out of
+  // a conservative half of post-interest cash flow.
+  const exitRev = n.revenue * Math.pow(1 + A.revGrowth / 100, A.hold);
+  const exitMargin = (n.margin + A.marginUplift) / 100;
+  const exitEbitda = exitRev * exitMargin;
+  const exitEv = exitEbitda * A.exitMult;
+
+  let d = debt;
+  for (let i = 0; i < A.hold; i++) {
+    const ebit = e + (exitEbitda - e) * ((i + 1) / A.hold);
+    const cash = Math.max(ebit - d * A.debtRate / 100, 0) * 0.5;
+    d = Math.max(d - cash, 0);
+  }
+  const exitEquity = Math.max(exitEv - d, 0);
+  const moic = exitEquity / equity;
+  const irr = moic > 0 ? (Math.pow(moic, 1 / A.hold) - 1) * 100 : -100;
+  return { n, ev, debt, equity, exitEbitda, exitEv, exitDebt: d, exitEquity, moic, irr, entryMult };
+}
+
+/* Max price: binary search the entry multiple that lands exactly on the hurdle.
+   Solved, not guessed — and monotone, because a higher entry price can only
+   reduce MOIC. */
+function maxPriceMultiple() {
+  let lo = 0.5, hi = 15;
+  if (model(lo).moic < A.hurdle) return null;   // fails even when almost free
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    (model(mid).moic >= A.hurdle ? lo = mid : hi = mid);
+  }
+  return lo;
+}
+
+/* Deal-box rules — evaluated in code against extracted facts. */
+function rules() {
+  const n = normalizedEbitda(), m = model(A.entryMult), y = DEAL.years[2025];
+  const abPct = DEAL.addbacks.reduce((s, b) => s + b.amt, 0) / (y.netIncome + DEAL.addbacks.reduce((s, b) => s + b.amt, 0)) * 100;
+  return [
+    { pass: false, hard: true, t: 'Single-client concentration',
+      d: 'The deal box kills above 20%. The CIM discloses concentration as a risk and offers mitigants, but never states the number — and revenue-by-client is not in the room. Unquantified is not the same as acceptable: this cannot be cleared without the file.' },
+    { pass: abPct <= 25, hard: false, t: `Add-backs ${abPct.toFixed(0)}% of pre-addback earnings`,
+      d: abPct > 25 ? `$${fmt(DEAL.addbacks.reduce((s,b)=>s+b.amt,0))} of add-backs against $${fmt(y.netIncome)} of net income. Above the 25% mark where the box says question everything — and we do, line by line.` : 'Within the 25% threshold.' },
+    { pass: n.ebitda >= 1500000, hard: false, t: `Adjusted EBITDA ${usd(n.ebitda)}`,
+      d: n.ebitda >= 1500000 ? 'Clears the $1.5M platform floor.' : `Below the $1.5M platform floor — this is a bolt-on at best, and priced as one (~4.5x, not ~6.0x). The broker's SDE headline of ${usd(n.sde)} is what makes it look like a platform.` },
+    { pass: y.revenue >= 2000000, hard: false, t: `Revenue ${usd(y.revenue)}`,
+      d: y.revenue >= 8000000 ? 'Platform range.' : 'Inside the $2–8M bolt-on range, below the $8–25M platform range.' },
+    { pass: !DEAL.facts.gpNotComparable, hard: false, t: 'Margin trend readable',
+      d: 'The broker states that 2023–24 and 2025–26 classify contractor and delivery cost differently — 2024 shows COGS of $0 against $2.04M of "Outside services" in opex. Gross margin cannot be trended across the period, so no margin improvement story is verifiable from these documents.' },
+    { pass: m.moic >= A.hurdle, hard: false, t: `Base MOIC ${m.moic ? m.moic.toFixed(2) : '—'}x at ${A.entryMult.toFixed(1)}x entry`,
+      d: m.moic >= A.hurdle ? `Clears the ${A.hurdle.toFixed(1)}x hurdle.` : `Fails the ${A.hurdle.toFixed(1)}x hurdle at this entry price.` },
+  ];
+}
+
+function thesisChecks() {
+  return [
+    { pass: false, t: 'Automation headroom is structurally reduced',
+      d: 'Our thesis takes 15–20% entry margins to ~35% by automating L1/L2 delivery. Enpowertek already runs a hybrid U.S./India delivery model — the labour this thesis compresses is largely offshore and already cheap. The uplift available here is a fraction of a domestic-delivery MSP, and the base case should be modelled that way rather than at the standard curve.' },
+    { pass: false, t: 'Owner is the business',
+      d: 'Owner’s Salary is $0 across all three years while "Member pay out" runs $210,949. The person taking that money is doing work someone must be paid to replace. That is the SDE-to-EBITDA bridge, and it is the single largest driver of price here.' },
+    { pass: null, t: 'Cross-sell distribution is unproven',
+      d: 'The upside case depends on 250–400 mid-market clients to sell transformation into. Client count is not disclosed, and a business with material concentration by definition does not have a wide base. Cross-sell carries none of the base case, as always — but here it may carry none of the upside either.' },
+  ];
+}
+
+/* ── Render ────────────────────────────────────────────────────────────── */
+const usd = v => (v < 0 ? '−' : '') + '$' + Math.abs(Math.round(v)).toLocaleString();
+const usdM = v => (v < 0 ? '−' : '') + '$' + (Math.abs(v) / 1e6).toFixed(2) + 'M';
+const fmt = v => Math.round(v).toLocaleString();
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cite = (doc, page) => `<span class="cite" title="${esc(doc)} — page ${page}">▸ ${esc(doc.split(' ')[0])} p.${page}</span>`;
+const rulingMap = () => Object.fromEntries(DEAL.addbacks.map(b => [b.id, b.ruling]));
+
+function show(v) {
+  for (const n of ['reconcile', 'addbacks', 'model', 'dealbox', 'memo']) {
+    document.getElementById('v-' + n).classList.toggle('on', n === v);
+    document.getElementById('n-' + n).classList.toggle('on', n === v);
+  }
+  if (v === 'memo') renderMemo();
+}
+
+function renderReconcile() {
+  const n = normalizedEbitda(), y = DEAL.years[2025], c = DEAL.claims[0];
+  const annualised = c.computed();
+  document.getElementById('threeCol').innerHTML = `
+    <div class="col">
+      <div class="h">CIM headline</div>
+      <div class="big" style="color:var(--red)">${usdM(c.cim)}</div>
+      <div class="sm">&ldquo;Annualized YTD SDE&rdquo; ${cite('CIM', 'stat block')}</div>
+    </div>
+    <div class="col">
+      <div class="h">Broker&rsquo;s own recast · FY2025</div>
+      <div class="big" style="color:var(--amber)">${usdM(y.sde)}</div>
+      <div class="sm">Seller&rsquo;s Discretionary Earnings ${cite("Broker's OMV", y.page)}</div>
+    </div>
+    <div class="col">
+      <div class="h">Our normalized EBITDA</div>
+      <div class="big" style="color:var(--green)">${usdM(n.ebitda)}</div>
+      <div class="sm">after add-back rulings and manager comp</div>
+    </div>`;
+
+  document.getElementById('bridgeNote').innerHTML = `
+    <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:9px">The bridge the broker never crosses</div>
+    <table style="max-width:560px">
+      <tr><td>FY2025 Seller&rsquo;s Discretionary Earnings</td><td class="r num">${usd(n.sde)}</td></tr>
+      <tr><td>Add-backs we disallow or halve</td><td class="r num" style="color:var(--red)">−${fmt(n.disallowed)}</td></tr>
+      <tr><td>Market-rate manager to replace the owner</td><td class="r num" style="color:var(--red)">−${fmt(A.mgrComp)}</td></tr>
+      <tfoot><tr><td>Normalized EBITDA</td><td class="r num">${usd(n.ebitda)}</td></tr></tfoot>
+    </table>
+    <p style="margin-top:12px;color:var(--ink2);max-width:680px">
+      SDE assumes a working owner takes the earnings. EBITDA assumes a buyer pays someone to do that job.
+      The recasting reports <b>Owner&rsquo;s Salary of $0</b> in all three years while adding back
+      <b>${usd(210949)}</b> of &ldquo;Member pay out&rdquo; ${cite("Broker's OMV", 6)} — so the owner
+      <em>was</em> paid, and the buyer will pay again. That single line is a
+      <b>${usdM(A.mgrComp * A.entryMult)}</b> swing in enterprise value at today&rsquo;s entry multiple.
+    </p>`;
+
+  const rows = [{
+    what: 'Annualized YTD SDE',
+    cim: usdM(c.cim), calc: usdM(annualised),
+    gap: usdM(c.cim - annualised),
+    why: `The CIM annualises to ${usdM(c.cim)}. The broker&rsquo;s own 2026 YTD recast — ${usd(DEAL.years[2026].sde)} over ${DEAL.years[2026].months} months ${cite("Broker's OMV", 5)} — annualises to ${usdM(annualised)}. Same firm, same deal, ${usdM(c.cim - annualised)} apart.`,
+  }, {
+    what: 'FY2025 actual', cim: '—', calc: usdM(y.sde), gap: usdM(c.cim - y.sde),
+    why: `The last complete year on file is ${usdM(y.sde)} ${cite("Broker's OMV", 6)}. The headline is ${usdM(c.cim - y.sde)} above the only full year that has actually happened.`,
+  }, {
+    what: 'Gross margin trend', cim: 'Improving', calc: 'Not comparable', gap: '—',
+    why: 'The broker states plainly that contractor and delivery costs sat in operating expense in 2023–24 and in COGS in 2025–26 — 2024 shows COGS of $0 against $2.04M of "Outside services" ' + cite("Broker's OMV", 7) + '. No margin trend across this period is readable.',
+  }];
+  document.getElementById('contraCount').textContent = rows.length + ' found';
+  document.getElementById('contraList').innerHTML =
+    `<table><thead><tr><th>Metric</th><th class="r">CIM</th><th class="r">Computed</th><th class="r">Gap</th><th>Why it differs</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td style="font-weight:600">${r.what}</td>
+      <td class="r num" style="color:var(--red)">${r.cim}</td>
+      <td class="r num">${r.calc}</td>
+      <td class="r num" style="color:var(--red)">${r.gap}</td>
+      <td style="color:var(--ink2);max-width:420px">${r.why}</td></tr>`).join('') + '</tbody></table>';
+
+  document.getElementById('histTable').innerHTML =
+    `<thead><tr><th>Year</th><th>Source</th><th class="r">Revenue</th><th class="r">COGS</th>
+      <th class="r">Net income</th><th class="r">Add-backs</th><th class="r">SDE</th><th class="r">SDE margin</th></tr></thead><tbody>` +
+    Object.entries(DEAL.years).sort((a, b) => a[0] - b[0]).map(([yr, d]) => `<tr>
+      <td style="font-weight:600">${yr}${d.months < 12 ? ` <span class="tag t-warn">${d.months}mo</span>` : ''}</td>
+      <td style="color:var(--ink2)">${d.src} ${cite("Broker's OMV", d.page)}</td>
+      <td class="r num">${usd(d.revenue)}</td>
+      <td class="r num">${d.cogs ? usd(d.cogs) : '<span class="tag t-bad">$0</span>'}</td>
+      <td class="r num">${usd(d.netIncome)}</td>
+      <td class="r num">${usd(d.addbacks)}</td>
+      <td class="r num" style="font-weight:600">${usd(d.sde)}</td>
+      <td class="r num">${(d.sde / d.revenue * 100).toFixed(1)}%</td></tr>`).join('') + '</tbody>';
+}
+
+function renderAddbacks() {
+  const total = DEAL.addbacks.reduce((s, b) => s + b.amt, 0);
+  const n = normalizedEbitda();
+  document.getElementById('abTable').innerHTML =
+    `<thead><tr><th>Line item</th><th class="r">Amount</th><th>Ruling</th><th>Reasoning</th></tr></thead><tbody>` +
+    DEAL.addbacks.map(b => `<tr>
+      <td><b>${esc(b.item)}</b><div style="font-size:11px;color:var(--muted)">note ${esc(b.note)} · ${cite("Broker's OMV", b.page)}</div></td>
+      <td class="r num">${usd(b.amt)}</td>
+      <td><select onchange="setRuling('${b.id}',this.value)" style="width:110px;padding:4px 7px;font-size:12.5px">
+        <option value="accept"${b.ruling === 'accept' ? ' selected' : ''}>accept</option>
+        <option value="challenge"${b.ruling === 'challenge' ? ' selected' : ''}>challenge</option>
+        <option value="reject"${b.ruling === 'reject' ? ' selected' : ''}>reject</option>
+      </select></td>
+      <td style="color:var(--ink2);max-width:460px">${esc(b.why)}</td></tr>`).join('') +
+    `</tbody><tfoot><tr><td>Broker adds back</td><td class="r num">${usd(total)}</td>
+      <td colspan="2">We disallow <b>${usd(n.disallowed)}</b> of it &rarr; adjusted SDE <b>${usd(n.adjSde)}</b>, normalized EBITDA <b>${usd(n.ebitda)}</b></td></tr></tfoot>`;
+}
+
+function setRuling(id, v) { DEAL.addbacks.find(b => b.id === id).ruling = v; renderAll(); }
+
+function renderModel() {
+  for (const col of [1, 2]) {
+    document.getElementById('sliders' + col).innerHTML = SPECS.filter(s => s.col === col).map(s => `
+      <div class="slider">
+        <div class="top"><span>${s.l}</span><b id="lab-${s.k}">${s.fmt(A[s.k])}</b></div>
+        <input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${A[s.k]}"
+               oninput="A['${s.k}']=parseFloat(this.value);document.getElementById('lab-${s.k}').textContent='${'' }'||0;setA()" />
+      </div>`).join('');
+  }
+  // Rebind cleanly (avoids escaping the formatter into an attribute).
+  for (const s of SPECS) {
+    const el = document.querySelector(`#sliders${s.col} input[oninput*="${s.k}"]`);
+    if (el) el.oninput = e => { A[s.k] = parseFloat(e.target.value); document.getElementById('lab-' + s.k).textContent = s.fmt(A[s.k]); renderOutputs(); };
+  }
+  renderOutputs();
+}
+function setA() { renderOutputs(); }
+
+function renderOutputs() {
+  const m = model(A.entryMult), n = m.n;
+  const good = m.moic >= A.hurdle;
+  document.getElementById('outStats').innerHTML = `
+    <div class="stat"><div class="l">Normalized EBITDA</div><div class="v num">${usdM(n.ebitda)}</div><div class="n">${n.margin.toFixed(1)}% margin</div></div>
+    <div class="stat"><div class="l">Enterprise value</div><div class="v num">${usdM(m.ev)}</div><div class="n">at ${A.entryMult.toFixed(1)}x</div></div>
+    <div class="stat"><div class="l">Debt</div><div class="v num">${usdM(m.debt)}</div><div class="n">${A.leverage.toFixed(1)}x EBITDA</div></div>
+    <div class="stat"><div class="l">Equity cheque</div><div class="v num">${usdM(m.equity)}</div><div class="n">at close</div></div>`;
+  document.getElementById('outStats2').innerHTML = `
+    <div class="stat"><div class="l">Exit EBITDA</div><div class="v num">${usdM(m.exitEbitda)}</div><div class="n">yr ${A.hold}, +${A.marginUplift}pts margin</div></div>
+    <div class="stat"><div class="l">Exit equity</div><div class="v num">${usdM(m.exitEquity)}</div><div class="n">after ${usdM(m.exitDebt)} debt</div></div>
+    <div class="stat"><div class="l">Base MOIC</div><div class="v num" style="color:${good ? 'var(--green)' : 'var(--red)'}">${m.moic.toFixed(2)}x</div><div class="n">hurdle ${A.hurdle.toFixed(1)}x</div></div>
+    <div class="stat"><div class="l">IRR</div><div class="v num" style="color:${good ? 'var(--green)' : 'var(--red)'}">${m.irr.toFixed(1)}%</div><div class="n">${A.hold}-yr hold</div></div>`;
+
+  const mp = maxPriceMultiple();
+  document.getElementById('maxPrice').innerHTML = mp === null
+    ? `<div class="tag t-bad" style="font-size:13px;padding:6px 12px">No entry price clears ${A.hurdle.toFixed(1)}x MOIC</div>
+       <p style="margin-top:10px;color:var(--ink2)">At these assumptions the deal fails the hurdle even at a nominal purchase price. The constraint is the earnings, not the price.</p>`
+    : `<div style="display:flex;gap:26px;flex-wrap:wrap;align-items:baseline">
+        <div><div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Max multiple</div>
+          <div style="font-family:var(--serif);font-size:34px;color:var(--accent)">${mp.toFixed(2)}x</div></div>
+        <div><div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Max enterprise value</div>
+          <div style="font-family:var(--serif);font-size:34px">${usdM(mp * normalizedEbitda().ebitda)}</div></div>
+        <div style="flex:1;min-width:260px;color:var(--ink2);font-size:13px">
+          Highest price that still returns ${A.hurdle.toFixed(1)}x. Solved by binary search over the
+          entry multiple to 60 iterations &mdash; not an estimate, and identical on every run.
+          Above this, walk.
+        </div></div>`;
+
+  const entries = [3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0], exits = [4.0, 4.5, 5.0, 5.5, 6.0];
+  const save = A.exitMult;
+  document.getElementById('sensTable').innerHTML =
+    `<thead><tr><th>entry ↓ / exit →</th>${exits.map(x => `<th class="r">${x.toFixed(1)}x</th>`).join('')}</tr></thead><tbody>` +
+    entries.map(en => `<tr><td style="font-weight:600">${en.toFixed(1)}x</td>` + exits.map(ex => {
+      A.exitMult = ex; const r = model(en).moic; A.exitMult = save;
+      return `<td class="r num ${r >= A.hurdle ? 'hi' : r < A.hurdle * 0.7 ? 'lo' : ''}">${r.toFixed(2)}x</td>`;
+    }).join('') + '</tr>').join('') + '</tbody>';
+  renderRules();
+}
+
+function renderRules() {
+  const rs = rules(), fails = rs.filter(r => !r.pass).length;
+  document.getElementById('ruleSummary').textContent = `${rs.length - fails} of ${rs.length} pass`;
+  document.getElementById('ruleList').innerHTML = rs.map(r => `<div class="rule">
+    <div class="ic" style="color:${r.pass ? 'var(--green)' : r.hard ? 'var(--red)' : 'var(--amber)'}">${r.pass ? '✓' : r.hard ? '✕' : '!'}</div>
+    <div class="tx"><b>${esc(r.t)} ${r.hard && !r.pass ? '<span class="tag t-bad">KILL</span>' : ''}</b>
+    <span style="color:var(--ink2)">${r.d}</span></div></div>`).join('');
+  document.getElementById('thesisList').innerHTML = thesisChecks().map(r => `<div class="rule">
+    <div class="ic" style="color:${r.pass === null ? 'var(--muted)' : 'var(--amber)'}">${r.pass === null ? '?' : '!'}</div>
+    <div class="tx"><b>${esc(r.t)}</b><span style="color:var(--ink2)">${r.d}</span></div></div>`).join('');
+}
+
+function renderRoom() {
+  document.getElementById('fileCount').textContent = DEAL.docs.length + ' files';
+  document.getElementById('fileList').innerHTML = DEAL.docs.map(d => `<div class="file">
+    <span class="tag ${d.kind === 'ingested' ? 't-neu' : 't-ok'}">${esc(d.label)}</span>
+    <span class="nm" title="${esc(d.file)}">${esc(d.file)}</span>
+    <span style="color:var(--muted)">${d.pages ? d.pages + 'p' : ''}</span></div>`).join('');
+  const have = REQUIRED.filter(r => r.have === true).length, block = REQUIRED.filter(r => !r.have && r.blocking).length;
+  document.getElementById('gapScore').textContent = `${have}/${REQUIRED.length}`;
+  document.getElementById('gapList').innerHTML = REQUIRED.map(r => `<div class="file">
+    <span style="width:14px;color:${r.have === true ? 'var(--green)' : r.have === 'partial' ? 'var(--amber)' : r.blocking ? 'var(--red)' : 'var(--muted)'}">${r.have === true ? '✓' : r.have === 'partial' ? '~' : '·'}</span>
+    <span class="nm">${esc(r.label)}${r.note ? ` <span style="color:var(--muted)">(${esc(r.note)})</span>` : ''}</span>
+    ${!r.have && r.blocking ? '<span class="tag t-bad">blocks</span>' : ''}</div>`).join('') +
+    (block ? `<div class="body" style="border-top:1px solid var(--line);font-size:12.5px;color:var(--ink2)">
+      <b>${block} blocking gaps.</b> Concentration cannot be cleared, and the auto and travel add-backs
+      cannot be ruled on, without these. Request before any LOI.</div>` : '');
+}
+
+/* ── Multi-file ingestion ──────────────────────────────────────────────── */
+const drop = document.getElementById('drop');
+['dragenter', 'dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', ev => ingest(ev.dataTransfer.files));
+
+async function ingest(files) {
+  const msg = document.getElementById('ingestMsg');
+  for (const f of files) {
+    msg.textContent = 'Reading ' + f.name + '…';
+    let pages = null, chars = 0;
+    try {
+      if (/\.pdf$/i.test(f.name)) {
+        const r = await readPdf(f); pages = r.pages; chars = r.text.length;
+      } else if (/\.(csv|txt|md)$/i.test(f.name)) {
+        chars = (await f.text()).length;
+      } else {
+        chars = f.size;
+      }
+    } catch (e) { msg.textContent = f.name + ': ' + e.message; continue; }
+    DEAL.docs.push({ file: f.name, label: 'ingested', pages, kind: 'ingested', chars });
+    renderRoom();
+  }
+  msg.innerHTML = `Parsed ${files.length} file(s). <b>Fact extraction needs a model key</b> — ` +
+    `the loaded Enpowertek analysis was transcribed from source with page citations, and this build ` +
+    `will not invent figures for a document it has not been given a way to read properly.`;
+}
+
+/* PDF text extraction via pdf.js, loaded on first use only. */
+let pdfjs = null;
+async function readPdf(file) {
+  if (!pdfjs) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload = res; s.onerror = () => rej(new Error('could not load the PDF reader'));
+      document.head.appendChild(s);
+    });
+    pdfjs = window.pdfjsLib;
+    pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  let text = '';
+  for (let i = 1; i <= doc.numPages; i++) {
+    const c = await (await doc.getPage(i)).getTextContent();
+    text += c.items.map(t => t.str).join(' ') + '\n';
+  }
+  return { pages: doc.numPages, text };
+}
+
+/* ── Memo, written from the computed model ─────────────────────────────── */
+function renderMemo() {
+  const n = normalizedEbitda(), m = model(A.entryMult), mp = maxPriceMultiple();
+  const y = DEAL.years[2025], c = DEAL.claims[0], ann = c.computed();
+  const rejected = DEAL.addbacks.filter(b => b.ruling === 'reject');
+  document.getElementById('memoStamp').textContent =
+    `normalized EBITDA ${usdM(n.ebitda)} · max ${mp ? mp.toFixed(2) + 'x' : 'n/a'}`;
+  document.getElementById('memoOut').textContent =
+`INVESTMENT COMMITTEE MEMO — ${DEAL.name}
+${DEAL.desc}
+Broker: ${DEAL.broker}
+
+RECOMMENDATION
+${mp === null
+  ? `PASS. No entry price clears the ${A.hurdle.toFixed(1)}x hurdle on these earnings — the constraint is the business, not the price.`
+  : `PURSUE AT OR BELOW ${mp.toFixed(2)}x NORMALIZED EBITDA (${usdM(mp * n.ebitda)} enterprise value), and only after the concentration file is produced. Concentration is an unresolved kill criterion, not a diligence item.`}
+
+THEIRS VS OURS
+The CIM headlines ${usdM(c.cim)} of annualized SDE. The broker's own recasting puts FY2025 at
+${usd(y.sde)} and 2026 year-to-date at ${usd(DEAL.years[2026].sde)} over ${DEAL.years[2026].months} months,
+which annualizes to ${usdM(ann)}. Same firm, same deal, ${usdM(c.cim - ann)} apart.
+
+Our number is ${usd(n.ebitda)}, and the bridge is not a matter of opinion:
+
+    FY2025 Seller's Discretionary Earnings        ${usd(y.sde)}
+    Add-backs disallowed or halved               −${fmt(n.disallowed)}
+    Market-rate manager to replace the owner     −${fmt(A.mgrComp)}
+    ────────────────────────────────────────────────────────
+    Normalized EBITDA                             ${usd(n.ebitda)}
+
+The recasting shows Owner's Salary of $0 in every year while adding back ${usd(210949)} of
+"Member pay out". The owner was paid; the buyer will pay again. That line alone moves enterprise
+value by ${usdM(A.mgrComp * A.entryMult)} at ${A.entryMult.toFixed(1)}x.
+
+ADD-BACKS WE DO NOT ACCEPT
+${rejected.map(b => `• ${b.item} — ${usd(b.amt)}. ${b.why}`).join('\n') || '• None.'}
+
+WHAT THE DOCUMENTS WILL NOT SUPPORT
+The broker states that contractor and delivery costs sat in operating expense in 2023–24 and in
+COGS in 2025–26; 2024 shows COGS of $0 against $2.04M of "Outside services". No gross-margin trend
+across this period is readable, so any margin-improvement narrative is unverifiable from what we have.
+
+THESIS FIT
+Weak, and specifically so. Our base case takes 15–20% entry margins to ~35% by automating L1/L2
+delivery. Enpowertek already runs hybrid U.S./India delivery — the labour we compress is largely
+offshore and already cheap, so the available uplift is a fraction of a domestic MSP's. Model it at a
+discount to the standard curve or not at all. Cross-sell carries none of the base case, and with
+undisclosed client count and material concentration it may carry none of the upside either.
+
+RETURNS AT ${A.entryMult.toFixed(1)}x ENTRY
+    Enterprise value    ${usdM(m.ev)}
+    Debt (${A.leverage.toFixed(1)}x)         ${usdM(m.debt)}
+    Equity              ${usdM(m.equity)}
+    Exit EBITDA (yr ${A.hold})  ${usdM(m.exitEbitda)}
+    Base MOIC           ${m.moic.toFixed(2)}x        IRR ${m.irr.toFixed(1)}%
+    Max price at ${A.hurdle.toFixed(1)}x     ${mp ? mp.toFixed(2) + 'x  (' + usdM(mp * n.ebitda) + ')' : 'no clearing price'}
+
+BLOCKING DILIGENCE — request before any LOI
+${REQUIRED.filter(r => !r.have && r.blocking).map(r => '• ' + r.label).join('\n')}
+
+Revenue by client is the first item and the only one that matters at this stage. The CIM discloses
+concentration as a risk and offers mitigants but never states the number. Unquantified is not the
+same as acceptable — and on a business this size, one client leaving is the whole thesis.`;
+}
+
+/* ── Boot ──────────────────────────────────────────────────────────────── */
+function renderAll() { renderReconcile(); renderAddbacks(); renderOutputs(); renderRoom(); }
+renderModel();
+renderAll();
+</script>
+</body>
+</html>
