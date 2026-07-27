@@ -106,27 +106,27 @@ a.card:hover{border-color:var(--ink);transform:translateY(-1px)}
       <div class="foot"><span class="go">Open the CRM →</span><span>· login required</span></div>
     </a>
 
-    <div class="card">
-      <div class="top"><h3>Sourcer</h3><span class="tag t-cli">Built · CLI</span></div>
+    <a class="card" href="/agents#sourcer">
+      <div class="top"><h3>Sourcer</h3><span class="tag t-live">Live</span></div>
       <div class="what">
         Deal origination. Builds the target universe, scores every company 1&ndash;10 against the deal
         box with a one-line thesis, buckets A/B/C, and drafts the three-touch direct-to-owner sequence
         in Nathan&rsquo;s voice. Writes to the shared pipeline DB; the CRM is where those leads are
         then worked.
       </div>
-      <div class="foot"><span>Terminal &mdash; no web view yet</span></div>
-    </div>
+      <div class="foot"><span class="go">Open Sourcer &rarr;</span><span>&middot; demo mode, no key needed</span></div>
+    </a>
 
-    <div class="card">
-      <div class="top"><h3>Analyst</h3><span class="tag t-cli">Built · CLI</span></div>
+    <a class="card" href="/agents#analyst">
+      <div class="top"><h3>Analyst</h3><span class="tag t-live">Live</span></div>
       <div class="what">
         Deal underwriting. Spreads a CIM into a normalized EBITDA with every add-back itemised and
         rated accept / challenge / reject, builds the automation margin bridge, runs base/bear/bull
         returns, solves for the highest price that still clears 3.0x MOIC, and writes the one-page IC
         memo. Always ends on a number, never &ldquo;it depends&rdquo;.
       </div>
-      <div class="foot"><span>Terminal &mdash; no web view yet</span></div>
-    </div>
+      <div class="foot"><span class="go">Open Analyst &rarr;</span><span>&middot; demo mode, no key needed</span></div>
+    </a>
 
   </div>
 
@@ -138,16 +138,16 @@ a.card:hover{border-color:var(--ink);transform:translateY(-1px)}
     and the reasoning both needed replacing, not just the label.
   -->
   <div class="note" style="margin-top:16px">
-    <strong>Sourcer and Analyst are dormant by default.</strong> No schedulers, no daemons, nothing
-    sends. Every run is a manual command, drafts are stored rather than delivered, and the whole
-    pipeline runs offline against a mocked model for $0 &mdash; they only make a paid call when a key
-    is set explicitly. They switch on when capital is raised, not before.
+    <strong>Sourcer and Analyst are dormant by default.</strong> Both open in demo mode with no key and
+    no cost &mdash; the full flow is explorable, and the page is incapable of spending money until
+    someone deliberately adds a key in settings. Nothing sends: outreach is drafted for review and
+    handed to the CRM. No schedulers, no daemons. The same two agents also run headless from the
+    terminal against the shared pipeline DB.
   </div>
 
   <div class="note">
     <strong>Status labels are honest.</strong> &ldquo;Built&rdquo; means it runs today, and
-    &ldquo;CLI&rdquo; means exactly that &mdash; a terminal tool with no web view, not a screen we
-    have simply not linked. Nothing on this page is a placeholder for work that has not happened. The
+    &ldquo;Live&rdquo; means you can open it right now. Nothing on this page is a placeholder for work that has not happened. The
     same rule applies inside Poly, where any figure we have not measured is shown as unmeasured
     rather than estimated. A console that flatters itself is not useful to the person reading it.
   </div>
