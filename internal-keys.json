@@ -1,0 +1,9 @@
+{
+  "note": "Product keys, encrypted under the shared credential. Decryptable only after login.",
+  "analyst": {
+    "s": "f+w8j8FZfggO4IRopDlsVA==",
+    "iv": "X7VVpYBew9KqxNqz",
+    "ct": "Ws0mT07udDDoPycYk3kkoAbe/udyFofyQ25sSJCc",
+    "iter": 600000
+  }
+}
