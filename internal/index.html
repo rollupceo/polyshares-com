@@ -51,6 +51,11 @@ a.card:hover{border-color:var(--ink);transform:translateY(-1px)}
 .tag{font-size:11px;font-weight:500;padding:3px 9px;border-radius:999px;white-space:nowrap}
 .t-live{background:#E6EEE6;color:#3F6342}
 .t-int{background:#E6ECF4;color:#3A5A86}
+.t-soon{background:var(--paper2);color:var(--muted)}
+/* Coming-soon cards are div, not <a> — nothing to click, and they read as
+   inert rather than as a link that quietly does nothing. */
+.card.soon{background:#FCFBF9;cursor:default}
+.card.soon h3,.card.soon .what{color:var(--muted)}
 
 .note{margin-top:34px;background:var(--paper2);border-radius:10px;padding:16px 18px;color:var(--ink2);font-size:13.5px;line-height:1.6;max-width:760px}
 .note strong{color:var(--ink)}
@@ -114,7 +119,7 @@ a.card:hover{border-color:var(--ink);transform:translateY(-1px)}
   <div class="grid">
 
     <a class="card" href="./demo/">
-      <div class="top"><h3>Poly</h3><span class="tag t-live">Live demo</span></div>
+      <div class="top"><h3>Poly &mdash; MSP agent</h3><span class="tag t-live">Live demo</span></div>
       <div class="what">
         Our MSP delivery agent. Reads the incoming ticket queue, resolves what it can safely resolve,
         verifies the fix actually landed, and hands the rest to a technician with its findings
@@ -129,35 +134,34 @@ a.card:hover{border-color:var(--ink);transform:translateY(-1px)}
   <div class="grid">
 
     <a class="card" href="./crm">
-      <div class="top"><h3>CRM</h3><span class="tag t-int">Internal</span></div>
+      <div class="top"><h3>CRM</h3><span class="tag t-live">Live</span></div>
       <div class="what">
         The deal pipeline. Lead lists, per-rep assignment, stage tracking with weighted forecast, and
         two-way Gmail so every email to a target is logged against it. Where sourcing actually happens
         today.
       </div>
-      <div class="foot"><span class="go">Open the CRM →</span><span>· same login as this page</span></div>
+      <div class="foot"><span class="go">Open the CRM →</span><span>· sign in with the same email and password</span></div>
     </a>
 
-    <a class="card" href="./agents#sourcer">
-      <div class="top"><h3>Sourcer</h3><span class="tag t-live">Live</span></div>
+    <div class="card soon">
+      <div class="top"><h3>Sourcer</h3><span class="tag t-soon">Coming soon</span></div>
       <div class="what">
-        Deal origination. Builds the target universe, scores every company 1&ndash;10 against the deal
-        box with a one-line thesis, buckets A/B/C, and drafts the three-touch direct-to-owner sequence
-        in Nathan&rsquo;s voice. Writes to the shared pipeline DB; the CRM is where those leads are
-        then worked.
+        Deal origination. Will build the target universe, score every company 1&ndash;10 against the
+        buy box with a one-line thesis, bucket A/B/C, and draft the three-touch direct-to-owner
+        sequence. Writes to the shared pipeline DB; the CRM is where those leads then get worked.
       </div>
-      <div class="foot"><span class="go">Open Sourcer &rarr;</span></div>
-    </a>
+      <div class="foot"><span>Not yet available</span></div>
+    </div>
 
     <a class="card" href="./analyst">
-      <div class="top"><h3>Analyst</h3><span class="tag t-live">Live</span></div>
+      <div class="top"><h3>Associate</h3><span class="tag t-live">Live</span></div>
       <div class="what">
-        Deal underwriting on live deals &mdash; Project Maturity, a national dental-focused MSP, is
-        loaded and priced against the Polyshares buy box. Audits every arithmetic claim in the teaser,
-        decomposes the earnings bridge, and prices across the range the undisclosed add-backs could
-        span. No figure is produced by a language model.
+        Our AI associate. Underwrites live deals end to end &mdash; Project Maturity and Digital
+        Boardwalk are both loaded and priced against the buy box. Audits every arithmetic claim
+        against the source, decomposes the earnings bridge, solves max price, and drafts the LOI,
+        the data request and the model. No figure is produced by a language model.
       </div>
-      <div class="foot"><span class="go">Open Analyst &rarr;</span><span>&middot; unlocks with this login</span></div>
+      <div class="foot"><span class="go">Open the Associate &rarr;</span><span>&middot; 2 live deals</span></div>
     </a>
 
   </div>
