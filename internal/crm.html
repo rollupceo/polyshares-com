@@ -176,6 +176,27 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .reddot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red)}
 .navbadge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--red);color:#fff;font-size:10.5px;font-weight:600;vertical-align:middle}
 #gmailBtn.gmail-ok{opacity:.65}
+/* ---- fulfillment / jobs ---- */
+.jobcard{background:#fff;border:1px solid var(--line);border-radius:9px;padding:11px 12px;margin-bottom:9px;cursor:pointer}
+.jobcard:hover{border-color:var(--ink)}
+.jobcard .jc-cli{font-weight:600;font-size:13.5px}
+.jobcard .jc-val{font-size:12.5px;color:var(--ink2);margin-top:1px}
+.jobcard .jc-meta{font-size:11.5px;color:var(--muted);margin-top:3px}
+.hbar{height:5px;background:var(--paper2);border-radius:3px;overflow:hidden;margin-top:7px}
+.hbar > i{display:block;height:100%;background:var(--accent)}
+.hbar.over > i{background:var(--red)}
+.mchip{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:20px}
+.mchip.good{background:rgba(94,140,97,.14);color:var(--green)}
+.mchip.mid{background:rgba(201,162,39,.16);color:#8a6d0b}
+.mchip.bad{background:rgba(165,80,80,.14);color:var(--red)}
+.jobline{display:grid;grid-template-columns:1.4fr .7fr .7fr .7fr auto;gap:7px;align-items:center;margin-bottom:6px}
+.jobline input,.jobline select{font-size:12.5px;padding:6px}
+.jsum{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.jsum > div{flex:1;min-width:120px;background:var(--paper3);border-radius:8px;padding:8px 11px}
+.jsum .k{font-size:11px;color:var(--muted)}
+.jsum .v{font-size:16px;font-weight:600}
+.invrow{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--paper2)}
+.invrow .lbl{flex:1}
 #cardpop{position:fixed;z-index:70;width:240px;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 16px 44px rgba(0,0,0,.22);padding:14px;display:none;flex-direction:column;gap:8px}
 #cardpop.open{display:flex}
 #cardpop .cp-h{font-weight:600;font-size:13px;margin-bottom:2px}
@@ -292,8 +313,10 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <button data-v="board" class="on">Board</button>
     <button data-v="work">Work</button>
     <button data-v="replies" id="repliesTab">Replies<span id="repliesBadge" class="navbadge" style="display:none">0</span></button>
+    <button data-v="fulfill">Fulfillment</button>
     <button data-v="leads">Leads</button>
     <button data-v="metrics">Metrics</button>
+    <button data-v="insights">Insights</button>
     <button data-v="team" id="teamTab">Admin</button>
   </nav>
   <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button id="gmailBtn" class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="connectGmail()" title="Connect your Gmail to send and read replies in the CRM">Connect Gmail</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="startTour()" title="Take the tour">? Tour</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="changeMyPass()">Password</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
@@ -320,6 +343,10 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <div class="row"><span style="font-weight:500;font-size:15px">Replies</span><span id="repCount" style="color:var(--muted);font-size:12.5px"></span><button class="btn sm ghost" style="margin-left:auto" onclick="refreshReplies()">Refresh</button></div>
     <div id="repliesWrap" style="margin-top:12px"></div>
   </section>
+  <section id="v-fulfill" style="display:none">
+    <div class="row"><b style="font-family:var(--serif);font-size:20px">Fulfillment</b><span id="fulfillSummary" style="color:var(--muted);font-size:12.5px"></span><input id="jsearch" placeholder="Search jobs…" style="margin-left:auto;width:220px" oninput="renderFulfill()" /><button class="btn sm ghost" onclick="loadJobs(true).then(()=>renderFulfill())">Refresh</button></div>
+    <div class="board" id="jobBoard" style="margin-top:14px"></div>
+  </section>
   <section id="v-leads" style="display:none">
     <div class="row"><input id="tsearch" placeholder="Search by name, email, phone, company, title…" style="width:300px" oninput="renderTable()" /><select id="tstage" onchange="renderTable()" style="padding:8px"><option value="">All stages</option></select><select id="tlist" onchange="renderTable()" style="padding:8px"><option value="">All lists</option></select><button class="btn ghost" onclick="newLead()">+ New lead</button><span id="tcount" style="color:var(--muted);font-size:12.5px"></span></div>
     <div id="bulkBar" style="display:none" class="row" style="margin-top:8px"></div>
@@ -333,6 +360,13 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <div class="subhead" style="margin-top:20px">Team pipeline</div>
     <div id="mFunnel"></div>
     <div class="mgrid" id="mgrid" style="margin-top:20px"></div>
+  </section>
+  <section id="v-insights" style="display:none">
+    <div class="row"><b style="font-family:var(--serif);font-size:20px">Insights</b><span id="insMeta" style="color:var(--muted);font-size:12.5px"></span><button class="btn sm ghost" style="margin-left:auto" onclick="renderInsights(true)">Refresh</button></div>
+    <div id="insKpis" class="pipebar" style="margin-top:12px;flex-wrap:wrap"></div>
+    <div class="subhead" style="margin-top:18px">Jobs — revenue, cost &amp; margin</div>
+    <div style="overflow-x:auto"><table class="tbl" id="insJobs"></table></div>
+    <div class="mgrid" id="insGrid" style="margin-top:22px"></div>
   </section>
   <section id="v-team" style="display:none">
     <h2 style="font-family:var(--serif);font-weight:500;font-size:24px;margin-bottom:4px">Admin Dashboard</h2>
@@ -389,11 +423,11 @@ async function gw(path, body, auth){
   return d;
 }
 let token=null, me=null, reps=[], stages=[], myLeads=[], myActs=[], myOutbox=[], myTasks=[], stageProb={};
-const DEFAULT_PROB = {'New':5,'Prospecting':10,'Connected':20,'Meeting Booked':40,'Meeting Attended':60,'Proposal Sent':80,'Paid & Closed':100,'Dead':0};
+const DEFAULT_PROB = {'New':5,'Prospecting':10,'Connected':20,'Meeting Booked':40,'Meeting Attended':60,'Proposal Sent':80,'Signed':100,'Dead':0};
 function prob(st){ if (stageProb && st in stageProb) return stageProb[st]; if (st in DEFAULT_PROB) return DEFAULT_PROB[st]; if (st==='Dead') return 0; const i=stages.indexOf(st); return i<0?0:Math.round(i/Math.max(1,stages.length-1)*100); }
 function money(n){ n=Number(n)||0; return n>=1000 ? '$'+(n/1000).toFixed(n%1000?1:0)+'k' : '$'+n; }
 function moneyFull(n){ return '$'+(Number(n)||0).toLocaleString(); }
-const isOpen = l => !['Paid & Closed','Dead'].includes(l.st||'New');
+const isOpen = l => !['Signed','Dead'].includes(l.st||'New');
 let shas={}, dirty={leads:false,acts:false,outbox:false,tasks:false}, saveTimer=null, colLimit={};
 
 /* ---------- crypto ---------- */
@@ -624,7 +658,7 @@ async function saveLogins(doc, sha, msg){
   if (!r.ok) throw new Error('logins save '+r.status);
 }
 async function enterApp(){
-  try { stages = await load('meta/stages.json'); } catch(e){ stages=['New','Prospecting','Connected','Meeting Booked','Meeting Attended','Proposal Sent','Paid & Closed','Dead']; }
+  try { stages = await load('meta/stages.json'); } catch(e){ stages=['New','Prospecting','Connected','Meeting Booked','Meeting Attended','Proposal Sent','Signed','Dead']; }
   try { stageProb = await load('meta/stageprob.json'); } catch(e){ stageProb={}; }
   // resilient loads: a transient failure on one file must not blank the whole app
   try { myLeads = await load(`reps/${me.id}/leads.json`); } catch(e){ myLeads = []; toast('Could not load your leads — check connection and refresh'); }
@@ -649,14 +683,16 @@ document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
   document.querySelectorAll('header nav button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   const v=b.dataset.v;
-  ['board','work','replies','leads','metrics','team'].forEach(x => document.getElementById('v-'+x).style.display = (x===v?'':'none'));
+  ['board','work','replies','fulfill','leads','metrics','insights','team'].forEach(x => document.getElementById('v-'+x).style.display = (x===v?'':'none'));
   document.getElementById('v-queue').style.display='none';
   document.getElementById('v-activity').style.display='none';
-  // lead panel is only contextually correct on Board, Leads and Replies; close it elsewhere
-  if (!['board','leads','replies'].includes(v)) closeDrawer();
+  // a drawer (lead or job) is only contextually correct on these views; close it elsewhere
+  if (!['board','leads','replies','fulfill'].includes(v)) closeDrawer();
   if (v==='metrics') renderMetrics();
   if (v==='leads') renderTable();
   if (v==='replies') renderReplies();
+  if (v==='fulfill') renderFulfill();
+  if (v==='insights') renderInsights();
   if (v==='team') { refreshLists(); renderProbEditor(); }
   if (v==='work') workSub(workCur);
 });
@@ -682,10 +718,10 @@ function renderPipelineBar(){
   const open = src.filter(isOpen);
   const total = open.reduce((s,l)=>s+(Number(l.v)||0),0);
   const weighted = open.reduce((s,l)=>s+(Number(l.v)||0)*prob(l.st||'New')/100,0);
-  const won = src.filter(l=>(l.st)==='Paid & Closed').reduce((s,l)=>s+(Number(l.v)||0),0);
+  const won = src.filter(l=>(l.st)==='Signed').reduce((s,l)=>s+(Number(l.v)||0),0);
   bar.innerHTML = `<div class="pstat"><div class="pl">Open pipeline</div><div class="pn">${moneyFull(total)}</div><div class="pl">${open.length} deals</div></div>
     <div class="pstat"><div class="pl">Weighted forecast</div><div class="pn">${moneyFull(Math.round(weighted))}</div><div class="pl">by stage probability</div></div>
-    <div class="pstat"><div class="pl">Won</div><div class="pn">${moneyFull(won)}</div><div class="pl">${src.filter(l=>l.st==='Paid & Closed').length} closed</div></div>`;
+    <div class="pstat"><div class="pl">Won</div><div class="pn">${moneyFull(won)}</div><div class="pl">${src.filter(l=>l.st==='Signed').length} closed</div></div>`;
 }
 let boardLeads = null, viewingRepId = null, viewingActs = [];   // admin "view another rep's pipeline" (read-only)
 async function setBoardRep(id){
@@ -743,7 +779,12 @@ function renderBoard(){
 function setStage(id, st){
   const l = myLeads.find(x=>x.i===id); if (!l || (l.st||'New')===st) return;
   l.st = st; l.la = Date.now();
-  if (st==='Paid & Closed'){ l.closed = Date.now(); delete l.fu; const r = prompt('Won! Any note (terms, close date)? Optional:', ''); if (r) l.wnote = r; }
+  if (st==='Signed'){
+    l.closed = Date.now(); delete l.fu;
+    if (!l.v){ const dv = prompt(`Signed! What's the contract value for ${leadName(l)} ($)? This drives fulfillment margins:`, ''); if (dv && Number(dv)>0) l.v = Math.round(Number(dv)); }
+    const r = prompt('Any note (terms, close date)? Optional:', ''); if (r) l.wnote = r;
+    createJobFromLead(l);   // spin up the fulfillment job
+  }
   else if (st==='Dead'){ l.closed = Date.now(); delete l.fu; const r = prompt('Marking as lost. Reason? Optional:', l.lreason||''); if (r!==null && r) l.lreason = r; }
   else {
     // once a lead is real (past Connected), nudge for a deal value so pipeline $ is meaningful
@@ -770,7 +811,7 @@ function queueGroups(){
   const now = Date.now();
   let N = parseInt(localStorage.getItem('crm_staleN')); if (!N || N < 1) N = 1;
   const touch = l => l.la || l.a || 0;
-  const active = myLeads.filter(l => !['Paid & Closed','Dead'].includes(l.st||'New'));
+  const active = myLeads.filter(l => !['Signed','Dead'].includes(l.st||'New'));
   const fuDue = active.filter(l => l.fu && l.fu <= now).sort((a,b)=>a.fu-b.fu);
   const fresh = active.filter(l => !fuDue.includes(l) && (l.st||'New')==='New' && !l.la).sort((a,b)=>(a.a||0)-(b.a||0));
   const stale = active.filter(l => !fuDue.includes(l) && !fresh.includes(l) && !l.fu && (now - touch(l)) >= N*DAY).sort((a,b)=>touch(a)-touch(b));
@@ -1427,7 +1468,7 @@ function computeMetrics(){
     const openL = leads.filter(isOpen);
     const openV = openL.reduce((s,l)=>s+(Number(l.v)||0),0);
     const wtdV = Math.round(openL.reduce((s,l)=>s+(Number(l.v)||0)*prob(l.st||'New')/100,0));
-    const won = leads.filter(l=>l.st==='Paid & Closed'), lost = leads.filter(l=>l.st==='Dead');
+    const won = leads.filter(l=>l.st==='Signed'), lost = leads.filter(l=>l.st==='Dead');
     const wonV = won.reduce((s,l)=>s+(Number(l.v)||0),0);
     const winRate = (won.length+lost.length) ? Math.round(won.length/(won.length+lost.length)*100) : 0;
     return { r, acts, leads, inRange, c, touches, leadCount:leads.length, openV, wtdV, won:won.length, lost:lost.length, wonV, winRate };
@@ -1487,15 +1528,264 @@ async function saveProb(){
   catch(e){ toast('Save failed: '+e.message); }
 }
 function renderReps(){
-  document.getElementById('repTable').innerHTML = '<table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Admin</th><th>Login</th><th>Status</th><th></th></tr></thead><tbody>' + reps.map((r,i)=>`<tr>
+  document.getElementById('repTable').innerHTML = '<table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Admin</th><th>Cost $/h</th><th>Login</th><th>Status</th><th></th></tr></thead><tbody>' + reps.map((r,i)=>`<tr>
     <td><b>${esc(r.name)}</b>${r.id===me.id?' <span style="color:var(--muted);font-size:11px">(you)</span>':''}<div style="color:var(--muted);font-size:11.5px">${esc(r.email||'')}</div></td>
     <td><select onchange="setRole(${i}, this.value)" style="font-size:12px;padding:4px 6px">${['founder','sales'].map(x=>`<option ${ (r.role||'sales')===x?'selected':'' }>${x}</option>`).join('')}</select></td>
     <td><input type="checkbox" ${r.admin?'checked':''} ${r.id===me.id?'disabled':''} onchange="setAdmin(${i}, this.checked)" style="width:auto" /></td>
+    <td><input type="number" min="0" step="5" value="${r.rate||''}" placeholder="—" onchange="setRate(${i}, this.value)" style="width:70px;font-size:12px;padding:4px 6px" /></td>
     <td><button class="btn sm ghost" onclick="resetPass(${i})">Reset password</button></td>
     <td>${r.active===false?'<span class="tag">inactive</span> ':''}<button class="btn sm ghost" onclick="toggleActive(${i})">${r.active===false?'Activate':'Deactivate'}</button></td>
     <td>${r.id!==me.id?`<button class="btn sm ghost" style="color:var(--red)" onclick="delRep(${i})">Remove</button>`:''}</td></tr>`).join('') + '</tbody></table>';
 }
 async function saveReps(msg){ try{ await save('meta/reps.json', reps, msg||'crm: update reps'); }catch(e){ toast('Save failed: '+e.message); } renderReps(); fillAdmin(); }
+async function setRate(i, v){ reps[i].rate = Math.max(0, Math.round(Number(v)||0)) || undefined; await saveReps('crm: rate '+reps[i].id); }
+
+/* ================= FULFILLMENT / JOBS ================= */
+const FULFILL_STAGES = ['To kickoff','In progress','In review','Delivered','Complete'];
+let jobsCache = null;
+function userById(id){ return reps.find(r=>r.id===id) || {}; }
+function userRate(id){ return Number(userById(id).rate)||0; }
+function userName(id){ const u=userById(id); return u.name || id; }
+function pct(x){ return Math.round(x*100)+'%'; }
+function _job(jobId){ return (jobsCache||[]).find(j=>j.id===jobId); }
+
+async function listDir(path){
+  try{ const r = await gh(path); if(!r.ok) return []; const j = await r.json(); return Array.isArray(j)?j:[]; }
+  catch(e){ return []; }
+}
+async function loadJobs(force){
+  if(jobsCache && !force) return jobsCache;
+  const dirs = (await listDir('jobs')).filter(e=>e.type==='dir');
+  const jobs = [];
+  for(const d of dirs){ try{ jobs.push(await load(`jobs/${d.name}/job.json`)); }catch(e){} }
+  jobs.sort((a,b)=>(b.signedAt||0)-(a.signedAt||0));
+  jobsCache = jobs; return jobs;
+}
+async function saveJob(job){
+  job.updatedAt = Date.now();
+  await save(`jobs/${job.id}/job.json`, job, `crm: job ${job.id}`);
+  if(jobsCache){ const i=jobsCache.findIndex(j=>j.id===job.id); if(i>=0) jobsCache[i]=job; else jobsCache.unshift(job); }
+}
+async function createJobFromLead(l){
+  try{
+    const id = 'job_'+l.i;
+    const jobs = await loadJobs();
+    if(jobs.find(j=>j.id===id)){ l.jobId=id; markDirty('leads'); return; }
+    const job = { id, leadId:l.i, repId:me.id, salesName:me.name,
+      client: l.co || leadName(l), contactName: leadName(l), contactEmail: l.em||'',
+      title: l.co || leadName(l), value: Number(l.v)||0, status:'To kickoff',
+      signedAt: l.closed||Date.now(), dueAt:null, team:[], budget:[], invoices:[], actuals:{},
+      createdAt: Date.now(), createdBy: me.id };
+    await saveJob(job);
+    l.jobId = id; markDirty('leads');
+    toast('✓ Job created in Fulfillment — set its budget & team');
+  }catch(e){ toast('Could not create job: '+e.message); }
+}
+
+/* cost math */
+function jobBudgetHours(j){ return (j.budget||[]).reduce((s,b)=>s+(Number(b.hours)||0),0); }
+function jobBudgetCost(j){ return (j.budget||[]).reduce((s,b)=>s+(Number(b.hours)||0)*(Number(b.rate)||0),0); }
+function lineRate(j, uid){ const b=(j.budget||[]).find(x=>x.uid===uid); return (b&&b.rate!=null)?Number(b.rate):userRate(uid); }
+function jobActualHours(j){ return Object.values(j.actuals||{}).reduce((s,h)=>s+(Number(h)||0),0); }
+function jobActualCost(j){ const a=j.actuals||{}; return Object.keys(a).reduce((s,uid)=>s+(Number(a[uid])||0)*lineRate(j,uid),0); }
+function jobHasCost(j){ return jobBudgetCost(j)>0 || jobActualCost(j)>0; }
+function jobCostBasis(j){ return jobActualCost(j)||jobBudgetCost(j); }
+function jobMargin(j){ const v=Number(j.value)||0; return v? (v-jobCostBasis(j))/v : 0; }
+function jobInvoiced(j){ return (j.invoices||[]).reduce((s,i)=>s+(Number(i.amount)||0),0); }
+function jobCollected(j){ return (j.invoices||[]).filter(i=>i.paidAt).reduce((s,i)=>s+(Number(i.amount)||0),0); }
+function marginClass(m){ return m>=0.5?'good':(m>=0.25?'mid':'bad'); }
+function marginChip(j){ return jobHasCost(j)?`<span class="mchip ${marginClass(jobMargin(j))}">${pct(jobMargin(j))} margin</span>`:''; }
+
+/* fulfillment board */
+function renderFulfill(){
+  const wrap = document.getElementById('jobBoard');
+  const q = (document.getElementById('jsearch').value||'').trim().toLowerCase();
+  if(!jobsCache){ wrap.innerHTML='<div style="color:var(--muted);padding:20px">Loading jobs…</div>'; loadJobs().then(()=>renderFulfill()); return; }
+  const jobs = jobsCache.filter(j=> !q || (j.client+' '+j.title+' '+(j.salesName||'')).toLowerCase().includes(q));
+  const totalVal = jobs.reduce((s,j)=>s+(Number(j.value)||0),0);
+  document.getElementById('fulfillSummary').textContent = `${jobs.length} job${jobs.length!==1?'s':''} · ${moneyFull(totalVal)} contracted`;
+  wrap.innerHTML='';
+  if(!jobs.length){ wrap.innerHTML='<div class="emptystate" style="margin-top:20px"><div class="es-title">No jobs yet.</div><div class="es-sub">Move a deal to the <b>Signed</b> stage on the Board and it becomes a job here automatically.</div></div>'; return; }
+  for(const st of FULFILL_STAGES){
+    const list = jobs.filter(j=>(j.status||'To kickoff')===st);
+    const sum = list.reduce((s,j)=>s+(Number(j.value)||0),0);
+    const col=document.createElement('div'); col.className='col';
+    col.innerHTML=`<h3>${st} <span>${list.length}${sum?' · '+money(sum):''}</span></h3><div class="cards"></div>`;
+    const cards=col.querySelector('.cards');
+    for(const j of list){
+      const bh=jobBudgetHours(j), ah=jobActualHours(j), over=bh&&ah>bh;
+      const c=document.createElement('div'); c.className='jobcard';
+      c.innerHTML=`<div class="jc-cli">${esc(j.client||'—')}</div>
+        <div class="jc-val">${moneyFull(j.value||0)} ${marginChip(j)}</div>
+        <div class="jc-meta">${esc(j.salesName||userName(j.repId))} · ${ah}/${bh||'?'} hrs${over?' · over':''}</div>
+        ${bh?`<div class="hbar ${over?'over':''}"><i style="width:${Math.min(100,Math.round(ah/bh*100))}%"></i></div>`:''}`;
+      c.onclick=()=>openJob(j.id);
+      cards.appendChild(c);
+    }
+    wrap.appendChild(col);
+  }
+}
+
+/* job detail drawer */
+async function openJob(jobId){
+  let job = _job(jobId); if(!job){ try{ job=await load(`jobs/${jobId}/job.json`); }catch(e){ return; } }
+  document.getElementById('dName').textContent = job.client||'Job';
+  document.getElementById('dCo').textContent = [job.title, moneyFull(job.value||0)+' contract'].filter(Boolean).join(' · ');
+  const cur = job.status||'To kickoff';
+  const stepper = FULFILL_STAGES.map(s=>`<button class="step-pill ${s===cur?'active':(FULFILL_STAGES.indexOf(s)<FULFILL_STAGES.indexOf(cur)?'done':'')}" onclick="setJobStatus('${job.id}','${s}')">${s}</button>`).join('');
+  const activeReps = reps.filter(r=>r.active!==false);
+  const repOpts = uid => activeReps.map(r=>`<option value="${r.id}" ${r.id===uid?'selected':''}>${esc(r.name)}${r.rate?` ($${r.rate}/h)`:''}</option>`).join('');
+  const budgetRows = (job.budget||[]).map((b,idx)=>{ const rt=(b.rate!=null?Number(b.rate):userRate(b.uid));
+    return `<div class="jobline">
+      <select onchange="jobBudgetEdit('${job.id}',${idx},'uid',this.value)">${repOpts(b.uid)}</select>
+      <input type="number" min="0" value="${b.hours||''}" placeholder="hrs" onchange="jobBudgetEdit('${job.id}',${idx},'hours',this.value)" />
+      <input type="number" min="0" value="${rt||''}" placeholder="rate" onchange="jobBudgetEdit('${job.id}',${idx},'rate',this.value)" />
+      <span style="font-size:12.5px;color:var(--muted);text-align:right">${moneyFull(Math.round((Number(b.hours)||0)*rt))}</span>
+      <button class="btn sm ghost" style="color:var(--red)" onclick="jobBudgetDel('${job.id}',${idx})">✕</button></div>`; }).join('');
+  const actUids = Object.keys(job.actuals||{}).filter(u=>(job.actuals[u]||0)>0);
+  const actualRows = actUids.length ? actUids.map(u=>`<div class="jobline" style="grid-template-columns:1.4fr .7fr .8fr .7fr">
+      <span style="font-size:13px">${esc(userName(u))}</span>
+      <span style="font-size:12.5px;text-align:right">${job.actuals[u]} hrs</span>
+      <span style="font-size:12px;color:var(--muted);text-align:right">@$${lineRate(job,u)}/h</span>
+      <span style="font-size:12.5px;text-align:right">${moneyFull(Math.round((job.actuals[u]||0)*lineRate(job,u)))}</span></div>`).join('')
+    : '<div style="color:var(--muted);font-size:12.5px">No hours logged yet.</div>';
+  const invRows = (job.invoices||[]).length ? (job.invoices||[]).map((iv,idx)=>`<div class="invrow">
+      <span class="lbl">${esc(iv.label||'Invoice')}${iv.due?` · due ${new Date(iv.due).toLocaleDateString()}`:''}</span>
+      <span>${moneyFull(iv.amount||0)}</span>
+      ${iv.paidAt?`<span class="mchip good">paid</span>`:`<button class="btn sm" onclick="invPaid('${job.id}',${idx})">Mark paid</button>`}
+      <button class="btn sm ghost" style="color:var(--red)" onclick="invDel('${job.id}',${idx})">✕</button></div>`).join('')
+    : '<div style="color:var(--muted);font-size:12.5px">No invoices yet.</div>';
+  const bh=jobBudgetHours(job), ah=jobActualHours(job), bc=jobBudgetCost(job), ac=jobActualCost(job), m=jobMargin(job);
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('dBody').innerHTML = `
+    <div class="stepper" style="margin-bottom:6px">${stepper}</div>
+    <div style="padding:14px 2px 40px">
+      <div class="fld"><b>Client</b>${esc(job.client||'—')}</div>
+      <div class="fld"><b>Sold by</b>${esc(job.salesName||userName(job.repId))}</div>
+      <div class="fld"><b>Contract value</b>$<input type="number" min="0" step="500" value="${job.value||''}" onchange="jobField('${job.id}','value',this.value)" style="width:120px" /></div>
+      <div class="fld"><b>Due date</b><input type="date" value="${job.dueAt?new Date(job.dueAt).toISOString().slice(0,10):''}" onchange="jobField('${job.id}','dueAt',this.value)" /></div>
+
+      <div class="subhead2" style="margin-top:20px">Budget — man-hours × rate</div>
+      ${budgetRows}
+      <button class="btn sm ghost" style="margin-top:6px" onclick="jobBudgetAdd('${job.id}')">+ Add person</button>
+
+      <div class="subhead2" style="margin-top:20px">Logged hours</div>
+      ${actualRows}
+      <div class="jobline" style="grid-template-columns:.9fr .6fr 1.5fr auto;margin-top:8px">
+        <input type="date" id="tl_date" value="${today}" />
+        <input type="number" id="tl_hrs" min="0" step="0.5" placeholder="hrs" />
+        <input type="text" id="tl_note" placeholder="What you worked on" />
+        <button class="btn sm" onclick="logTime('${job.id}')">Log</button>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:4px">Logs to your account (${esc(me.name)}) at $${userRate(me.id)}/h.</div>
+
+      <div class="jsum">
+        <div><div class="k">Budgeted cost</div><div class="v">${moneyFull(Math.round(bc))}</div><div class="k">${bh} hrs</div></div>
+        <div><div class="k">Actual so far</div><div class="v">${moneyFull(Math.round(ac))}</div><div class="k">${ah} hrs</div></div>
+        <div><div class="k">Margin</div><div class="v" style="color:${!jobHasCost(job)?'var(--ink)':(m>=0.25?'var(--green)':'var(--red)')}">${jobHasCost(job)?pct(m):'—'}</div><div class="k">${jobHasCost(job)?moneyFull(Math.round((job.value||0)-jobCostBasis(job))):'set a budget'}</div></div>
+      </div>
+
+      <div class="subhead2" style="margin-top:22px">Milestone invoices</div>
+      ${invRows}
+      <div class="jobline" style="grid-template-columns:1.3fr .7fr .9fr auto;margin-top:8px">
+        <input type="text" id="iv_lbl" placeholder="Milestone (e.g. Deposit)" />
+        <input type="number" id="iv_amt" min="0" placeholder="$" />
+        <input type="date" id="iv_due" />
+        <button class="btn sm" onclick="invAdd('${job.id}')">Add</button>
+      </div>
+      <div class="jsum">
+        <div><div class="k">Invoiced</div><div class="v">${moneyFull(jobInvoiced(job))}</div></div>
+        <div><div class="k">Collected</div><div class="v">${moneyFull(jobCollected(job))}</div></div>
+        <div><div class="k">Outstanding</div><div class="v">${moneyFull(jobInvoiced(job)-jobCollected(job))}</div></div>
+      </div>
+    </div>`;
+  document.getElementById('drawer').classList.add('open'); document.getElementById('drawerback').classList.add('open');
+}
+function afterJobChange(jobId){ openJob(jobId); if(document.getElementById('v-fulfill').style.display!=='none') renderFulfill(); }
+
+/* job mutations */
+async function jobField(jobId, field, val){ const j=_job(jobId); if(!j) return;
+  if(field==='value') j.value=Math.max(0,Math.round(Number(val)||0));
+  else if(field==='dueAt') j.dueAt = val ? new Date(val+'T09:00:00').getTime() : null;
+  await saveJob(j); afterJobChange(jobId); }
+async function jobBudgetAdd(jobId){ const j=_job(jobId); if(!j) return; j.budget=j.budget||[];
+  const used=new Set(j.budget.map(b=>b.uid)); const pick=(reps.find(r=>r.active!==false && !used.has(r.id))||reps[0]||{id:me.id});
+  j.budget.push({uid:pick.id, hours:0, rate:userRate(pick.id)}); await saveJob(j); afterJobChange(jobId); }
+async function jobBudgetEdit(jobId, idx, field, val){ const j=_job(jobId); if(!j||!j.budget[idx]) return;
+  if(field==='uid'){ j.budget[idx].uid=val; j.budget[idx].rate=userRate(val); }
+  else if(field==='hours'){ j.budget[idx].hours=Math.max(0,Number(val)||0); }
+  else if(field==='rate'){ j.budget[idx].rate=Math.max(0,Number(val)||0); }
+  await saveJob(j); afterJobChange(jobId); }
+async function jobBudgetDel(jobId, idx){ const j=_job(jobId); if(!j) return; j.budget.splice(idx,1); await saveJob(j); afterJobChange(jobId); }
+async function setJobStatus(jobId, st){ const j=_job(jobId); if(!j) return; j.status=st; await saveJob(j); afterJobChange(jobId); }
+async function invAdd(jobId){ const j=_job(jobId); if(!j) return;
+  const lbl=(document.getElementById('iv_lbl').value||'').trim();
+  const amt=Math.round(Number(document.getElementById('iv_amt').value)||0);
+  const due=document.getElementById('iv_due').value;
+  if(!amt){ toast('Enter an amount'); return; }
+  j.invoices=j.invoices||[]; j.invoices.push({id:'inv_'+Date.now().toString(36), label:lbl||'Invoice', amount:amt, due:due?new Date(due+'T09:00:00').getTime():null, paidAt:null});
+  await saveJob(j); afterJobChange(jobId); }
+async function invPaid(jobId, idx){ const j=_job(jobId); if(!j||!j.invoices[idx]) return; j.invoices[idx].paidAt=Date.now(); await saveJob(j); afterJobChange(jobId); }
+async function invDel(jobId, idx){ const j=_job(jobId); if(!j) return; j.invoices.splice(idx,1); await saveJob(j); afterJobChange(jobId); }
+
+/* time logging — per-user file + merge-safe actuals bump */
+async function bumpActual(jobId, uid, total){
+  const path=`jobs/${jobId}/job.json`;
+  for(let attempt=0; attempt<4; attempt++){
+    let job; try{ job=await load(path); }catch(e){ return null; }
+    job.actuals=job.actuals||{}; job.actuals[uid]=total; job.updatedAt=Date.now();
+    const body={ message:`crm: actuals ${uid} ${jobId}`, content:b64enc(job) };
+    if(shas[path]) body.sha=shas[path];
+    const r=await gh(path,{method:'PUT',body:JSON.stringify(body)});
+    if(r.ok){ const j=await r.json(); shas[path]=j.content.sha; if(jobsCache){const i=jobsCache.findIndex(x=>x.id===jobId); if(i>=0)jobsCache[i]=job;} return job; }
+    if(r.status===409||r.status===422) continue;   // someone else wrote — reload & re-apply
+    throw new Error('actuals '+r.status);
+  }
+  return null;
+}
+async function logTime(jobId){
+  const hrs=Number(document.getElementById('tl_hrs').value)||0;
+  const date=document.getElementById('tl_date').value;
+  const note=(document.getElementById('tl_note').value||'').trim();
+  if(hrs<=0){ toast('Enter hours'); return; }
+  const tpath=`jobs/${jobId}/time-${me.id}.json`;
+  let entries=[]; try{ entries=await load(tpath); }catch(e){ shas[tpath]=null; }
+  entries.push({date:date||new Date().toISOString().slice(0,10), hours:hrs, note, ts:Date.now(), by:me.id});
+  await save(tpath, entries, `crm: time ${me.id} ${jobId}`);
+  const total=entries.reduce((s,e)=>s+(Number(e.hours)||0),0);
+  await bumpActual(jobId, me.id, total);
+  toast(`Logged ${hrs}h`);
+  afterJobChange(jobId);
+}
+
+/* insights dashboard */
+async function renderInsights(force){
+  const jobs = await loadJobs(force);
+  document.getElementById('insMeta').textContent = `${jobs.length} job${jobs.length!==1?'s':''}`;
+  const revenue=jobs.reduce((s,j)=>s+(Number(j.value)||0),0);
+  const invoiced=jobs.reduce((s,j)=>s+jobInvoiced(j),0);
+  const collected=jobs.reduce((s,j)=>s+jobCollected(j),0);
+  const cogs=jobs.reduce((s,j)=>s+jobActualCost(j),0);
+  const gp=revenue-cogs, margin=revenue?gp/revenue:0;
+  const kpi=(k,v,sub)=>`<div class="pstat"><div class="pl">${k}</div><div class="pn">${v}</div><div class="pl">${sub||''}</div></div>`;
+  document.getElementById('insKpis').innerHTML =
+    kpi('Signed revenue', moneyFull(revenue), jobs.length+' jobs')+
+    kpi('Invoiced', moneyFull(invoiced), '')+
+    kpi('Collected', moneyFull(collected), moneyFull(invoiced-collected)+' outstanding')+
+    kpi('COGS · labor', moneyFull(Math.round(cogs)), '')+
+    kpi('Gross profit', moneyFull(Math.round(gp)), pct(margin)+' margin');
+  const rows = jobs.map(j=>{ const ac=jobActualCost(j)||jobBudgetCost(j), over=jobBudgetHours(j)&&jobActualHours(j)>jobBudgetHours(j);
+    return `<tr style="cursor:pointer" onclick="goJob('${j.id}')"><td><b>${esc(j.client||'—')}</b></td><td style="text-align:right">${moneyFull(j.value||0)}</td><td style="text-align:right">${moneyFull(Math.round(ac))}</td><td style="text-align:right">${jobHasCost(j)?`<span class="mchip ${marginClass(jobMargin(j))}">${pct(jobMargin(j))}</span>`:'—'}</td><td style="text-align:right;${over?'color:var(--red)':''}">${jobActualHours(j)}/${jobBudgetHours(j)||'?'}</td><td>${esc(j.status||'')}</td><td style="color:var(--muted)">${esc(j.salesName||userName(j.repId))}</td></tr>`; }).join('');
+  document.getElementById('insJobs').innerHTML = jobs.length
+    ? `<thead><tr><th>Client</th><th style="text-align:right">Value</th><th style="text-align:right">Cost</th><th style="text-align:right">Margin</th><th style="text-align:right">Hrs</th><th>Status</th><th>Sold by</th></tr></thead><tbody>${rows}</tbody>`
+    : '<tbody><tr><td style="color:var(--muted);padding:14px">No jobs yet — sign a deal to get started.</td></tr></tbody>';
+  const util={}; jobs.forEach(j=>{ const a=j.actuals||{}; Object.keys(a).forEach(u=>{ util[u]=(util[u]||0)+(Number(a[u])||0); }); });
+  const utilRows=Object.keys(util).sort((a,b)=>util[b]-util[a]).map(u=>`<div class="invrow"><span class="lbl">${esc(userName(u))}</span><span>${util[u]} hrs</span><span style="color:var(--muted)">${moneyFull(Math.round(util[u]*userRate(u)))}</span></div>`).join('')||'<div style="color:var(--muted);font-size:12.5px">No hours logged.</div>';
+  const bySales={}; jobs.forEach(j=>{ const k=j.salesName||userName(j.repId); if(!bySales[k])bySales[k]={rev:0,cost:0}; bySales[k].rev+=Number(j.value)||0; bySales[k].cost+=jobCostBasis(j); });
+  const salesRows=Object.keys(bySales).map(k=>{ const d=bySales[k], mm=d.rev?(d.rev-d.cost)/d.rev:0; return `<div class="invrow"><span class="lbl">${esc(k)}</span><span>${moneyFull(d.rev)}</span><span class="mchip ${marginClass(mm)}">${pct(mm)}</span></div>`; }).join('')||'<div style="color:var(--muted);font-size:12.5px">—</div>';
+  document.getElementById('insGrid').innerHTML=`<div class="panel" style="max-width:none"><h3>Utilization — hours logged</h3>${utilRows}</div><div class="panel" style="max-width:none"><h3>Margin by salesperson</h3>${salesRows}</div>`;
+}
+function goJob(id){ document.querySelector('[data-v=fulfill]').click(); openJob(id); }
 async function setAdmin(i, v){ reps[i].admin = v; await saveReps('crm: admin '+reps[i].id); toast('Updated'); }
 async function setRole(i, v){
   reps[i].role = v;
