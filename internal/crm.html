@@ -1569,8 +1569,11 @@ async function saveJob(job){
 async function createJobFromLead(l){
   try{
     const id = 'job_'+l.i;
-    const jobs = await loadJobs();
-    if(jobs.find(j=>j.id===id)){ l.jobId=id; markDirty('leads'); return; }
+    const jp = `jobs/${id}/job.json`;
+    // authoritative existence check against the file itself — never overwrite an existing job
+    try{ const existing = await load(jp); if(existing){ l.jobId=id; markDirty('leads');
+        if(jobsCache && !jobsCache.find(j=>j.id===id)) jobsCache.unshift(existing); return; } }
+    catch(e){ shas[jp]=null; }   // 404 → safe to create as a new file
     const job = { id, leadId:l.i, repId:me.id, salesName:me.name,
       client: l.co || leadName(l), contactName: leadName(l), contactEmail: l.em||'',
       title: l.co || leadName(l), value: Number(l.v)||0, status:'To kickoff',
@@ -1589,7 +1592,7 @@ function lineRate(j, uid){ const b=(j.budget||[]).find(x=>x.uid===uid); return (
 function jobActualHours(j){ return Object.values(j.actuals||{}).reduce((s,h)=>s+(Number(h)||0),0); }
 function jobActualCost(j){ const a=j.actuals||{}; return Object.keys(a).reduce((s,uid)=>s+(Number(a[uid])||0)*lineRate(j,uid),0); }
 function jobHasCost(j){ return jobBudgetCost(j)>0 || jobActualCost(j)>0; }
-function jobCostBasis(j){ return jobActualCost(j)||jobBudgetCost(j); }
+function jobCostBasis(j){ const a=jobActualCost(j), b=jobBudgetCost(j); return ((j.status||'')==='Complete') ? (a||b) : Math.max(a,b); }
 function jobMargin(j){ const v=Number(j.value)||0; return v? (v-jobCostBasis(j))/v : 0; }
 function jobInvoiced(j){ return (j.invoices||[]).reduce((s,i)=>s+(Number(i.amount)||0),0); }
 function jobCollected(j){ return (j.invoices||[]).filter(i=>i.paidAt).reduce((s,i)=>s+(Number(i.amount)||0),0); }
@@ -1628,7 +1631,7 @@ function renderFulfill(){
 
 /* job detail drawer */
 async function openJob(jobId){
-  let job = _job(jobId); if(!job){ try{ job=await load(`jobs/${jobId}/job.json`); }catch(e){ return; } }
+  let job = _job(jobId); if(!job){ try{ job=await load(`jobs/${jobId}/job.json`); }catch(e){ return; } if(job){ jobsCache=jobsCache||[]; if(!jobsCache.find(x=>x.id===job.id)) jobsCache.push(job); } }
   document.getElementById('dName').textContent = job.client||'Job';
   document.getElementById('dCo').textContent = [job.title, moneyFull(job.value||0)+' contract'].filter(Boolean).join(' · ');
   const cur = job.status||'To kickoff';
@@ -1765,7 +1768,7 @@ async function renderInsights(force){
   const revenue=jobs.reduce((s,j)=>s+(Number(j.value)||0),0);
   const invoiced=jobs.reduce((s,j)=>s+jobInvoiced(j),0);
   const collected=jobs.reduce((s,j)=>s+jobCollected(j),0);
-  const cogs=jobs.reduce((s,j)=>s+jobActualCost(j),0);
+  const cogs=jobs.reduce((s,j)=>s+jobCostBasis(j),0);   // match the per-job table basis (actual, or budget while in-flight)
   const gp=revenue-cogs, margin=revenue?gp/revenue:0;
   const kpi=(k,v,sub)=>`<div class="pstat"><div class="pl">${k}</div><div class="pn">${v}</div><div class="pl">${sub||''}</div></div>`;
   document.getElementById('insKpis').innerHTML =
@@ -1774,13 +1777,13 @@ async function renderInsights(force){
     kpi('Collected', moneyFull(collected), moneyFull(invoiced-collected)+' outstanding')+
     kpi('COGS · labor', moneyFull(Math.round(cogs)), '')+
     kpi('Gross profit', moneyFull(Math.round(gp)), pct(margin)+' margin');
-  const rows = jobs.map(j=>{ const ac=jobActualCost(j)||jobBudgetCost(j), over=jobBudgetHours(j)&&jobActualHours(j)>jobBudgetHours(j);
+  const rows = jobs.map(j=>{ const ac=jobCostBasis(j), over=jobBudgetHours(j)&&jobActualHours(j)>jobBudgetHours(j);
     return `<tr style="cursor:pointer" onclick="goJob('${j.id}')"><td><b>${esc(j.client||'—')}</b></td><td style="text-align:right">${moneyFull(j.value||0)}</td><td style="text-align:right">${moneyFull(Math.round(ac))}</td><td style="text-align:right">${jobHasCost(j)?`<span class="mchip ${marginClass(jobMargin(j))}">${pct(jobMargin(j))}</span>`:'—'}</td><td style="text-align:right;${over?'color:var(--red)':''}">${jobActualHours(j)}/${jobBudgetHours(j)||'?'}</td><td>${esc(j.status||'')}</td><td style="color:var(--muted)">${esc(j.salesName||userName(j.repId))}</td></tr>`; }).join('');
   document.getElementById('insJobs').innerHTML = jobs.length
     ? `<thead><tr><th>Client</th><th style="text-align:right">Value</th><th style="text-align:right">Cost</th><th style="text-align:right">Margin</th><th style="text-align:right">Hrs</th><th>Status</th><th>Sold by</th></tr></thead><tbody>${rows}</tbody>`
     : '<tbody><tr><td style="color:var(--muted);padding:14px">No jobs yet — sign a deal to get started.</td></tr></tbody>';
-  const util={}; jobs.forEach(j=>{ const a=j.actuals||{}; Object.keys(a).forEach(u=>{ util[u]=(util[u]||0)+(Number(a[u])||0); }); });
-  const utilRows=Object.keys(util).sort((a,b)=>util[b]-util[a]).map(u=>`<div class="invrow"><span class="lbl">${esc(userName(u))}</span><span>${util[u]} hrs</span><span style="color:var(--muted)">${moneyFull(Math.round(util[u]*userRate(u)))}</span></div>`).join('')||'<div style="color:var(--muted);font-size:12.5px">No hours logged.</div>';
+  const util={}; jobs.forEach(j=>{ const a=j.actuals||{}; Object.keys(a).forEach(u=>{ const h=Number(a[u])||0; if(!util[u]) util[u]={h:0,cost:0}; util[u].h+=h; util[u].cost+=h*lineRate(j,u); }); });
+  const utilRows=Object.keys(util).sort((a,b)=>util[b].h-util[a].h).map(u=>`<div class="invrow"><span class="lbl">${esc(userName(u))}</span><span>${util[u].h} hrs</span><span style="color:var(--muted)">${moneyFull(Math.round(util[u].cost))}</span></div>`).join('')||'<div style="color:var(--muted);font-size:12.5px">No hours logged.</div>';
   const bySales={}; jobs.forEach(j=>{ const k=j.salesName||userName(j.repId); if(!bySales[k])bySales[k]={rev:0,cost:0}; bySales[k].rev+=Number(j.value)||0; bySales[k].cost+=jobCostBasis(j); });
   const salesRows=Object.keys(bySales).map(k=>{ const d=bySales[k], mm=d.rev?(d.rev-d.cost)/d.rev:0; return `<div class="invrow"><span class="lbl">${esc(k)}</span><span>${moneyFull(d.rev)}</span><span class="mchip ${marginClass(mm)}">${pct(mm)}</span></div>`; }).join('')||'<div style="color:var(--muted);font-size:12.5px">—</div>';
   document.getElementById('insGrid').innerHTML=`<div class="panel" style="max-width:none"><h3>Utilization — hours logged</h3>${utilRows}</div><div class="panel" style="max-width:none"><h3>Margin by salesperson</h3>${salesRows}</div>`;
