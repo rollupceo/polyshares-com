@@ -1570,10 +1570,13 @@ async function createJobFromLead(l){
   try{
     const id = 'job_'+l.i;
     const jp = `jobs/${id}/job.json`;
-    // authoritative existence check against the file itself — never overwrite an existing job
-    try{ const existing = await load(jp); if(existing){ l.jobId=id; markDirty('leads');
-        if(jobsCache && !jobsCache.find(j=>j.id===id)) jobsCache.unshift(existing); return; } }
-    catch(e){ shas[jp]=null; }   // 404 → safe to create as a new file
+    // authoritative existence check — adopt an existing job, only create on a *genuine* 404
+    let r; try{ r = await gh(jp); }catch(e){ toast('Network hiccup — sign again to create the job'); return; }
+    if(r.ok){ const j = await r.json(); shas[jp]=j.sha; const existing = b64dec(j.content);
+      l.jobId=id; markDirty('leads');
+      if(jobsCache && !jobsCache.find(x=>x.id===id)) jobsCache.unshift(existing); return; }
+    if(r.status!==404){ toast(`Couldn't verify the job (${r.status}) — not created, try again`); return; }
+    shas[jp]=null;   // real 404 → safe to create a new file
     const job = { id, leadId:l.i, repId:me.id, salesName:me.name,
       client: l.co || leadName(l), contactName: leadName(l), contactEmail: l.em||'',
       title: l.co || leadName(l), value: Number(l.v)||0, status:'To kickoff',
