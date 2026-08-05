@@ -197,6 +197,9 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .jsum .v{font-size:16px;font-weight:600}
 .invrow{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--paper2)}
 .invrow .lbl{flex:1}
+.proppanel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:20px}
+.propscope{width:100%;min-height:58px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.5;resize:vertical}
+.propscope:focus{outline:2px solid var(--accent);outline-offset:-1px}
 #cardpop{position:fixed;z-index:70;width:240px;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 16px 44px rgba(0,0,0,.22);padding:14px;display:none;flex-direction:column;gap:8px}
 #cardpop.open{display:flex}
 #cardpop .cp-h{font-weight:600;font-size:13px;margin-bottom:2px}
@@ -1268,7 +1271,30 @@ function openDrawer(id){
 
   const canEmail = gmailReady() && !!l.em;
   const dmode = canEmail ? 'email' : 'note';
+  const activeReps = reps.filter(r=>r.active!==false);
+  const pb = (l.proposal&&Array.isArray(l.proposal.budget))?l.proposal.budget:[];
+  const pbEst = pb.reduce((s,b)=>s+(Number(b.hours)||0)*(b.rate!=null?Number(b.rate):userRate(b.uid)),0);
+  const pbEm = (Number(l.v)||0)? ((Number(l.v)||0)-pbEst)/(Number(l.v)||0) : 0;
+  const propPanel = `<div class="proppanel">
+    <div class="subhead2" style="margin-top:0">Proposal &amp; expected margin</div>
+    <textarea class="propscope" placeholder="What we proposed — scope, deliverables, key terms…" onchange="setProposalScope('${l.i}', this.value)">${esc((l.proposal&&l.proposal.scope)||'')}</textarea>
+    <div style="font-size:11.5px;color:var(--muted);margin:10px 0 6px">Expected delivery cost — the hours &amp; rates budgeted to fulfil this:</div>
+    ${pb.map((b,idx)=>{ const rt=(b.rate!=null?Number(b.rate):userRate(b.uid)); return `<div class="jobline">
+      <select onchange="propBudgetEdit('${l.i}',${idx},'uid',this.value)">${activeReps.map(r=>`<option value="${r.id}" ${r.id===b.uid?'selected':''}>${esc(r.name)}${r.rate?` ($${r.rate}/h)`:''}</option>`).join('')}</select>
+      <input type="number" min="0" value="${b.hours||''}" placeholder="hrs" onchange="propBudgetEdit('${l.i}',${idx},'hours',this.value)" />
+      <input type="number" min="0" value="${rt||''}" placeholder="rate" onchange="propBudgetEdit('${l.i}',${idx},'rate',this.value)" />
+      <span style="font-size:12.5px;color:var(--muted);text-align:right">${moneyFull(Math.round((Number(b.hours)||0)*rt))}</span>
+      <button class="btn sm ghost" style="color:var(--red)" onclick="propBudgetDel('${l.i}',${idx})">✕</button></div>`; }).join('')}
+    <button class="btn sm ghost" style="margin-top:2px" onclick="propBudgetAdd('${l.i}')">+ Add person</button>
+    <div class="jsum">
+      <div><div class="k">Proposed price</div><div class="v">$<input type="number" min="0" step="500" value="${l.v||''}" onchange="setValue('${l.i}',this.value);openDrawer('${l.i}')" style="width:92px;font-size:16px" /></div></div>
+      <div><div class="k">Expected cost</div><div class="v">${moneyFull(Math.round(pbEst))}</div></div>
+      <div><div class="k">Expected margin</div><div class="v" style="color:${(Number(l.v)||0)?(pbEm>=0.25?'var(--green)':'var(--red)'):'var(--ink)'}">${(Number(l.v)||0)?pct(pbEm):'—'}</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">Carries into the Fulfillment job when this deal is signed.</div>
+  </div>`;
   const right = `
+    ${propPanel}
     <div class="composer">
       <div class="comp-modes">
         ${canEmail?`<button class="cmode${dmode==='email'?' on':''}" data-m="email" onclick="compMode('email','${l.i}')"><span>✉</span> Email</button>`:''}
@@ -1318,6 +1344,11 @@ function openDrawer(id){
   if(l.em && gmailReady()) gmailSync(l.i, false);
 }
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerback').classList.remove('open'); }
+/* proposal (captured on the deal, carries into the job on sign) */
+function setProposalScope(id, text){ const l=myLeads.find(x=>x.i===id); if(!l) return; l.proposal=l.proposal||{scope:'',budget:[]}; l.proposal.scope=text; markDirty('leads'); }
+function propBudgetAdd(id){ const l=myLeads.find(x=>x.i===id); if(!l) return; l.proposal=l.proposal||{scope:'',budget:[]}; l.proposal.budget=l.proposal.budget||[]; const used=new Set(l.proposal.budget.map(b=>b.uid)); const pick=reps.find(r=>r.active!==false&&!used.has(r.id))||reps[0]||{id:me.id}; l.proposal.budget.push({uid:pick.id,hours:0,rate:userRate(pick.id)}); markDirty('leads'); if(document.getElementById('drawer').classList.contains('open')) openDrawer(id); }
+function propBudgetEdit(id, idx, field, val){ const l=myLeads.find(x=>x.i===id); if(!l||!l.proposal||!l.proposal.budget||!l.proposal.budget[idx]) return; if(field==='uid'){ l.proposal.budget[idx].uid=val; l.proposal.budget[idx].rate=userRate(val); } else if(field==='hours'){ l.proposal.budget[idx].hours=Math.max(0,Number(val)||0); } else if(field==='rate'){ l.proposal.budget[idx].rate=Math.max(0,Number(val)||0); } markDirty('leads'); if(document.getElementById('drawer').classList.contains('open')) openDrawer(id); }
+function propBudgetDel(id, idx){ const l=myLeads.find(x=>x.i===id); if(!l||!l.proposal||!l.proposal.budget) return; l.proposal.budget.splice(idx,1); markDirty('leads'); if(document.getElementById('drawer').classList.contains('open')) openDrawer(id); }
 function openRODrawer(id){
   const l = (boardLeads||[]).find(x=>x.i===id); if(!l) return;
   const repName = ((reps.find(r=>r.id===viewingRepId)||{}).name)||viewingRepId;
@@ -1577,10 +1608,12 @@ async function createJobFromLead(l){
       if(jobsCache && !jobsCache.find(x=>x.id===id)) jobsCache.unshift(existing); return; }
     if(r.status!==404){ toast(`Couldn't verify the job (${r.status}) — not created, try again`); return; }
     shas[jp]=null;   // real 404 → safe to create a new file
+    const propBudget = (l.proposal&&Array.isArray(l.proposal.budget)) ? l.proposal.budget.map(b=>({uid:b.uid, hours:Number(b.hours)||0, rate:Number(b.rate)||0})) : [];
     const job = { id, leadId:l.i, repId:me.id, salesName:me.name,
       client: l.co || leadName(l), contactName: leadName(l), contactEmail: l.em||'',
-      title: l.co || leadName(l), value: Number(l.v)||0, status:'To kickoff',
-      signedAt: l.closed||Date.now(), dueAt:null, team:[], budget:[], invoices:[], actuals:{},
+      title: l.co || leadName(l), scope: (l.proposal&&l.proposal.scope)||'',
+      value: Number(l.v)||0, status:'To kickoff',
+      signedAt: l.closed||Date.now(), dueAt:null, team:[], budget: propBudget, invoices:[], actuals:{},
       createdAt: Date.now(), createdBy: me.id };
     await saveJob(job);
     l.jobId = id; markDirty('leads');
@@ -1668,6 +1701,7 @@ async function openJob(jobId){
     <div style="padding:14px 2px 40px">
       <div class="fld"><b>Client</b>${esc(job.client||'—')}</div>
       <div class="fld"><b>Sold by</b>${esc(job.salesName||userName(job.repId))}</div>
+      <div class="fld" style="align-items:flex-start"><b>Scope</b><textarea onchange="jobField('${job.id}','scope',this.value)" style="flex:1;min-height:52px;resize:vertical" placeholder="Scope / what we proposed (carried from the deal)">${esc(job.scope||'')}</textarea></div>
       <div class="fld"><b>Contract value</b>$<input type="number" min="0" step="500" value="${job.value||''}" onchange="jobField('${job.id}','value',this.value)" style="width:120px" /></div>
       <div class="fld"><b>Due date</b><input type="date" value="${job.dueAt?new Date(job.dueAt).toISOString().slice(0,10):''}" onchange="jobField('${job.id}','dueAt',this.value)" /></div>
 
@@ -1713,6 +1747,7 @@ function afterJobChange(jobId){ openJob(jobId); if(document.getElementById('v-fu
 async function jobField(jobId, field, val){ const j=_job(jobId); if(!j) return;
   if(field==='value') j.value=Math.max(0,Math.round(Number(val)||0));
   else if(field==='dueAt') j.dueAt = val ? new Date(val+'T09:00:00').getTime() : null;
+  else if(field==='scope') j.scope = val;
   await saveJob(j); afterJobChange(jobId); }
 async function jobBudgetAdd(jobId){ const j=_job(jobId); if(!j) return; j.budget=j.budget||[];
   const used=new Set(j.budget.map(b=>b.uid)); const pick=(reps.find(r=>r.active!==false && !used.has(r.id))||reps[0]||{id:me.id});
