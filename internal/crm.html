@@ -806,6 +806,8 @@ function setValue(id, v){
   const n = Math.max(0, Math.round(Number(v)||0));
   if ((l.v||0)===n) return;
   l.v = n; markDirty('leads'); renderPipelineBar();
+  // keep the open deal drawer (proposal expected-margin, both value inputs) in sync
+  if (document.getElementById('drawer').classList.contains('open')) openDrawer(id);
 }
 
 /* ---------- queue ---------- */
@@ -1287,7 +1289,7 @@ function openDrawer(id){
       <button class="btn sm ghost" style="color:var(--red)" onclick="propBudgetDel('${l.i}',${idx})">✕</button></div>`; }).join('')}
     <button class="btn sm ghost" style="margin-top:2px" onclick="propBudgetAdd('${l.i}')">+ Add person</button>
     <div class="jsum">
-      <div><div class="k">Proposed price</div><div class="v">$<input type="number" min="0" step="500" value="${l.v||''}" onchange="setValue('${l.i}',this.value);openDrawer('${l.i}')" style="width:92px;font-size:16px" /></div></div>
+      <div><div class="k">Proposed price</div><div class="v">$<input type="number" min="0" step="500" value="${l.v||''}" onchange="setValue('${l.i}',this.value)" style="width:92px;font-size:16px" /></div></div>
       <div><div class="k">Expected cost</div><div class="v">${moneyFull(Math.round(pbEst))}</div></div>
       <div><div class="k">Expected margin</div><div class="v" style="color:${(Number(l.v)||0)?(pbEm>=0.25?'var(--green)':'var(--red)'):'var(--ink)'}">${(Number(l.v)||0)?pct(pbEm):'—'}</div></div>
     </div>
