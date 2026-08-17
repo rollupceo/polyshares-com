@@ -65,8 +65,14 @@
       <p class="eyebrow">Private investment firm</p>
       <h1>We invest in companies.<br><em>And in the data inside them.</em></h1>
       <p class="sub">Polyshares puts capital to work two ways. We provide non-dilutive capital to companies against a license to their operational data, and we acquire lower middle market businesses outright.</p>
-      <div class="cta">
-        <a class="btn" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Request an introduction <span class="arw" aria-hidden="true">&rsaquo;</span></a>
+      <div class="herostart">
+        <p class="startlead" id="startlead">Start here. What does your company run on?</p>
+        <div class="qgrid" id="herotools" role="group" aria-label="Tools your company uses"></div>
+        <div class="cta">
+          <a class="btn" id="herogo" href="/intake">Check your data <span class="arw" aria-hidden="true">&rsaquo;</span></a>
+          <a class="tlink herocal" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">or book a call</a>
+        </div>
+        <p class="assure">Six quick questions. No obligation, and nothing you tell us leaves Polyshares.</p>
       </div>
     </div>
   </div>
@@ -171,7 +177,7 @@
           <p class="l">Revenue across businesses built with partners</p>
         </div>
         <div class="stat">
-          <p class="n">$20M+</p>
+          <p class="n">$21M</p>
           <p class="l">Raised</p>
         </div>
       </div>
@@ -189,6 +195,35 @@
   </div>
 
 </main>
+
+<script>
+(function () {
+  'use strict';
+  var TOOLS = ['Slack or Teams','Google Drive or SharePoint','Gmail or Outlook','CRM (HubSpot, Salesforce)',
+               'Notion or Confluence','Jira or Linear','GitHub','Figma','Photos or imagery',
+               'Call recordings','Data warehouse (BigQuery, S3)','Accounting or ERP'];
+  var host = document.getElementById('herotools'), go = document.getElementById('herogo');
+  if (!host || !go) return;
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); };
+  var chosen = [];
+  TOOLS.forEach(function (name) {
+    var el = document.createElement('label');
+    el.className = 'qcard';
+    el.innerHTML = '<input type="checkbox" value="' + esc(name) + '"><span class="tick" aria-hidden="true"></span><span>' + esc(name) + '</span>';
+    el.querySelector('input').addEventListener('change', function (e) {
+      if (e.target.checked) { el.setAttribute('data-on',''); chosen.push(name); }
+      else { el.removeAttribute('data-on'); chosen = chosen.filter(function (x) { return x !== name; }); }
+      go.textContent = chosen.length ? 'Continue' : 'Check your data';
+      go.insertAdjacentHTML('beforeend', ' <span class="arw" aria-hidden="true">&rsaquo;</span>');
+    });
+    host.appendChild(el);
+  });
+  go.addEventListener('click', function () {
+    try { sessionStorage.setItem('poly_tools', JSON.stringify(chosen)); } catch (e) {}
+  });
+})();
+</script>
 
 <footer>
   <div class="wrap foot">

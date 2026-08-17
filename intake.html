@@ -452,8 +452,19 @@
   });
   $('#submit').addEventListener('click', send);
 
+  // Carry over the tools picked in the homepage hero, and start on the next question.
+  var handoff = [];
+  try { handoff = JSON.parse(sessionStorage.getItem('poly_tools') || '[]'); } catch (e) {}
+  if (handoff && handoff.length) {
+    $$('#tools input').forEach(function (i) {
+      if (handoff.indexOf(i.value) !== -1) { i.checked = true; i.parentNode.setAttribute('data-on',''); }
+    });
+    state.tools = selected($('#tools'));
+    try { sessionStorage.removeItem('poly_tools'); } catch (e) {}
+  }
+  gate();
   $('#flow').hidden = false;
-  show(0, true);
+  show(state.tools.length ? 1 : 0, true);
 })();
 </script>
 
