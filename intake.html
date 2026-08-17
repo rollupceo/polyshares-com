@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Check your data · Polyshares</title>
+<meta name="description" content="Five questions to find out whether your company's operational data is something Polyshares would license. No obligation, no cost.">
+<link rel="canonical" href="https://polyshares.com/intake">
+<meta property="og:title" content="Check your data · Polyshares">
+<meta property="og:description" content="Five questions to find out whether your company's operational data is something Polyshares would license.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://polyshares.com/intake">
+<meta property="og:image" content="https://polyshares.com/assets/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..500;1,9..144,300..500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/poly.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="/" aria-label="Polyshares home">
+      <svg viewBox="0 0 96 96" aria-hidden="true">
+        <rect x="24" y="24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="7"/>
+        <rect x="38" y="38" width="38" height="38" fill="none" stroke="currentColor" stroke-width="7"/>
+        <path d="M62 31V45" stroke="currentColor" stroke-width="7"/>
+      </svg>
+      Polyshares
+    </a>
+    <nav class="nav-links">
+      <a href="/#data-capital">Data capital</a>
+      <a href="/#acquisitions">Acquisitions</a>
+      <a href="/case-studies">Track record</a>
+      <a href="/team">The firm</a>
+    </nav>
+    <a class="btn btn-quiet" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Request an introduction</a>
+    <details class="menu">
+      <summary aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M3 6h18M3 12h18M3 18h18"/>
+        </svg>
+      </summary>
+      <div class="menu-panel">
+        <a href="/#data-capital">Data capital</a>
+        <a href="/#acquisitions">Acquisitions</a>
+        <a href="/case-studies">Track record</a>
+        <a href="/team">The firm</a>
+        <a class="btn" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Request an introduction</a>
+      </div>
+    </details>
+  </div>
+</header>
+
+<main>
+  <div class="wrap flow">
+
+    <noscript>
+      <p class="eyebrow">Check your data</p>
+      <h1 style="font-size:clamp(31px,4.3vw,50px);font-weight:300;margin-top:16px">Five questions, <em>two minutes.</em></h1>
+      <div class="nojs">
+        <p>This check needs JavaScript. Book a call instead and a Managing Partner will walk you through the same questions.</p>
+        <p style="margin-top:18px"><a class="btn" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Request an introduction</a></p>
+      </div>
+    </noscript>
+
+    <div id="flow" hidden>
+      <div class="flow-head">
+        <span class="progress-n" id="pn">Step 1 of 5</span>
+        <span class="progress"><i id="pbar"></i></span>
+      </div>
+
+      <div aria-live="polite">
+
+        <!-- 1. TOOLS -->
+        <section class="step" data-step="0" data-active>
+          <h2>What does your company <em>run on?</em></h2>
+          <p class="hint">Pick everything you use. This is the working record we license, and most of it is already sitting in tools you use every day.</p>
+          <div class="qgrid" id="tools" role="group" aria-label="Tools your company uses"></div>
+          <div class="flow-nav">
+            <button class="btn" type="button" data-next disabled>Continue <span class="arw" aria-hidden="true">&rsaquo;</span></button>
+          </div>
+        </section>
+
+        <!-- 2. YEARS -->
+        <section class="step" data-step="1">
+          <h2>How long has the company <em>been operating?</em></h2>
+          <p class="hint">History is what makes the record worth something. A long run of ordinary work beats a short run of interesting work.</p>
+          <div class="qgrid two" id="years" role="radiogroup" aria-label="Years operating"></div>
+          <div class="flow-nav">
+            <button class="btn" type="button" data-next disabled>Continue <span class="arw" aria-hidden="true">&rsaquo;</span></button>
+            <button class="flow-back" type="button" data-back>Back</button>
+          </div>
+        </section>
+
+        <!-- 3. HEADCOUNT -->
+        <section class="step" data-step="2">
+          <h2>How many people work <em>in the business?</em></h2>
+          <p class="hint">Count anyone with a company account, including contractors and offshore staff.</p>
+          <div class="qgrid two" id="size" role="radiogroup" aria-label="Number of people"></div>
+          <div class="flow-nav">
+            <button class="btn" type="button" data-next disabled>Continue <span class="arw" aria-hidden="true">&rsaquo;</span></button>
+            <button class="flow-back" type="button" data-back>Back</button>
+          </div>
+        </section>
+
+        <!-- 4. RIGHTS -->
+        <section class="step" data-step="3">
+          <h2>Does the company own <em>its own records?</em></h2>
+          <p class="hint">We are asking whether the material was generated by your own operations, rather than licensed in from a vendor. Customer names and identifying fields are normal and are handled before anything moves.</p>
+          <div class="qgrid one" id="rights" role="radiogroup" aria-label="Rights to the data"></div>
+          <div class="flow-nav">
+            <button class="btn" type="button" data-next disabled>Continue <span class="arw" aria-hidden="true">&rsaquo;</span></button>
+            <button class="flow-back" type="button" data-back>Back</button>
+          </div>
+        </section>
+
+        <!-- 5. RESULT + CONTACT -->
+        <section class="step" data-step="4">
+          <div class="verdict">
+            <p class="eyebrow" id="vlabel">Result</p>
+            <p class="mark" id="vmark"></p>
+            <p class="hint" id="vtext"></p>
+          </div>
+
+          <div id="capture">
+            <div class="field" id="f-name">
+              <label for="i-name">Your name</label>
+              <input id="i-name" type="text" autocomplete="name" required>
+              <p class="err">Enter your name.</p>
+            </div>
+            <div class="field" id="f-co">
+              <label for="i-co">Company</label>
+              <input id="i-co" type="text" autocomplete="organization" required>
+              <p class="err">Enter your company.</p>
+            </div>
+            <div class="field" id="f-em">
+              <label for="i-em">Work email</label>
+              <input id="i-em" type="email" autocomplete="email" required>
+              <p class="err">Enter a valid work email.</p>
+            </div>
+            <div aria-hidden="true" style="position:absolute;left:-9999px;height:0;overflow:hidden">
+              <label for="i-hp">Do not fill this in</label>
+              <input id="i-hp" type="text" tabindex="-1" autocomplete="off">
+            </div>
+            <div class="field" id="f-ws">
+              <label for="i-ws">Company website</label>
+              <input id="i-ws" type="text" autocomplete="url" placeholder="optional">
+              <p class="err"></p>
+            </div>
+
+            <div class="flow-nav">
+              <button class="btn" type="button" id="submit">Send this to Polyshares <span class="arw" aria-hidden="true">&rsaquo;</span></button>
+              <button class="flow-back" type="button" data-back>Back</button>
+            </div>
+            <p class="hint" id="sendstate" style="margin-top:18px"></p>
+          </div>
+        </section>
+
+        <!-- 6. DONE -->
+        <section class="step" data-step="5">
+          <div class="verdict">
+            <p class="eyebrow">Received</p>
+            <p class="mark" id="dmark">That is with us.</p>
+            <p class="hint" id="dtext"></p>
+          </div>
+          <dl class="recap" id="recap"></dl>
+          <div class="flow-nav">
+            <a class="btn" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Book the call now <span class="arw" aria-hidden="true">&rsaquo;</span></a>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <p class="c">&copy; 2026 Polyshares, Inc.</p>
+    <nav class="foot-links">
+      <a href="/#data-capital">Data capital</a>
+      <a href="/#acquisitions">Acquisitions</a>
+      <a href="/case-studies">Track record</a>
+      <a href="/team">The firm</a>
+      <a href="https://www.linkedin.com/company/polyshares" target="_blank" rel="noopener">LinkedIn</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // Set this to the deployed Worker origin, e.g. 'https://gw.polyshares.workers.dev'.
+  // Empty means "not deployed yet": the flow still works and tells the truth instead of
+  // pretending a submission was stored.
+  var ENDPOINT = '';
+
+  var TOOLS = ['Slack or Teams','Google Drive or SharePoint','Gmail or Outlook','CRM (HubSpot, Salesforce)',
+               'Notion or Confluence','Jira or Linear','GitHub','Figma','Photos or imagery',
+               'Call recordings','Data warehouse (BigQuery, S3)','Accounting or ERP'];
+  var YEARS = [['<2','Under 2 years'],['2-3','2 to 3 years'],['3-5','3 to 5 years'],
+               ['5-10','5 to 10 years'],['10+','More than 10 years']];
+  var SIZE  = [['1-9','1 to 9 people'],['10-19','10 to 19 people'],['20-49','20 to 49 people'],
+               ['50-199','50 to 199 people'],['200+','200 or more people']];
+  var RIGHTS= [['own','Yes, we generated it ourselves'],
+               ['partial','Mostly, with some third-party material'],
+               ['unsure','Not sure']];
+
+  var YEARS_OK = ['2-3','3-5','5-10','10+'];
+  var SIZE_OK  = ['20-49','50-199','200+'];
+
+  var state = { tools: [], years: '', size: '', rights: '' };
+  var step = 0, LAST = 5;
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); };
+
+  function card(val, label, multi) {
+    var b = document.createElement('label');
+    b.className = 'qcard' + (multi ? '' : ' radio');
+    b.innerHTML = '<input type="' + (multi ? 'checkbox' : 'radio') + '" name="' + (multi ? 'tools' : 'r' + step) +
+                  '" value="' + esc(val) + '"><span class="tick" aria-hidden="true"></span><span>' + esc(label) + '</span>';
+    return b;
+  }
+
+  function build(host, items, multi, onPick) {
+    items.forEach(function (it) {
+      var val = multi ? it : it[0], label = multi ? it : it[1];
+      var el = card(val, label, multi);
+      var input = $('input', el);
+      input.addEventListener('change', function () {
+        if (multi) {
+          if (input.checked) { el.setAttribute('data-on',''); }
+          else { el.removeAttribute('data-on'); }
+        } else {
+          $$('.qcard', host).forEach(function (o) { o.removeAttribute('data-on'); });
+          el.setAttribute('data-on','');
+        }
+        onPick();
+      });
+      host.appendChild(el);
+    });
+  }
+
+  function selected(host) {
+    return $$('input:checked', host).map(function (i) { return i.value; });
+  }
+
+  function gate() {
+    var s = $$('.step')[step];
+    var btn = $('[data-next]', s);
+    if (!btn) return;
+    var ok = [ state.tools.length > 0, !!state.years, !!state.size, !!state.rights ][step];
+    btn.disabled = !ok;
+  }
+
+  function show(n) {
+    step = n;
+    $$('.step').forEach(function (s, i) {
+      if (i === n) { s.setAttribute('data-active',''); } else { s.removeAttribute('data-active'); }
+    });
+    $('#pbar').style.width = Math.round((n / LAST) * 100) + '%';
+    $('#pn').textContent = n >= LAST ? 'Done' : 'Step ' + (n + 1) + ' of ' + LAST;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    var h = $('h2, .mark', $$('.step')[n]);
+    if (h) { h.setAttribute('tabindex','-1'); h.focus({ preventScroll: true }); }
+  }
+
+  function qualifies() {
+    return YEARS_OK.indexOf(state.years) !== -1 && SIZE_OK.indexOf(state.size) !== -1;
+  }
+
+  function labelOf(list, val) {
+    for (var i = 0; i < list.length; i++) { if (list[i][0] === val) return list[i][1]; }
+    return val;
+  }
+
+  function renderVerdict() {
+    var ok = qualifies();
+    $('#vlabel').textContent = ok ? 'This looks licensable' : 'Not yet';
+    $('#vmark').innerHTML = ok
+      ? 'There is likely a market for <em>what you have.</em>'
+      : 'Probably <em>too early.</em>';
+    $('#vtext').textContent = ok
+      ? 'A company your size with that much operating history produces the kind of record buyers are paying for. Leave your details and a Managing Partner will confirm what is there and what a license would look like.'
+      : 'We license operational data from companies with at least 20 people and two years of history. You are under that today. Leave your details if you want us to look again later, or skip this and book a call.';
+    $('#submit').textContent = ok ? 'Send this to Polyshares' : 'Keep me on file';
+    $('#f-ws').style.display = ok ? '' : 'none';
+  }
+
+  function payload() {
+    var n = $('#i-name').value.trim(), sp = n.indexOf(' ');
+    return {
+      firstName: sp > 0 ? n.slice(0, sp) : n,
+      lastName:  sp > 0 ? n.slice(sp + 1) : '',
+      company:   $('#i-co').value.trim(),
+      email:     $('#i-em').value.trim(),
+      website:   $('#i-ws').value.trim(),
+      tools:     state.tools,
+      years:     state.years,
+      size:      state.size,
+      rights:    state.rights,
+      qualified: qualifies(),
+      hp:        $('#i-hp').value,
+      page:      'intake'
+    };
+  }
+
+  function invalid(id, bad) {
+    var f = $(id);
+    if (bad) { f.setAttribute('data-invalid',''); } else { f.removeAttribute('data-invalid'); }
+    return bad;
+  }
+
+  function validate() {
+    var bad = false;
+    bad = invalid('#f-name', !$('#i-name').value.trim()) || bad;
+    bad = invalid('#f-co',   !$('#i-co').value.trim()) || bad;
+    bad = invalid('#f-em',   !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test($('#i-em').value.trim())) || bad;
+    return !bad;
+  }
+
+  function recap() {
+    var rows = [
+      ['Tools', state.tools.join(', ')],
+      ['Operating', labelOf(YEARS, state.years)],
+      ['People', labelOf(SIZE, state.size)],
+      ['Records', labelOf(RIGHTS, state.rights)]
+    ];
+    $('#recap').innerHTML = rows.map(function (r) {
+      return '<div><span class="k2">' + esc(r[0]) + '</span><span class="v2">' + esc(r[1]) + '</span></div>';
+    }).join('');
+  }
+
+  function send() {
+    if (!validate()) return;
+    var btn = $('#submit'), note = $('#sendstate');
+    btn.disabled = true;
+    note.textContent = 'Sending.';
+
+    if (!ENDPOINT) {
+      // Nothing to submit to yet. Say so rather than faking success.
+      note.innerHTML = 'We could not send that through yet. Book a call and bring these answers, ' +
+                       'or email them to a partner and we will pick it up.';
+      btn.disabled = false;
+      recap();
+      $('#dmark').textContent = 'Bring this to the call.';
+      $('#dtext').textContent = 'Here is what you told us. A Managing Partner will go through it with you.';
+      show(LAST);
+      return;
+    }
+
+    fetch(ENDPOINT.replace(/\/$/, '') + '/intake', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload())
+    }).then(function (r) {
+      if (!r.ok) throw new Error('bad status ' + r.status);
+      return r.json();
+    }).then(function () {
+      recap();
+      $('#dmark').innerHTML = qualifies() ? 'That is <em>with us.</em>' : 'Noted, <em>thank you.</em>';
+      $('#dtext').textContent = qualifies()
+        ? 'A Managing Partner will come back to you, usually within two business days. If you would rather not wait, book the call now.'
+        : 'We have your details and will come back to you if this changes. You are welcome to book a call in the meantime.';
+      show(LAST);
+    }).catch(function () {
+      note.innerHTML = 'That did not go through. Please <a class="tlink" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">book a call</a> instead.';
+      btn.disabled = false;
+    });
+  }
+
+  // wire up
+  build($('#tools'),  TOOLS,  true,  function () { state.tools  = selected($('#tools')); gate(); });
+  build($('#years'),  YEARS,  false, function () { state.years  = selected($('#years'))[0] || ''; gate(); });
+  build($('#size'),   SIZE,   false, function () { state.size   = selected($('#size'))[0] || ''; gate(); });
+  build($('#rights'), RIGHTS, false, function () { state.rights = selected($('#rights'))[0] || ''; gate(); });
+
+  $$('[data-next]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (step === 3) renderVerdict();
+      show(step + 1);
+    });
+  });
+  $$('[data-back]').forEach(function (b) {
+    b.addEventListener('click', function () { show(Math.max(0, step - 1)); });
+  });
+  $('#submit').addEventListener('click', send);
+
+  $('#flow').hidden = false;
+  show(0);
+})();
+</script>
+
+</body>
+</html>
