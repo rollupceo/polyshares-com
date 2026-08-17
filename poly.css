@@ -258,7 +258,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--paper3)}
 }
 
 /* ---------- intake flow ---------- */
-.flow{padding:56px 0 104px}
+.flow{padding-top:56px;padding-bottom:104px}
 .flow-head{display:flex;align-items:center;gap:16px;margin-bottom:34px}
 .progress{flex:1;height:2px;background:var(--line);position:relative;overflow:hidden}
 .progress i{position:absolute;inset:0 auto 0 0;background:var(--ink);width:0;transition:width .35s ease}
@@ -327,7 +327,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--paper3)}
   .qgrid{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:720px){
-  .flow{padding:36px 0 72px}
+  .flow{padding-top:36px;padding-bottom:72px}
   .qgrid,.qgrid.two{grid-template-columns:1fr}
   .flow-nav .btn{width:100%;justify-content:center;order:-1}
   .flow-nav{flex-direction:column;align-items:stretch}

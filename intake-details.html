@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data intake · Polyshares</title>
+<meta name="description" content="The detailed data intake a qualified company completes before a call with a Managing Partner.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://polyshares.com/intake-details">
+<meta property="og:title" content="Data intake · Polyshares">
+<meta property="og:description" content="The detailed data intake a qualified company completes before a call with a Managing Partner.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://polyshares.com/intake-details">
+<meta property="og:image" content="https://polyshares.com/assets/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..500;1,9..144,300..500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/poly.css">
+<style>
+/* Page-local only. Components that do not exist in poly.css yet. */
+/* poly.css .flow sets a padding shorthand that drops .wrap side gutters. Restore them here. */
+.flow{padding-left:28px;padding-right:28px}
+.flow h1{font-size:clamp(31px,4.3vw,50px);font-weight:300;margin-top:16px;max-width:20ch}
+.flow h1 em{font-style:italic;font-weight:400}
+.lede{margin-top:24px;max-width:56ch;color:var(--ink2);font-size:17px}
+
+.flow .step{padding:0}
+.step + .step{margin-top:56px;padding-top:52px;border-top:1px solid var(--line2)}
+.step .num{font-size:11.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--muted);font-weight:500;display:block;margin-bottom:14px}
+
+.field.wide{max-width:66ch}
+.field.narrow{max-width:22ch}
+.field textarea{
+  width:100%;margin-top:9px;padding:14px 15px;font-size:16px;line-height:1.6;
+  font-family:var(--sans);color:var(--ink);background:var(--paper2);
+  border:1px solid var(--line);border-radius:8px;min-height:118px;resize:vertical;
+}
+.field textarea:focus{outline:2px solid var(--ink);outline-offset:2px;border-color:var(--ink)}
+.field[data-invalid] textarea{border-color:#8c2f24}
+.field .sub{margin-top:8px;font-size:14px;color:var(--muted)}
+.grouplabel{display:block;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:500}
+
+/* tech stack table */
+.stack{
+  margin-top:28px;border:1px solid var(--line);border-radius:9px;
+  background:var(--paper2);overflow:hidden;
+}
+.stack-head,.stack-row{
+  display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) 46px;
+  gap:12px;align-items:center;padding:11px 14px;
+}
+.stack-head{background:var(--paper3);border-bottom:1px solid var(--line)}
+.stack-head span{font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.stack-row{border-bottom:1px solid var(--line2)}
+.stack-row:last-child{border-bottom:0}
+.stack-row input{
+  width:100%;padding:11px 13px;font-size:15.5px;font-family:var(--sans);
+  color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:7px;
+}
+.stack-row input:focus{outline:2px solid var(--ink);outline-offset:2px;border-color:var(--ink)}
+.row-del{
+  width:38px;height:38px;justify-self:end;border:1px solid var(--line);
+  border-radius:7px;background:var(--paper);color:var(--ink2);cursor:pointer;
+  font-family:var(--sans);font-size:18px;line-height:1;
+}
+.row-del:hover{border-color:var(--ink);color:var(--ink)}
+.row-del[disabled]{opacity:.3;cursor:not-allowed}
+.stack-tools{display:flex;align-items:center;gap:16px;margin-top:16px;flex-wrap:wrap}
+.btn-row{
+  display:inline-flex;align-items:center;gap:9px;font-family:var(--sans);
+  font-weight:500;font-size:14.5px;padding:11px 20px;border-radius:8px;
+  background:transparent;color:var(--ink);border:1px solid rgba(23,24,28,.32);cursor:pointer;
+}
+.btn-row:hover{border-color:var(--ink)}
+.stack-count{font-size:14px;color:var(--muted)}
+
+.reflist{margin-top:26px;border:1px solid var(--line);border-radius:9px;padding:20px 22px;background:var(--paper2)}
+.reflist .cap{font-size:11.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.reflist p{margin-top:12px;font-size:15px;color:var(--ink2);max-width:60ch}
+.reflist ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.reflist li{font-size:13.5px;color:var(--ink2);border:1px solid var(--line);border-radius:6px;padding:6px 12px;background:var(--paper)}
+
+.vh{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+
+@media (max-width:720px){
+  .flow{padding-left:20px;padding-right:20px}
+  .stack-head{display:none}
+  .stack-row{grid-template-columns:1fr;gap:8px;padding:16px 14px}
+  .row-del{justify-self:start;width:44px;height:44px}
+  .stack-row label.vh{
+    position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;
+    display:block;font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--muted);font-weight:500;margin-bottom:6px;
+  }
+  .btn-row{width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="/" aria-label="Polyshares home">
+      <svg viewBox="0 0 96 96" aria-hidden="true">
+        <rect x="24" y="24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="7"/>
+        <rect x="38" y="38" width="38" height="38" fill="none" stroke="currentColor" stroke-width="7"/>
+        <path d="M62 31V45" stroke="currentColor" stroke-width="7"/>
+      </svg>
+      Polyshares
+    </a>
+    <nav class="nav-links">
+      <a href="/#data-capital">Data capital</a>
+      <a href="/#acquisitions">Acquisitions</a>
+      <a href="/case-studies">Track record</a>
+      <a href="/team">The firm</a>
+    </nav>
+    <a class="btn btn-quiet" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Request an introduction</a>
+    <details class="menu">
+      <summary aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M3 6h18M3 12h18M3 18h18"/>
+        </svg>
+      </summary>
+      <div class="menu-panel">
+        <a href="/#data-capital">Data capital</a>
+        <a href="/#acquisitions">Acquisitions</a>
+        <a href="/case-studies">Track record</a>
+        <a href="/team">The firm</a>
+        <a class="btn" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Request an introduction</a>
+      </div>
+    </details>
+  </div>
+</header>
+
+<main>
+  <div class="wrap flow">
+
+    <noscript>
+      <p class="eyebrow">Data intake</p>
+      <h1>The detail behind <em>the record.</em></h1>
+      <div class="nojs">
+        <p>This form needs JavaScript. Book a call instead and a Managing Partner will take the same detail from you directly.</p>
+        <p style="margin-top:18px"><a class="btn" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Request an introduction</a></p>
+      </div>
+    </noscript>
+
+    <div id="flow" hidden>
+
+      <div id="form">
+        <p class="eyebrow">Data intake</p>
+        <h1>The detail behind <em>the record.</em></h1>
+        <p class="lede">Your company cleared the first check. This is the material a Managing Partner reads before the call. Fill in what you know. Rough numbers are fine and blanks are fine. Nothing here is binding.</p>
+
+        <div class="flow-head" style="margin-top:40px">
+          <span class="progress-n" id="pn">0 of 5 sections started</span>
+          <span class="progress"><i id="pbar"></i></span>
+        </div>
+
+        <!-- 1. COMPANY -->
+        <section class="step" data-active data-sec="co">
+          <span class="num">Section 1</span>
+          <h2>The <em>company</em></h2>
+          <p class="hint">Enough for us to place you before the call.</p>
+
+          <div class="field" id="f-co">
+            <label for="i-co">Company name</label>
+            <input id="i-co" type="text" autocomplete="organization" required>
+            <p class="err">Enter your company name.</p>
+          </div>
+
+          <div class="field wide">
+            <label for="i-desc">What the company does</label>
+            <textarea id="i-desc" placeholder="A few lines. What you sell, who buys it, how the work gets done."></textarea>
+          </div>
+
+          <div class="field">
+            <label for="i-ws">Website</label>
+            <input id="i-ws" type="text" autocomplete="url" placeholder="polyshares.com">
+          </div>
+
+          <div class="field">
+            <label for="i-li">LinkedIn</label>
+            <input id="i-li" type="text" placeholder="linkedin.com/company/...">
+          </div>
+        </section>
+
+        <!-- 2. PEOPLE AND HISTORY -->
+        <section class="step" data-active data-sec="ppl">
+          <span class="num">Section 2</span>
+          <h2>People and <em>history</em></h2>
+          <p class="hint">Headcount and operating history set the size of the record. Write it out in your own words rather than rounding to a single number.</p>
+
+          <div class="field wide">
+            <label for="i-fte">Number of FTE</label>
+            <textarea id="i-fte" placeholder="Current and peak headcount. Note W-2 staff against contractors, and any seasonal swing."></textarea>
+            <p class="sub">Example: 62 today, 94 at peak in 2023. 41 are W-2, the rest are contractors.</p>
+          </div>
+
+          <div class="field wide">
+            <label for="i-yrs">Years operational</label>
+            <input id="i-yrs" type="text" placeholder="Operating since 03/2017 till present">
+            <p class="sub">If the entity changed name or owner along the way, say so here.</p>
+          </div>
+
+          <div class="field wide">
+            <label for="i-loc">Where employees are located</label>
+            <textarea id="i-loc" placeholder="One country per line with a headcount. Example:&#10;United States 34&#10;Philippines 18&#10;Poland 6"></textarea>
+          </div>
+        </section>
+
+        <!-- 3. THE DATA -->
+        <section class="step" data-active data-sec="data">
+          <span class="num">Section 3</span>
+          <h2>Rights and <em>language</em></h2>
+          <p class="hint">We are asking who controls the material and what shape it is in. Customer names and identifying fields are normal and are handled before anything moves.</p>
+
+          <div class="field narrow" id="f-eng">
+            <label for="i-eng">Percent of the data in English</label>
+            <input id="i-eng" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="0 to 100">
+            <p class="err">Enter a number between 0 and 100.</p>
+          </div>
+
+          <div class="field wide" style="margin-top:34px">
+            <span class="grouplabel" id="rights-lbl">Does the company own or control the rights to the data</span>
+          </div>
+          <div class="qgrid one" id="rights" role="radiogroup" aria-labelledby="rights-lbl" style="margin-top:14px">
+            <label class="qcard radio" data-card>
+              <input type="radio" name="rights" value="yes" id="r-yes">
+              <span class="tick" aria-hidden="true"></span>
+              <span>Yes. The company owns or controls all of it.</span>
+            </label>
+            <label class="qcard radio" data-card>
+              <input type="radio" name="rights" value="partial" id="r-part">
+              <span class="tick" aria-hidden="true"></span>
+              <span>Partial. Some of it carries third-party or customer terms.</span>
+            </label>
+            <label class="qcard radio" data-card>
+              <input type="radio" name="rights" value="no" id="r-no">
+              <span class="tick" aria-hidden="true"></span>
+              <span>No. The rights sit with someone else.</span>
+            </label>
+          </div>
+
+          <div class="field wide">
+            <label for="i-restr">Third-party or customer restrictions</label>
+            <textarea id="i-restr" placeholder="Contracts that limit use, data supplied by customers, vendor terms, anything under a current NDA."></textarea>
+            <p class="sub">If you are not sure, write what you suspect. Counsel checks this later.</p>
+          </div>
+        </section>
+
+        <!-- 4. TECH STACK -->
+        <section class="step" data-active data-sec="stack">
+          <span class="num">Section 4</span>
+          <h2>Tech stack and <em>volumes</em></h2>
+          <p class="hint">One row per place the data sits. Give the size in whatever unit the system reports. Add rows as you need them.</p>
+
+          <div class="stack">
+            <div class="stack-head" aria-hidden="true">
+              <span>Data source</span>
+              <span>Size</span>
+              <span></span>
+            </div>
+            <div id="rows"></div>
+          </div>
+
+          <div class="stack-tools">
+            <button class="btn-row" type="button" id="addrow">Add a row</button>
+            <span class="stack-count" id="rowcount" aria-live="polite"></span>
+          </div>
+
+          <div class="reflist">
+            <p class="cap">Typical sources</p>
+            <p>This is the granularity we are after. Sizes read like 1.4 TB, 211 GB, or 218,400 records.</p>
+            <ul>
+              <li>BigQuery</li>
+              <li>S3</li>
+              <li>Google Drive or SharePoint</li>
+              <li>Gmail or Outlook</li>
+              <li>Slack or Teams</li>
+              <li>CRM (HubSpot, Salesforce)</li>
+              <li>Photos or imagery</li>
+              <li>Call recordings</li>
+              <li>GitHub</li>
+              <li>Figma</li>
+              <li>Notion or Confluence</li>
+              <li>Jira or Linear</li>
+              <li>Accounting or ERP</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 5. CONTACT -->
+        <section class="step" data-active data-sec="me">
+          <span class="num">Section 5</span>
+          <h2>Who we <em>speak to</em></h2>
+          <p class="hint">The person a Managing Partner comes back to.</p>
+
+          <div class="field" id="f-name">
+            <label for="i-name">Your name</label>
+            <input id="i-name" type="text" autocomplete="name" required>
+            <p class="err">Enter your name.</p>
+          </div>
+          <div class="field" id="f-title">
+            <label for="i-title">Title</label>
+            <input id="i-title" type="text" autocomplete="organization-title">
+          </div>
+          <div class="field" id="f-em">
+            <label for="i-em">Work email</label>
+            <input id="i-em" type="email" autocomplete="email" required>
+            <p class="err">Enter a valid work email.</p>
+          </div>
+          <div aria-hidden="true" style="position:absolute;left:-9999px;height:0;overflow:hidden">
+            <label for="i-hp">Do not fill this in</label>
+            <input id="i-hp" type="text" tabindex="-1" autocomplete="off">
+          </div>
+
+          <div class="flow-nav">
+            <button class="btn" type="button" id="submit">Send this to Polyshares <span class="arw" aria-hidden="true">&rsaquo;</span></button>
+            <a class="flow-back" href="/intake">Back to the first check</a>
+          </div>
+          <p class="hint" id="sendstate" style="margin-top:18px"></p>
+        </section>
+      </div>
+
+      <!-- DONE -->
+      <section class="step" id="done" hidden>
+        <div class="verdict">
+          <p class="eyebrow" id="dlabel">Received</p>
+          <p class="mark" id="dmark">That is <em>with us.</em></p>
+          <p class="hint" id="dtext"></p>
+        </div>
+        <dl class="recap" id="recap"></dl>
+        <div class="flow-nav">
+          <a class="btn" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Book the call now <span class="arw" aria-hidden="true">&rsaquo;</span></a>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <p class="c">&copy; 2026 Polyshares, Inc.</p>
+    <nav class="foot-links">
+      <a href="/#data-capital">Data capital</a>
+      <a href="/#acquisitions">Acquisitions</a>
+      <a href="/case-studies">Track record</a>
+      <a href="/team">The firm</a>
+      <a href="https://www.linkedin.com/company/polyshares" target="_blank" rel="noopener">LinkedIn</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // Set this to the deployed Worker origin, e.g. 'https://gw.polyshares.workers.dev'.
+  // Empty means "not deployed yet": the form still works and tells the truth instead of
+  // pretending a submission was stored.
+  var ENDPOINT = 'https://formspree.io/f/myegnryn';
+
+  var START_ROWS = 6;
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); };
+  var val = function (id) { var el = $(id); return el ? el.value.trim() : ''; };
+
+  var rowSeq = 0;
+
+  /* ---------- tech stack rows ---------- */
+
+  function addRow(source, size, focusIt) {
+    var n = ++rowSeq;
+    var row = document.createElement('div');
+    row.className = 'stack-row';
+    row.innerHTML =
+      '<div><label class="vh" for="src-' + n + '">Data source</label>' +
+      '<input id="src-' + n + '" type="text" data-src placeholder="BigQuery"></div>' +
+      '<div><label class="vh" for="siz-' + n + '">Size</label>' +
+      '<input id="siz-' + n + '" type="text" data-size placeholder="1.4 TB"></div>' +
+      '<button class="row-del" type="button" data-del>' +
+      '<span aria-hidden="true">&times;</span><span class="vh">Remove this row</span></button>';
+    if (source) { $('[data-src]', row).value = source; }
+    if (size) { $('[data-size]', row).value = size; }
+    $('[data-del]', row).addEventListener('click', function () { removeRow(row); });
+    $$('input', row).forEach(function (i) { i.addEventListener('input', progress); });
+    $('#rows').appendChild(row);
+    relabel();
+    if (focusIt) { $('[data-src]', row).focus(); }
+  }
+
+  function removeRow(row) {
+    var rows = $$('.stack-row');
+    if (rows.length < 2) return;
+    var i = rows.indexOf(row);
+    row.parentNode.removeChild(row);
+    relabel();
+    var left = $$('.stack-row');
+    var next = left[Math.min(i, left.length - 1)];
+    if (next) { $('[data-del]', next).focus(); } else { $('#addrow').focus(); }
+    progress();
+  }
+
+  function relabel() {
+    var rows = $$('.stack-row');
+    rows.forEach(function (r, i) {
+      var b = $('[data-del]', r);
+      $('.vh', b).textContent = 'Remove row ' + (i + 1);
+      b.setAttribute('aria-label', 'Remove row ' + (i + 1));
+      b.disabled = rows.length < 2;
+    });
+    $('#rowcount').textContent = rows.length + (rows.length === 1 ? ' row' : ' rows');
+  }
+
+  function stack() {
+    return $$('.stack-row').map(function (r) {
+      return { source: $('[data-src]', r).value.trim(), size: $('[data-size]', r).value.trim() };
+    }).filter(function (o) { return o.source || o.size; });
+  }
+
+  /* ---------- rights cards ---------- */
+
+  $$('#rights input').forEach(function (input) {
+    input.addEventListener('change', function () {
+      $$('#rights .qcard').forEach(function (c) { c.removeAttribute('data-on'); });
+      input.closest('.qcard').setAttribute('data-on', '');
+      progress();
+    });
+  });
+
+  function rights() {
+    var c = $('#rights input:checked');
+    return c ? c.value : '';
+  }
+
+  function rightsLabel() {
+    var c = $('#rights input:checked');
+    return c ? c.closest('.qcard').querySelector('span:last-child').textContent : '';
+  }
+
+  /* ---------- progress ---------- */
+
+  var SECTIONS = [
+    function () { return val('#i-co') || val('#i-desc') || val('#i-ws') || val('#i-li'); },
+    function () { return val('#i-fte') || val('#i-yrs') || val('#i-loc'); },
+    function () { return val('#i-eng') || rights() || val('#i-restr'); },
+    function () { return stack().length > 0; },
+    function () { return val('#i-name') || val('#i-title') || val('#i-em'); }
+  ];
+
+  function progress() {
+    var done = SECTIONS.filter(function (f) { return !!f(); }).length;
+    $('#pbar').style.width = Math.round((done / SECTIONS.length) * 100) + '%';
+    $('#pn').textContent = done + ' of ' + SECTIONS.length + ' sections started';
+  }
+
+  /* ---------- validation ---------- */
+
+  function invalid(id, bad) {
+    var f = $(id);
+    if (!f) return bad;
+    if (bad) { f.setAttribute('data-invalid', ''); } else { f.removeAttribute('data-invalid'); }
+    return bad;
+  }
+
+  function validate() {
+    var bad = false;
+    bad = invalid('#f-name', !val('#i-name')) || bad;
+    bad = invalid('#f-co',   !val('#i-co')) || bad;
+    bad = invalid('#f-em',   !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val('#i-em'))) || bad;
+
+    var eng = val('#i-eng');
+    var engBad = eng !== '' && (isNaN(Number(eng)) || Number(eng) < 0 || Number(eng) > 100);
+    bad = invalid('#f-eng', engBad) || bad;
+
+    if (bad) {
+      var first = $('[data-invalid] input, [data-invalid] textarea');
+      if (first) { first.focus(); }
+    }
+    return !bad;
+  }
+
+  /* ---------- payload and recap ---------- */
+
+  function payload() {
+    var n = val('#i-name'), sp = n.indexOf(' ');
+    return {
+      firstName:    sp > 0 ? n.slice(0, sp) : n,
+      lastName:     sp > 0 ? n.slice(sp + 1) : '',
+      title:        val('#i-title'),
+      email:        val('#i-em'),
+      company:      val('#i-co'),
+      description:  val('#i-desc'),
+      website:      val('#i-ws'),
+      linkedin:     val('#i-li'),
+      fte:          val('#i-fte'),
+      yearsOperational: val('#i-yrs'),
+      percentEnglish:   val('#i-eng'),
+      employeeLocations: val('#i-loc'),
+      rights:       rights(),
+      restrictions: val('#i-restr'),
+      stack:        stack(),
+      _gotcha:      val('#i-hp'),
+      _subject:     'Data intake detail: ' + (val('#i-co') || val('#i-name')),
+      page:         'intake-details'
+    };
+  }
+
+  function recap() {
+    var rows = [
+      ['Company', val('#i-co')],
+      ['What it does', val('#i-desc')],
+      ['Website', val('#i-ws')],
+      ['LinkedIn', val('#i-li')],
+      ['FTE', val('#i-fte')],
+      ['Years operational', val('#i-yrs')],
+      ['Employee locations', val('#i-loc')],
+      ['Data in English', val('#i-eng') ? val('#i-eng') + '%' : ''],
+      ['Rights', rightsLabel()],
+      ['Restrictions', val('#i-restr')],
+      ['Contact', [val('#i-name'), val('#i-title')].filter(Boolean).join(', ')],
+      ['Email', val('#i-em')]
+    ];
+    stack().forEach(function (s) {
+      rows.push([s.source || 'Data source', s.size || 'size not given']);
+    });
+    $('#recap').innerHTML = rows.filter(function (r) { return r[1]; }).map(function (r) {
+      return '<div><span class="k2">' + esc(r[0]) + '</span><span class="v2">' +
+             esc(r[1]).replace(/\n/g, '<br>') + '</span></div>';
+    }).join('');
+  }
+
+  function finish(label, mark, text) {
+    recap();
+    $('#dlabel').textContent = label;
+    $('#dmark').innerHTML = mark;
+    $('#dtext').textContent = text;
+    $('#form').hidden = true;
+    $('#done').hidden = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    $('#dmark').setAttribute('tabindex', '-1');
+    $('#dmark').focus({ preventScroll: true });
+  }
+
+  function send() {
+    if (!validate()) return;
+    var btn = $('#submit'), note = $('#sendstate');
+    btn.disabled = true;
+    note.textContent = 'Sending.';
+
+    if (!ENDPOINT) {
+      // Nothing to submit to yet. Say so rather than faking success.
+      btn.disabled = false;
+      note.textContent = '';
+      finish(
+        'Not sent yet',
+        'Bring this to <em>the call.</em>',
+        'This form has nowhere to post to right now, so nothing was stored. Below is everything you entered. ' +
+        'Book the call and a Managing Partner will take it from you there, or copy this into an email to your partner contact.'
+      );
+      return;
+    }
+
+    fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload())
+    }).then(function (r) {
+      if (!r.ok) throw new Error('bad status ' + r.status);
+      return r.json();
+    }).then(function () {
+      note.textContent = '';
+      finish(
+        'Received',
+        'That is <em>with us.</em>',
+        'A Managing Partner will read this before you speak. If you have not booked the call yet, do that now.'
+      );
+    }).catch(function () {
+      note.innerHTML = 'That did not go through. Please <a class="tlink" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">book a call</a> instead.';
+      btn.disabled = false;
+    });
+  }
+
+  /* ---------- wire up ---------- */
+
+  for (var i = 0; i < START_ROWS; i++) { addRow('', '', false); }
+  $('#addrow').addEventListener('click', function () { addRow('', '', true); progress(); });
+  $('#submit').addEventListener('click', send);
+  $$('#form input, #form textarea').forEach(function (el) {
+    el.addEventListener('input', progress);
+  });
+
+  $('#flow').hidden = false;
+  progress();
+})();
+</script>
+
+</body>
+</html>

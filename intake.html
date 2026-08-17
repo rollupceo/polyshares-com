@@ -221,10 +221,9 @@
 (function () {
   'use strict';
 
-  // Set this to the deployed Worker origin, e.g. 'https://gw.polyshares.workers.dev'.
-  // Empty means "not deployed yet": the flow still works and tells the truth instead of
-  // pretending a submission was stored.
-  var ENDPOINT = '';
+  // Formspree receives the submission and emails it. Swap this for the Cloudflare
+  // Worker origin later to write leads straight into the CRM instead.
+  var ENDPOINT = 'https://formspree.io/f/myegnryn';
 
   var TOOLS = ['Slack or Teams','Google Drive or SharePoint','Gmail or Outlook','CRM (HubSpot, Salesforce)',
                'Notion or Confluence','Jira or Linear','GitHub','Figma','Photos or imagery',
@@ -330,7 +329,22 @@
 
   function payload() {
     var n = $('#i-name').value.trim(), sp = n.indexOf(' ');
+    var co = $('#i-co').value.trim();
     return {
+      name: n,
+      email: $('#i-em').value.trim(),
+      company: co,
+      website: $('#i-ws').value.trim(),
+      Qualified: qualifies() ? 'Yes' : 'No (below 20 people or under 2 years)',
+      Operating: labelOf(YEARS, state.years),
+      People: labelOf(SIZE, state.size),
+      'Based in': state.where.join(', '),
+      'Record holds': state.holds.join(', '),
+      'Runs on': state.tools.join(', '),
+      'Owns records': labelOf(RIGHTS, state.rights),
+      _subject: 'Data intake: ' + co + (qualifies() ? ' (qualified)' : ''),
+      _gotcha: $('#i-hp').value,
+      _raw: {
       firstName: sp > 0 ? n.slice(0, sp) : n,
       lastName:  sp > 0 ? n.slice(sp + 1) : '',
       company:   $('#i-co').value.trim(),
@@ -345,6 +359,7 @@
       qualified: qualifies(),
       hp:        $('#i-hp').value,
       page:      'intake'
+      }
     };
   }
 
@@ -399,14 +414,15 @@
       return;
     }
 
-    fetch(ENDPOINT.replace(/\/$/, '') + '/intake', {
+    fetch(ENDPOINT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(payload())
     }).then(function (r) {
       if (!r.ok) throw new Error('bad status ' + r.status);
       return r.json();
     }).then(function () {
+      note.textContent = '';
       recap();
       $('#dlabel').textContent = 'Received';
       $('#dmark').innerHTML = qualifies() ? 'That is <em>with us.</em>' : 'Noted, <em>thank you.</em>';
