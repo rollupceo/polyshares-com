@@ -343,3 +343,14 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--paper3)}
   content:"";width:6px;height:6px;border-radius:50%;
   background:var(--muted);flex:none;
 }
+
+/* ---------- mobile tap targets ----------
+   Touch guidance wants 44px. These were 23px to 36px. */
+@media (max-width:720px){
+  .foot-links{gap:2px 26px}
+  .foot-links a{padding:11px 0;display:inline-block}
+  .flow-back{padding:13px 0}
+  .brand{padding:6px 0}
+  .menu summary{padding:12px;margin:-12px}
+  .recap div{padding:16px 0}
+}
