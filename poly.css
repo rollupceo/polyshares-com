@@ -307,7 +307,7 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--paper3)}
 .field[data-invalid] .err{display:block}
 .field[data-invalid] input{border-color:#8c2f24}
 
-.flow-nav{display:flex;align-items:center;gap:14px;margin-top:38px;flex-wrap:wrap}
+.flow-nav{display:flex;align-items:center;gap:22px;margin-top:38px;flex-wrap:wrap}
 .flow-back{background:none;border:0;cursor:pointer;font-family:var(--sans);font-size:15px;color:var(--muted);padding:8px 0}
 .flow-back:hover{color:var(--ink)}
 .btn[disabled]{opacity:.32;cursor:not-allowed;transform:none}
