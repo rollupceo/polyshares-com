@@ -8,7 +8,7 @@ ALLOWED_ORIGINS = "https://polyshares.com,https://www.polyshares.com"
 
 # Public /intake endpoint: where website leads are written, and who owns them.
 CRM_REPO = "rollupceo/polyshares-crm-data"
-INTAKE_REP = "austin"
+INTAKE_REP = "ryan"
 
 # KV namespace holding the private credential store + lockout counters.
 # Create it once with:  npx wrangler kv namespace create CRM_AUTH
