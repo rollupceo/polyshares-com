@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /internal/
+Disallow: /crm-logins.json
+Disallow: /crm-signup.json
+Disallow: /internal-keys.json
 
 Sitemap: https://polyshares.com/sitemap.xml
