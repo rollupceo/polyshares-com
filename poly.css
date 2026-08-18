@@ -378,3 +378,4 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--paper3)}
 @media (max-width:720px){
   .calwrap .calendly-inline-widget{height:760px!important}
 }
+.calalt{margin-top:14px;font-size:14.5px;color:var(--muted)}
