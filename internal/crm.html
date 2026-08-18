@@ -15,7 +15,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
 <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png?v=2" />
 <style>
-:root{--paper:#F7F5F0;--paper2:#EFECE4;--ink:#16140F;--ink2:#4A463C;--muted:#8A8474;--line:#DDD8CC;--dark:#16140F;--accent:#4A6FA5;--green:#5E8C61;--red:#A55050;--serif:'Fraunces',serif;--sans:'Inter',sans-serif}
+:root{--paper:#F7F5F0;--paper2:#EFECE4;--paper3:#E7E3D9;--ink:#16140F;--ink2:#4A463C;--muted:#8A8474;--line:#DDD8CC;--line2:#D0CABD;--dark:#16140F;--accent:#4A6FA5;--green:#5E8C61;--red:#A55050;--serif:'Fraunces',serif;--sans:'Inter',sans-serif}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
 button{font-family:var(--sans);cursor:pointer}
@@ -734,7 +734,7 @@ async function enterApp(){
   renderBoard(); fillAdmin(); updateQueueBadge(); updateActivityBadge();
   updateRepliesBadge(false);          // seed badge from cached lastReplyTs/mailSeen (no toast)
   gmailSilentConnect();               // re-grant Gmail without a popup if connected before; starts reply polling
-  maybeGateQuiz();                    // reps + managers must pass the product test before selling
+  await maybeGateQuiz();              // reps + managers must pass the product test before selling
   if (!localStorage.getItem('crm_tour_done_'+me.id)) setTimeout(startTour, 700);
 }
 function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); localStorage.removeItem('crm_email'); localStorage.removeItem('crm_rep'); location.reload(); }
@@ -1642,8 +1642,9 @@ function renderReps(){
   }).join('') + '</tbody></table>';
 }
 async function setRepManager(i, v){ reps[i].managerId = v||undefined; await saveReps('crm: assign '+reps[i].id+' to '+(v||'none')); }
-async function setManagerComp(i, v){ let n=Math.max(0,Math.min(100,Number(v)||0)); const floor=Number(reps[i].compFloor)||0; if(n<floor){ n=floor; toast('Comp cannot go below the hard floor ('+floor+'%)'); } reps[i].compRate=n; await saveReps('crm: comp '+reps[i].id); }
-async function setManagerFloor(i, v){ const f=Math.max(0,Math.min(100,Number(v)||0)); reps[i].compFloor=f; if((Number(reps[i].compRate)||0)<f) reps[i].compRate=f; await saveReps('crm: floor '+reps[i].id); }
+function clampRepComm(r){ const cap=Math.max(Number(r.compRate)||0,Number(r.compFloor)||0); if(r.repCommissionPct!=null && r.repCommissionPct>cap) r.repCommissionPct=cap; }
+async function setManagerComp(i, v){ let n=Math.max(0,Math.min(100,Number(v)||0)); const floor=Number(reps[i].compFloor)||0; if(n<floor){ n=floor; toast('Comp cannot go below the hard floor ('+floor+'%)'); } reps[i].compRate=n; clampRepComm(reps[i]); await saveReps('crm: comp '+reps[i].id); }
+async function setManagerFloor(i, v){ const f=Math.max(0,Math.min(100,Number(v)||0)); reps[i].compFloor=f; if((Number(reps[i].compRate)||0)<f) reps[i].compRate=f; clampRepComm(reps[i]); await saveReps('crm: floor '+reps[i].id); }
 /* commission / comp math — spread model: org earns compRate% of the deal, rep earns repCommissionPct% out of it, manager keeps the difference */
 function repOf(id){ return reps.find(r=>r.id===id)||{}; }
 function dealComp(dealValue, repId){
@@ -1927,7 +1928,7 @@ async function renderCommission(force){
     const mgr = repOf(me.id).managerId ? repOf(repOf(me.id).managerId) : null;
     kpis.innerHTML = kpiTile('Your commission', moneyFull(Math.round(total)), signed.length+' signed deals');
     document.getElementById('commMeta').textContent = mgr ? ('Org: '+mgr.name) : 'No manager assigned yet';
-    wrap.innerHTML = signed.length ? `<table class="tbl"><thead><tr><th>Deal</th><th style="text-align:right">Value</th><th style="text-align:right">Your %</th><th style="text-align:right">Commission</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="emptystate"><div class="es-title">No signed deals yet.</div><div class="es-sub">Your commission shows here once a deal reaches the Signed stage.</div></div>';
+    wrap.innerHTML = signed.length ? `<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Deal</th><th style="text-align:right">Value</th><th style="text-align:right">Your %</th><th style="text-align:right">Commission</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="emptystate"><div class="es-title">No signed deals yet.</div><div class="es-sub">Your commission shows here once a deal reaches the Signed stage.</div></div>';
     return;
   }
   const managers = me.admin ? reps.filter(r=>r.role==='manager') : reps.filter(r=>r.id===me.id);
@@ -1941,7 +1942,7 @@ async function renderCommission(force){
     const rate=Math.max(Number(m.compRate)||0,Number(m.compFloor)||0);
     html+=`<div class="panel" style="max-width:none"><h3>${esc(m.name)} <span style="font-weight:400;color:var(--muted);font-size:12px">· ${rate}% comp (floor ${Number(m.compFloor)||0}%) · reps ${Number(m.repCommissionPct)||0}%</span></h3>
       <div class="jsum"><div><div class="k">Org pool</div><div class="v">${moneyFull(Math.round(pool))}</div></div><div><div class="k">Reps earn</div><div class="v">${moneyFull(Math.round(repSum))}</div></div><div><div class="k">Manager spread</div><div class="v">${moneyFull(Math.round(mgrSpread))}</div></div></div>
-      <table class="tbl" style="margin-top:8px"><thead><tr><th>Rep</th><th style="text-align:right">Signed</th><th style="text-align:right">Commission</th></tr></thead><tbody>${repRows.join('')||'<tr><td colspan="3" style="color:var(--muted)">No reps yet.</td></tr>'}</tbody></table></div>`;
+      <div style="overflow-x:auto"><table class="tbl" style="margin-top:8px"><thead><tr><th>Rep</th><th style="text-align:right">Signed</th><th style="text-align:right">Commission</th></tr></thead><tbody>${repRows.join('')||'<tr><td colspan="3" style="color:var(--muted)">No reps yet.</td></tr>'}</tbody></table></div></div>`;
   }
   kpis.innerHTML = me.admin
     ? kpiTile('Total channel payout', moneyFull(Math.round(gPool)), managers.length+' orgs')+kpiTile('Reps earn', moneyFull(Math.round(gRep)))+kpiTile('Managers earn', moneyFull(Math.round(gMgr)))
@@ -1980,20 +1981,26 @@ async function setRepCommission(v){
 
 /* invites (per-manager shareable links; token encrypted under the invite code, mirrors the team-code model) */
 const INVITES_URL='https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-invites.json';
+const INVITE_TTL = 30*86400000;   // links valid 30 days
+async function sha256hex(s){ const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
 async function loadInvitesDoc(){ try{ const r=await ghSite('crm-invites.json'); if(r.ok){ const j=await r.json(); return { doc:b64dec(j.content), sha:j.sha }; } }catch(e){} return { doc:{invites:{}}, sha:null }; }
-async function saveInvitesDoc(doc, sha){ const body={ message:'crm: invites', content:b64enc(doc) }; if(sha) body.sha=sha; const r=await ghSite('crm-invites.json',{method:'PUT',body:JSON.stringify(body)}); if(!r.ok) throw new Error('invites save '+r.status); }
-function newInviteCode(){ return 'inv'+Math.random().toString(36).slice(2,9)+Math.random().toString(36).slice(2,6); }
+async function saveInvitesDoc(doc, sha){ const body={ message:'crm: invites', content:b64enc(doc) }; if(sha) body.sha=sha; const r=await ghSite('crm-invites.json',{method:'PUT',body:JSON.stringify(body)}); if(!r.ok) throw new Error('invites save '+r.status); return r; }
+function newInviteCode(){ return 'inv'+Math.random().toString(36).slice(2,9)+Math.random().toString(36).slice(2,7)+Math.random().toString(36).slice(2,7); }
+// SECURITY: the invite code is the decryption password, so it is NEVER stored. Entries are keyed by sha256(code)
+// (a preimage-resistant id) with the token encrypted under the code. The raw code lives only in the shared link.
 async function createInvite(role, managerId){
-  const code=newInviteCode(); const enc=await encryptToken(code, token);
-  const { doc, sha }=await loadInvitesDoc(); doc.invites=doc.invites||{};
-  doc.invites[code]={ managerId:managerId||null, role, enc, active:true, by:me.id, createdAt:Date.now() };
-  await saveInvitesDoc(doc, sha); return code;
+  const code=newInviteCode(); const enc=await encryptToken(code, token); const key=await sha256hex(code);
+  const entry={ managerId:managerId||null, role, enc, active:true, by:me.id, createdAt:Date.now(), expiresAt:Date.now()+INVITE_TTL };
+  for(let a=0;a<4;a++){ const { doc, sha }=await loadInvitesDoc(); doc.invites=doc.invites||{}; doc.invites[key]=entry;
+    try{ await saveInvitesDoc(doc, sha); return code; }catch(e){ if(a===3) throw e; } }   // reload+merge on 409
+  return code;
 }
 async function createRepInvite(){ try{ const code=await createInvite('sales', me.id); const i=reps.findIndex(r=>r.id===me.id); if(i>=0){ reps[i].inviteCode=code; me=reps[i]; } await saveReps('crm: invite '+me.id); renderOrg(); toast('Your invite link is ready'); }catch(e){ toast('Failed: '+e.message); } }
-async function createManagerInvite(){ try{ const code=await createInvite('manager', null); const link=location.origin+'/internal/crm?invite='+code; prompt('Sales-manager invite link — share it:', link); }catch(e){ toast('Failed: '+e.message); } }
+async function createManagerInvite(){ try{ const code=await createInvite('manager', null); const link=location.origin+'/internal/crm?invite='+code; prompt('Sales-manager invite link — share it (valid 30 days):', link); }catch(e){ toast('Failed: '+e.message); } }
 async function fetchInvite(code){
+  let key; try{ key=await sha256hex(code); }catch(e){ return null; }
   const tries=['https://api.github.com/repos/'+SITE_REPO+'/contents/crm-invites.json?ref=main&t='+Date.now(), INVITES_URL+'?t='+Date.now()];
-  for(let i=0;i<tries.length;i++){ try{ const h=i===0?{'Accept':'application/vnd.github.raw'}:{}; const r=await fetchT(tries[i],{headers:h},12000); if(!r.ok) continue; const d=await r.json(); const inv=(d.invites||{})[code]; if(inv&&inv.active) return inv; }catch(e){} }
+  for(let i=0;i<tries.length;i++){ try{ const h=i===0?{'Accept':'application/vnd.github.raw'}:{}; const r=await fetchT(tries[i],{headers:h},12000); if(!r.ok) continue; const d=await r.json(); const inv=(d.invites||{})[key]; if(inv&&inv.active&&(!inv.expiresAt||inv.expiresAt>Date.now())) return inv; }catch(e){} }
   return null;
 }
 
@@ -2001,16 +2008,21 @@ async function fetchInvite(code){
 let quizDoc=null;
 async function loadQuiz(){ if(quizDoc) return quizDoc; try{ quizDoc=await load('meta/quiz.json'); }catch(e){ quizDoc={questions:[],passPct:80}; } return quizDoc; }
 function needsQuiz(){ return !me.admin && me.role!=='founder' && !me.quizPassed; }
-async function maybeGateQuiz(){ if(!needsQuiz()) return; await loadQuiz(); if(quizDoc.questions && quizDoc.questions.length) renderQuizGate(); }
+async function maybeGateQuiz(){ if(!needsQuiz()) return; await loadQuiz(); renderQuizGate(); }   // fail CLOSED: gate always shows for the uncertified
+function gateOn(on){ const app=document.getElementById('app'); if(app) app.inert = on; document.getElementById('quizgate').classList.toggle('open', on); }
 function renderQuizGate(){
   const q=quizDoc, el=document.getElementById('quizgate');
+  if(!q || !q.questions || !q.questions.length){   // couldn't load the test — block rather than let an uncertified user in
+    el.innerHTML=`<div class="qg-card"><h2>Product certification</h2><p style="color:var(--muted);font-size:13.5px">The certification test could not load. You need to pass it before selling.</p><div class="qg-foot"><span></span><button class="btn" onclick="(async()=>{quizDoc=null;await loadQuiz();renderQuizGate();})()">Retry</button></div></div>`;
+    gateOn(true); return;
+  }
   el.innerHTML=`<div class="qg-card">
     <h2>Product certification</h2>
     <p style="color:var(--muted);font-size:13.5px">Before you can start selling, pass a short test on the Polyshares product. You need ${q.passPct||80}% to pass, and you can retake it.</p>
     <form id="quizForm">${q.questions.map((qq,qi)=>`<div class="qg-q"><div class="qg-qt">${qi+1}. ${esc(qq.q)}</div>${qq.options.map((op,oi)=>`<label class="qg-opt"><input type="radio" name="q${qi}" value="${oi}" /> <span>${esc(op)}</span></label>`).join('')}</div>`).join('')}</form>
     <div class="qg-foot"><span id="qgMsg" style="color:var(--red);font-size:13px"></span><button class="btn" onclick="submitQuiz()">Submit test</button></div>
   </div>`;
-  el.classList.add('open');
+  gateOn(true);
 }
 async function submitQuiz(){
   const q=quizDoc; let correct=0, answered=0;
@@ -2021,14 +2033,16 @@ async function submitQuiz(){
   const i=reps.findIndex(r=>r.id===me.id);
   if(i>=0){ reps[i].quizPassed=true; reps[i].quizScore=score; reps[i].quizAt=Date.now(); me=reps[i]; } else { me.quizPassed=true; }
   try{ await saveReps('crm: certified '+me.id); }catch(e){}
-  document.getElementById('quizgate').classList.remove('open');
+  gateOn(false);
   toast('Certified at '+score+'% — you are cleared to sell.');
 }
 async function setAdmin(i, v){ reps[i].admin = v; await saveReps('crm: admin '+reps[i].id); toast('Updated'); }
 async function setRole(i, v){
+  const wasManager = reps[i].role==='manager';
   reps[i].role = v;
   reps[i].admin = (v==='founder');            // founders are admins; managers/reps are not
   if (v!=='sales') delete reps[i].managerId;  // only reps sit under a manager
+  if (wasManager && v!=='manager'){ const mid=reps[i].id; reps.forEach(r=>{ if(r.managerId===mid) delete r.managerId; }); }  // don't orphan their reps
   try{
     if (useGateway()){ await gw('/set-role', { id: reps[i].id, role: v }, true); }
     else { const { doc, sha } = await loadLogins(); const u = doc.users.find(x=>x.id===reps[i].id); if (u){ u.role = v; await saveLogins(doc, sha, 'crm: role '+reps[i].id); } }
@@ -2072,6 +2086,7 @@ async function delRep(i){
       }
       await save('pool/lists.json', doc, `crm: return ${leads.length} leads from ${r.id}`);
     }
+    if (r.role==='manager'){ reps.forEach(x=>{ if(x.managerId===r.id) delete x.managerId; }); }  // don't orphan their reps
     reps.splice(i,1);
     await saveReps('crm: remove rep '+r.id);
     try{
