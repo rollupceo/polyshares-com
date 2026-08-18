@@ -397,7 +397,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   <section id="v-team" style="display:none">
     <h2 style="font-family:var(--serif);font-weight:500;font-size:24px;margin-bottom:4px">Admin Dashboard</h2>
     <div style="color:var(--muted);font-size:13px;margin-bottom:18px">Manage your team, pipeline settings, and lead pool.</div>
-    <div class="panel"><h3>Users &amp; roles</h3>
+    <div class="panel" style="max-width:none"><h3>Users &amp; roles</h3>
       <div id="repTable" style="overflow-x:auto"></div>
       <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" style="width:150px" /><input id="rEmail" type="email" placeholder="Email" style="width:180px" /><select id="rRole" style="padding:8px"><option value="sales">sales rep</option><option value="manager">sales manager</option><option value="founder">founder</option></select><input id="rPass" type="text" placeholder="Temp password (8+)" style="width:150px" /><button class="btn" onclick="addRep()">Add user</button></div>
       <div style="font-size:12.5px;color:var(--muted)">Add a user with a temporary password they can change later, or share the team signup code so they self-register. Removing a user returns their leads to the pool and revokes their login.</div>
@@ -2074,7 +2074,7 @@ async function delRep(i){
   const r = reps[i];
   if (!confirm('Remove '+r.name+'? Their assigned leads return to their source lists.')) return;
   try{
-    const leads = await load(`reps/${r.id}/leads.json`);
+    let leads = []; try { leads = await load(`reps/${r.id}/leads.json`) || []; } catch(e){ leads = []; }  // no leads file is fine
     if (leads.length){
       const doc = await ensureLists();
       leads.forEach(l => { delete l.st; delete l.a; delete l.la; delete l.nt; delete l.mail; delete l.mailSync; delete l.mailSeen; delete l.lastReplyTs; });
