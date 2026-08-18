@@ -1582,7 +1582,7 @@ function renderReps(){
   }).join('') + '</tbody></table>';
 }
 async function setRepManager(i, v){ reps[i].managerId = v||undefined; await saveReps('crm: assign '+reps[i].id+' to '+(v||'none')); }
-async function setManagerComp(i, v){ let n=Math.max(0,Math.min(100,Number(v)||0)); const floor=Number(reps[i].compFloor)||0; if(n<floor){ n=floor; toast('Comp can\\'t go below the hard floor ('+floor+'%)'); } reps[i].compRate=n; await saveReps('crm: comp '+reps[i].id); }
+async function setManagerComp(i, v){ let n=Math.max(0,Math.min(100,Number(v)||0)); const floor=Number(reps[i].compFloor)||0; if(n<floor){ n=floor; toast('Comp cannot go below the hard floor ('+floor+'%)'); } reps[i].compRate=n; await saveReps('crm: comp '+reps[i].id); }
 async function setManagerFloor(i, v){ const f=Math.max(0,Math.min(100,Number(v)||0)); reps[i].compFloor=f; if((Number(reps[i].compRate)||0)<f) reps[i].compRate=f; await saveReps('crm: floor '+reps[i].id); }
 /* commission / comp math — spread model: org earns compRate% of the deal, rep earns repCommissionPct% out of it, manager keeps the difference */
 function repOf(id){ return reps.find(r=>r.id===id)||{}; }
