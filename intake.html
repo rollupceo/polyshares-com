@@ -145,6 +145,15 @@
             <p class="hint" id="vtext"></p>
           </div>
 
+          <div id="calbox" hidden>
+            <div class="calwrap">
+              <div class="calendly-inline-widget" id="calinline"
+                   data-url="https://calendly.com/polyshares/30min?hide_gdpr_banner=1&background_color=f7f5f0&text_color=17181c&primary_color=17181c"
+                   style="min-width:320px;height:680px"></div>
+            </div>
+            <p class="assure" id="calnote">Your answers are already with us. Pick a time and a Managing Partner will have read them first.</p>
+          </div>
+
           <div id="capture">
             <div class="field" id="f-name">
               <label for="i-name">Your name</label>
@@ -313,10 +322,13 @@
       ? 'There is likely a market for <em>what you have.</em>'
       : 'Probably <em>too early.</em>';
     $('#vtext').textContent = ok
-      ? 'A company your size with that much operating history produces the kind of record buyers are paying for. Leave your details and a Managing Partner will confirm what is there and what a license would look like.'
-      : 'We license operational data from companies with at least 20 people and two years of history. You are under that today. Leave your details if you want us to look again later, or skip this and book a call.';
-    $('#submit').textContent = ok ? 'Send this to Polyshares' : 'Keep me on file';
-    $('#f-ws').style.display = ok ? '' : 'none';
+      ? 'A company your size with that much operating history produces the kind of record buyers are paying for. Book a time below and a Managing Partner will confirm what is there and what a license would look like.'
+      : 'We sell operational data for companies with at least 20 people and two years of history. You are under that today. Leave your details if you want us to look again later.';
+    $('#submit').textContent = 'Keep me on file';
+    $('#f-ws').style.display = 'none';
+    $('#calbox').hidden = !ok;
+    $('#capture').hidden = ok;
+    if (ok) { loadCalendly(); autoSend(); }
   }
 
   function payload() {
@@ -382,6 +394,51 @@
     $('#recap').innerHTML = rows.map(function (r) {
       return '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd></div>';
     }).join('');
+  }
+
+  var calLoaded = false;
+  function loadCalendly() {
+    if (calLoaded) return;
+    calLoaded = true;
+    var s = document.createElement('script');
+    s.src = 'https://assets.calendly.com/assets/external/widget.js';
+    s.async = true;
+    s.onerror = function () {
+      $('#calinline').innerHTML =
+        '<p class="hint">The calendar did not load. ' +
+        '<a class="tlink" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Book a call here</a> instead.</p>';
+    };
+    document.head.appendChild(s);
+  }
+
+  // A qualified visitor may book without ever typing their details, so send the
+  // answers as soon as they qualify rather than waiting on a form submit.
+  var autoSent = false;
+  function autoSend() {
+    if (autoSent || !ENDPOINT) return;
+    autoSent = true;
+    var body = qualifiedPayload();
+    fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(body)
+    }).catch(function () { autoSent = false; });
+  }
+
+  function qualifiedPayload() {
+    return {
+      name: '(booking pending)',
+      company: '(from the website check)',
+      Qualified: 'Yes',
+      Operating: labelOf(YEARS, state.years),
+      People: labelOf(SIZE, state.size),
+      'Based in': state.where.join(', '),
+      'Record holds': state.holds.join(', '),
+      'Runs on': state.tools.join(', '),
+      'Owns records': labelOf(RIGHTS, state.rights),
+      _subject: 'Qualified data check, booking pending',
+      _gotcha: $('#i-hp').value
+    };
   }
 
   function send() {
