@@ -1985,7 +1985,7 @@ const INVITE_TTL = 30*86400000;   // links valid 30 days
 async function sha256hex(s){ const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
 async function loadInvitesDoc(){ try{ const r=await ghSite('crm-invites.json'); if(r.ok){ const j=await r.json(); return { doc:b64dec(j.content), sha:j.sha }; } }catch(e){} return { doc:{invites:{}}, sha:null }; }
 async function saveInvitesDoc(doc, sha){ const body={ message:'crm: invites', content:b64enc(doc) }; if(sha) body.sha=sha; const r=await ghSite('crm-invites.json',{method:'PUT',body:JSON.stringify(body)}); if(!r.ok) throw new Error('invites save '+r.status); return r; }
-function newInviteCode(){ return 'inv'+Math.random().toString(36).slice(2,9)+Math.random().toString(36).slice(2,7)+Math.random().toString(36).slice(2,7); }
+function newInviteCode(){ const a=new Uint8Array(20); crypto.getRandomValues(a); const cs='abcdefghijklmnopqrstuvwxyz0123456789'; return 'inv'+Array.from(a,b=>cs[b%cs.length]).join(''); }
 // SECURITY: the invite code is the decryption password, so it is NEVER stored. Entries are keyed by sha256(code)
 // (a preimage-resistant id) with the token encrypted under the code. The raw code lives only in the shared link.
 async function createInvite(role, managerId){
@@ -2008,7 +2008,7 @@ async function fetchInvite(code){
 let quizDoc=null;
 async function loadQuiz(){ if(quizDoc) return quizDoc; try{ quizDoc=await load('meta/quiz.json'); }catch(e){ quizDoc={questions:[],passPct:80}; } return quizDoc; }
 function needsQuiz(){ return !me.admin && me.role!=='founder' && !me.quizPassed; }
-async function maybeGateQuiz(){ if(!needsQuiz()) return; await loadQuiz(); renderQuizGate(); }   // fail CLOSED: gate always shows for the uncertified
+async function maybeGateQuiz(){ if(!needsQuiz()) return; gateOn(true); await loadQuiz(); renderQuizGate(); }   // inert immediately, then render — no visible pre-load window
 function gateOn(on){ const app=document.getElementById('app'); if(app) app.inert = on; document.getElementById('quizgate').classList.toggle('open', on); }
 function renderQuizGate(){
   const q=quizDoc, el=document.getElementById('quizgate');
