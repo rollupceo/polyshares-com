@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <script>try{if(self!==top){document.documentElement.style.display='none';top.location=self.location.href;}}catch(e){document.documentElement.style.display='none';}</script>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'sha256-CRRKSCn7ZW6YErASDFEKgq3kp11/azdnedyKnxS5CuU=' 'sha256-p6a8y+wRzbYFr4ZDSxfTjWTCyj4P0r0HapQq3SFVgvA=' https://assets.calendly.com https://calendly.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.calendly.com; connect-src 'self' https://formspree.io https://*.calendly.com https://gw.polyshares.workers.dev; frame-src https://calendly.com https://assets.calendly.com; form-action 'self' https://formspree.io">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'sha256-CRRKSCn7ZW6YErASDFEKgq3kp11/azdnedyKnxS5CuU=' 'sha256-qaetWZdYVHfM227nwqzsEdg5zC8ooEgIHQQwc0u5iEU=' https://assets.calendly.com https://calendly.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.calendly.com; connect-src 'self' https://formspree.io https://*.calendly.com https://gw.polyshares.workers.dev; frame-src https://calendly.com https://assets.calendly.com; form-action 'self' https://formspree.io">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Check your data · Polyshares</title>
@@ -160,6 +160,11 @@
               <label for="i-em">Work email</label>
               <input id="i-em" type="email" autocomplete="email" required>
               <p class="err">Enter a valid work email.</p>
+            </div>
+            <div class="field" id="f-ph">
+              <label for="i-ph">Phone</label>
+              <input id="i-ph" type="tel" autocomplete="tel" placeholder="optional">
+              <p class="err"></p>
             </div>
             <div class="field" id="f-ws">
               <label for="i-ws">Company website</label>
@@ -323,7 +328,7 @@
       ? 'A company your size with that much operating history produces the kind of record buyers are paying for. Your answers are with us. Pick a time below and a Managing Partner will have read them first.'
       : 'We sell operational data for companies with at least 20 people and two years of history. You are under that today. We have your details and will come back to you if that changes.';
     $('#calbox').hidden = !ok;
-    if (ok) loadCalendly();
+    if (ok) { prefillCalendly(); loadCalendly(); }
   }
 
   function payload() {
@@ -341,6 +346,7 @@
       'Record holds': state.holds.join(', '),
       'Runs on': state.tools.join(', '),
       'Owns records': labelOf(RIGHTS, state.rights),
+      Phone: $('#i-ph').value.trim(),
       _subject: 'Data intake: ' + co + (qualifies() ? ' (qualified)' : ''),
       _gotcha: $('#i-hp').value,
       _raw: {
@@ -349,6 +355,7 @@
       company:   $('#i-co').value.trim(),
       email:     $('#i-em').value.trim(),
       website:   $('#i-ws').value.trim(),
+      phone:     $('#i-ph').value.trim(),
       tools:     state.tools,
       where:     state.where,
       holds:     state.holds,
@@ -389,6 +396,18 @@
     $('#recap').innerHTML = rows.map(function (r) {
       return '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd></div>';
     }).join('');
+  }
+
+  function prefillCalendly() {
+    var el = $('#calinline');
+    if (!el) return;
+    var base = el.getAttribute('data-url').split('&name=')[0];
+    var q = '&name=' + encodeURIComponent($('#i-name').value.trim()) +
+            '&email=' + encodeURIComponent($('#i-em').value.trim());
+    var ph = $('#i-ph').value.trim();
+    // a1 is Calendly's first custom question. Harmlessly ignored if none is set.
+    if (ph) q += '&a1=' + encodeURIComponent(ph);
+    el.setAttribute('data-url', base + q);
   }
 
   var calLoaded = false;
