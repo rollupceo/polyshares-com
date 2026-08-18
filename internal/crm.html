@@ -103,7 +103,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .stepper{display:flex;gap:6px;flex-wrap:wrap;padding:16px 26px;border-bottom:1px solid var(--line);flex:none}
 .step-pill{font-size:12px;padding:7px 12px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink2);cursor:pointer;white-space:nowrap;transition:all .15s}
 .step-pill:hover{border-color:var(--ink)}
-.step-pill.done{background:var(--paper3);color:var(--muted)}
+.step-pill.done{background:var(--paper3);color:var(--ink2)}
 .step-pill.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
 .step-pill.dead{margin-left:auto;color:var(--red);border-color:rgba(165,80,80,.3)}
 .step-pill.dead.active{background:var(--red);border-color:var(--red);color:#fff}
@@ -125,6 +125,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .seg-btn{background:none;border:none;font-size:13px;padding:7px 16px;border-radius:7px;color:var(--ink2);cursor:pointer}
 .seg-btn.on{background:#fff;color:var(--ink);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .fld{margin-bottom:10px;font-size:13px}
+.fld textarea{width:100%;margin-top:5px}
 .fld b{display:inline-block;width:84px;color:var(--muted);font-weight:500}
 .fld a{color:var(--accent)}
 .logrow{display:flex;gap:6px;margin:14px 0 6px}
@@ -188,7 +189,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .hbar.over > i{background:var(--red)}
 .mchip{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:20px}
 .mchip.good{background:rgba(94,140,97,.14);color:var(--green)}
-.mchip.mid{background:rgba(201,162,39,.16);color:#8a6d0b}
+.mchip.mid{background:rgba(201,162,39,.16);color:#7A5F09}
 .mchip.bad{background:rgba(165,80,80,.14);color:var(--red)}
 .jobline{display:grid;grid-template-columns:1.4fr .7fr .7fr .7fr auto;gap:7px;align-items:center;margin-bottom:6px}
 .jobline input,.jobline select{font-size:12.5px;padding:6px}
@@ -285,6 +286,13 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
   .col{min-width:80vw;width:80vw}
   .pipebar{gap:8px}.pstat{min-width:46%;flex:1;padding:10px 12px}
   .pstat .pn{font-size:19px}
+  /* Job/proposal budget rows: restack so date & number inputs stay usable */
+  .jobline{grid-template-columns:1fr 1fr;gap:6px 8px}
+  .jobline input[type=date],.jobline textarea{grid-column:1/-1}
+  .jobline button{grid-column:1/-1;justify-self:start}
+  /* Bigger tap targets on touch widths */
+  .btn.sm{padding:9px 12px;font-size:12.5px}
+  .iconbtn{padding:9px 10px}
 }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -423,7 +431,8 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     </div>
     <div class="panel"><h3>Sales orgs &amp; affiliates</h3>
       <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Invite a sales manager to start their own org. They recruit their own reps via a shareable link, and everyone must pass the product test before selling. Set each manager's comp rate and hard floor in the Users table above.</div>
-      <button class="btn" onclick="createManagerInvite()">Invite a sales manager →</button>
+      <button class="btn" id="mgrInviteBtn" onclick="createManagerInvite()">Invite a sales manager →</button>
+      <div id="mgrInviteBox" style="margin-top:12px"></div>
     </div>
     <div id="log"></div>
   </section>
@@ -1631,7 +1640,7 @@ function renderReps(){
     let compCell = '<span style="color:var(--muted)">—</span>';
     if(role==='manager') compCell = `<span style="font-size:11px;color:var(--muted)">rate</span> <input type="number" min="0" max="100" value="${r.compRate!=null?r.compRate:''}" placeholder="%" onchange="setManagerComp(${i}, this.value)" style="width:48px;font-size:12px;padding:3px 5px" /> <span style="font-size:11px;color:var(--muted)">floor</span> <input type="number" min="0" max="100" value="${r.compFloor!=null?r.compFloor:''}" placeholder="%" onchange="setManagerFloor(${i}, this.value)" style="width:48px;font-size:12px;padding:3px 5px" />`;
     else if(role==='sales'){ const m=reps.find(x=>x.id===r.managerId); compCell = (m&&m.repCommissionPct!=null) ? `<span style="font-size:12px">${m.repCommissionPct}% of deal</span>` : '<span style="color:var(--muted);font-size:11.5px">set by manager</span>'; }
-    const quizTag = r.quizPassed ? '<span class="tag" style="background:rgba(94,140,97,.14);color:var(--green)">certified</span>' : '<span class="tag" style="background:rgba(201,162,39,.16);color:#8a6d0b">not certified</span>';
+    const quizTag = r.quizPassed ? '<span class="tag" style="background:rgba(94,140,97,.14);color:var(--green)">certified</span>' : '<span class="tag" style="background:rgba(201,162,39,.16);color:#7A5F09">not certified</span>';
     return `<tr>
       <td><b>${esc(r.name)}</b>${r.id===me.id?' <span style="color:var(--muted);font-size:11px">(you)</span>':''}<div style="color:var(--muted);font-size:11.5px">${esc(r.email||'')}</div><div style="margin-top:3px">${quizTag}</div></td>
       <td>${roleSel}</td>
@@ -1938,7 +1947,7 @@ async function renderCommission(force){
     const orgReps = reps.filter(r=>r.managerId===m.id);
     let pool=0, repSum=0, repRows=[];
     for(const r of orgReps){ const signed=await loadSignedFor(r.id); let rp=0,pl=0; signed.forEach(l=>{ const c=dealComp(l.v,r.id); rp+=c.repPay; pl+=c.pool; }); repSum+=rp; pool+=pl;
-      repRows.push(`<tr><td>${esc(r.name)}${r.quizPassed?'':' <span class="tag" style="background:rgba(201,162,39,.16);color:#8a6d0b">not certified</span>'}</td><td style="text-align:right">${signed.length}</td><td style="text-align:right">${moneyFull(Math.round(rp))}</td></tr>`); }
+      repRows.push(`<tr><td>${esc(r.name)}${r.quizPassed?'':' <span class="tag" style="background:rgba(201,162,39,.16);color:#7A5F09">not certified</span>'}</td><td style="text-align:right">${signed.length}</td><td style="text-align:right">${moneyFull(Math.round(rp))}</td></tr>`); }
     const mgrSpread=Math.max(0,pool-repSum); gPool+=pool; gRep+=repSum; gMgr+=mgrSpread;
     const rate=Math.max(Number(m.compRate)||0,Number(m.compFloor)||0);
     html+=`<div class="panel" style="max-width:none"><h3>${esc(m.name)} <span style="font-weight:400;color:var(--muted);font-size:12px">· ${rate}% comp (floor ${Number(m.compFloor)||0}%) · reps ${Number(m.repCommissionPct)||0}%</span></h3>
@@ -1968,7 +1977,7 @@ function renderOrg(){
       ${link ? `<div class="row"><input id="orgInvite" value="${esc(link)}" readonly style="flex:1;min-width:240px" /><button class="btn sm" onclick="copyText(document.getElementById('orgInvite').value)">Copy link</button></div>` : `<button class="btn" onclick="createRepInvite()">Generate my invite link</button>`}
     </div>
     <div class="panel" style="max-width:none"><h3>Your reps (${orgReps.length})</h3>
-      <table class="tbl"><thead><tr><th>Rep</th><th>Certified</th><th>Status</th></tr></thead><tbody>${orgReps.map(r=>`<tr><td><b>${esc(r.name)}</b><div style="color:var(--muted);font-size:11.5px">${esc(r.email||'')}</div></td><td>${r.quizPassed?'<span class="tag" style="background:rgba(94,140,97,.14);color:var(--green)">yes</span>':'<span class="tag" style="background:rgba(201,162,39,.16);color:#8a6d0b">no</span>'}</td><td>${r.active===false?'inactive':'active'}</td></tr>`).join('')||'<tr><td colspan="3" style="color:var(--muted)">No reps yet — share your invite link.</td></tr>'}</tbody></table>
+      <table class="tbl"><thead><tr><th>Rep</th><th>Certified</th><th>Status</th></tr></thead><tbody>${orgReps.map(r=>`<tr><td><b>${esc(r.name)}</b><div style="color:var(--muted);font-size:11.5px">${esc(r.email||'')}</div></td><td>${r.quizPassed?'<span class="tag" style="background:rgba(94,140,97,.14);color:var(--green)">yes</span>':'<span class="tag" style="background:rgba(201,162,39,.16);color:#7A5F09">no</span>'}</td><td>${r.active===false?'inactive':'active'}</td></tr>`).join('')||'<tr><td colspan="3" style="color:var(--muted)">No reps yet — share your invite link.</td></tr>'}</tbody></table>
     </div>`;
   document.getElementById('orgMeta').textContent = orgReps.length+' reps';
 }
@@ -1997,7 +2006,7 @@ async function createInvite(role, managerId){
   return code;
 }
 async function createRepInvite(){ try{ const code=await createInvite('sales', me.id); const i=reps.findIndex(r=>r.id===me.id); if(i>=0){ reps[i].inviteCode=code; me=reps[i]; } await saveReps('crm: invite '+me.id); renderOrg(); toast('Your invite link is ready'); }catch(e){ toast('Failed: '+e.message); } }
-async function createManagerInvite(){ try{ const code=await createInvite('manager', null); const link=location.origin+'/internal/crm?invite='+code; prompt('Sales-manager invite link — share it (valid 30 days):', link); }catch(e){ toast('Failed: '+e.message); } }
+async function createManagerInvite(){ const btn=document.getElementById('mgrInviteBtn'); const box=document.getElementById('mgrInviteBox'); if(btn){ btn.disabled=true; btn.textContent='Generating…'; } try{ const code=await createInvite('manager', null); const link=location.origin+'/internal/crm?invite='+code; if(box){ box.innerHTML=`<div style="font-size:12px;color:var(--muted);margin-bottom:5px">Share this link — valid 30 days. It creates a sales manager who can build their own org.</div><div class="row"><input id="mgrInvite" value="${esc(link)}" readonly style="flex:1;min-width:240px" /><button class="btn sm" onclick="copyText(document.getElementById('mgrInvite').value)">Copy link</button></div>`; } toast('Manager invite link ready'); }catch(e){ if(box){ box.innerHTML=`<div style="color:var(--red);font-size:12.5px">Failed: ${esc(e.message)}</div>`; } toast('Failed: '+e.message); } finally{ if(btn){ btn.disabled=false; btn.textContent='Invite a sales manager →'; } } }
 async function fetchInvite(code){
   let key; try{ key=await sha256hex(code); }catch(e){ return null; }
   const tries=['https://api.github.com/repos/'+SITE_REPO+'/contents/crm-invites.json?ref=main&t='+Date.now(), INVITES_URL+'?t='+Date.now()];
