@@ -140,23 +140,10 @@
           </div>
         </section>
 
-        <!-- 5. RESULT + CONTACT -->
+        <!-- 7. CONTACT, before the verdict so every submission has a name -->
         <section class="step" data-step="6">
-          <div class="verdict">
-            <p class="eyebrow" id="vlabel">Result</p>
-            <p class="mark" id="vmark"></p>
-            <p class="hint" id="vtext"></p>
-          </div>
-
-          <div id="calbox" hidden>
-            <div class="calwrap">
-              <div class="calendly-inline-widget" id="calinline"
-                   data-url="https://calendly.com/polyshares/30min?hide_gdpr_banner=1&background_color=f7f5f0&text_color=17181c&primary_color=17181c"
-                   style="min-width:320px;height:680px"></div>
-            </div>
-            <p class="assure" id="calnote">Your answers are already with us. Pick a time and a Managing Partner will have read them first.</p>
-            <p class="calalt">Calendar not loading? <a class="tlink" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Book a call here</a>.</p>
-          </div>
+          <h2>Last step. <em>Who are we speaking to?</em></h2>
+          <p class="hint">We will show you the result on the next screen. This is so a Managing Partner knows who to come back to.</p>
 
           <div id="capture">
             <div class="field" id="f-name">
@@ -174,36 +161,43 @@
               <input id="i-em" type="email" autocomplete="email" required>
               <p class="err">Enter a valid work email.</p>
             </div>
-            <div aria-hidden="true" style="position:absolute;left:-9999px;height:0;overflow:hidden">
-              <label for="i-hp">Do not fill this in</label>
-              <input id="i-hp" type="text" tabindex="-1" autocomplete="off">
-            </div>
             <div class="field" id="f-ws">
               <label for="i-ws">Company website</label>
               <input id="i-ws" type="text" autocomplete="url" placeholder="optional">
               <p class="err"></p>
             </div>
-
-            <p class="assure">Nothing you tell us leaves Polyshares. We will not contact anyone at your company but you.</p>
-            <div class="flow-nav">
-              <button class="flow-back" type="button" data-back>Back</button>
-              <button class="btn" type="button" id="submit">Send this to Polyshares <span class="arw" aria-hidden="true">&rsaquo;</span></button>
+            <div aria-hidden="true" style="position:absolute;left:-9999px;height:0;overflow:hidden">
+              <label for="i-hp">Do not fill this in</label>
+              <input id="i-hp" type="text" tabindex="-1" autocomplete="off">
             </div>
-            <p class="hint" id="sendstate" role="status" aria-live="polite" style="margin-top:18px"></p>
           </div>
+
+          <p class="assure">Nothing you tell us leaves Polyshares. We will not contact anyone at your company but you.</p>
+          <div class="flow-nav">
+            <button class="flow-back" type="button" data-back>Back</button>
+            <button class="btn" type="button" id="submit">See your result <span class="arw" aria-hidden="true">&rsaquo;</span></button>
+          </div>
+          <p class="hint" id="sendstate" role="status" aria-live="polite" style="margin-top:18px"></p>
         </section>
 
-        <!-- 8. DONE -->
+        <!-- 8. RESULT -->
         <section class="step" data-step="7">
           <div class="verdict">
-            <p class="eyebrow" id="dlabel">Received</p>
-            <p class="mark" id="dmark">That is with us.</p>
-            <p class="hint" id="dtext"></p>
+            <p class="eyebrow" id="vlabel">Result</p>
+            <p class="mark" id="vmark"></p>
+            <p class="hint" id="vtext"></p>
           </div>
+
+          <div id="calbox" hidden>
+            <div class="calwrap">
+              <div class="calendly-inline-widget" id="calinline"
+                   data-url="https://calendly.com/polyshares/30min?hide_gdpr_banner=1&background_color=f7f5f0&text_color=17181c&primary_color=17181c"
+                   style="min-width:320px;height:680px"></div>
+            </div>
+            <p class="calalt">Calendar not loading? <a class="tlink" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Book a call here</a>.</p>
+          </div>
+
           <dl class="recap" id="recap"></dl>
-          <div class="flow-nav">
-            <a class="btn" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">Book the call now <span class="arw" aria-hidden="true">&rsaquo;</span></a>
-          </div>
         </section>
 
       </div>
@@ -303,7 +297,7 @@
       if (i === n) { s.setAttribute('data-active',''); } else { s.removeAttribute('data-active'); }
     });
     $('#pbar').style.width = Math.round((n / LAST) * 100) + '%';
-    $('#pn').textContent = n >= LAST ? 'Done' : 'Step ' + (n + 1) + ' of ' + LAST;
+    $('#pn').textContent = n >= LAST ? 'Result' : 'Step ' + (n + 1) + ' of ' + LAST;
     if (quiet) return;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     var h = $('h2, .mark', $$('.step')[n]);
@@ -326,13 +320,10 @@
       ? 'There is likely a market for <em>what you have.</em>'
       : 'Probably <em>too early.</em>';
     $('#vtext').textContent = ok
-      ? 'A company your size with that much operating history produces the kind of record buyers are paying for. Book a time below and a Managing Partner will confirm what is there and what a license would look like.'
-      : 'We sell operational data for companies with at least 20 people and two years of history. You are under that today. Leave your details if you want us to look again later.';
-    $('#submit').textContent = 'Keep me on file';
-    $('#f-ws').style.display = 'none';
+      ? 'A company your size with that much operating history produces the kind of record buyers are paying for. Your answers are with us. Pick a time below and a Managing Partner will have read them first.'
+      : 'We sell operational data for companies with at least 20 people and two years of history. You are under that today. We have your details and will come back to you if that changes.';
     $('#calbox').hidden = !ok;
-    $('#capture').hidden = ok;
-    if (ok) { loadCalendly(); autoSend(); }
+    if (ok) loadCalendly();
   }
 
   function payload() {
@@ -415,36 +406,6 @@
     document.head.appendChild(s);
   }
 
-  // A qualified visitor may book without ever typing their details, so send the
-  // answers as soon as they qualify rather than waiting on a form submit.
-  var autoSent = false;
-  function autoSend() {
-    if (autoSent || !ENDPOINT) return;
-    autoSent = true;
-    var body = qualifiedPayload();
-    fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(body)
-    }).catch(function () { autoSent = false; });
-  }
-
-  function qualifiedPayload() {
-    return {
-      name: '(booking pending)',
-      company: '(from the website check)',
-      Qualified: 'Yes',
-      Operating: labelOf(YEARS, state.years),
-      People: labelOf(SIZE, state.size),
-      'Based in': state.where.join(', '),
-      'Record holds': state.holds.join(', '),
-      'Runs on': state.tools.join(', '),
-      'Owns records': labelOf(RIGHTS, state.rights),
-      _subject: 'Qualified data check, booking pending',
-      _gotcha: $('#i-hp').value
-    };
-  }
-
   function send() {
     if (!validate()) {
       var firstBad = $('.field[data-invalid] input');
@@ -455,14 +416,14 @@
     btn.disabled = true;
     note.textContent = 'Sending.';
 
+    renderVerdict();
+
     if (!ENDPOINT) {
       // Nothing to submit to yet. Say so rather than faking success.
       btn.disabled = false;
       recap();
-      $('#dlabel').textContent = 'Not sent';
-      $('#dmark').textContent = 'Bring this to the call.';
-      $('#dtext').textContent = 'We could not send this through, so nothing has reached us yet. Here is what you '
-        + 'told us. Book the call and a Managing Partner will go through it with you.';
+      $('#vtext').textContent = 'We could not send this through, so nothing has reached us yet. '
+        + 'Book a call and a Managing Partner will go through it with you.';
       show(LAST);
       return;
     }
@@ -477,11 +438,6 @@
     }).then(function () {
       note.textContent = '';
       recap();
-      $('#dlabel').textContent = 'Received';
-      $('#dmark').innerHTML = qualifies() ? 'That is <em>with us.</em>' : 'Noted, <em>thank you.</em>';
-      $('#dtext').textContent = qualifies()
-        ? 'A Managing Partner will come back to you, usually within two business days. If you would rather not wait, book the call now.'
-        : 'We have your details and will come back to you if this changes. You are welcome to book a call in the meantime.';
       show(LAST);
     }).catch(function () {
       note.innerHTML = 'That did not go through. Please <a class="tlink" href="https://calendly.com/polyshares/30min" target="_blank" rel="noopener">book a call</a> instead.';
@@ -499,7 +455,6 @@
 
   $$('[data-next]').forEach(function (b) {
     b.addEventListener('click', function () {
-      if (step === 5) renderVerdict();
       show(step + 1);
     });
   });
