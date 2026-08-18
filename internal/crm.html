@@ -200,6 +200,16 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 .proppanel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:20px}
 .propscope{width:100%;min-height:58px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.5;resize:vertical}
 .propscope:focus{outline:2px solid var(--accent);outline-offset:-1px}
+#quizgate{position:fixed;inset:0;z-index:120;background:rgba(23,24,28,.55);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:40px 16px}
+#quizgate.open{display:flex}
+.qg-card{background:var(--paper);border-radius:14px;max-width:640px;width:100%;padding:26px 28px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.qg-card h2{font-family:var(--serif);font-weight:500;font-size:24px;margin-bottom:6px}
+.qg-q{margin:16px 0;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.qg-qt{font-size:14px;font-weight:500;margin-bottom:8px}
+.qg-opt{display:flex;align-items:flex-start;gap:8px;font-size:13.5px;padding:6px 8px;border-radius:8px;cursor:pointer;line-height:1.45}
+.qg-opt:hover{background:var(--paper3)}
+.qg-opt input{margin-top:2px}
+.qg-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;position:sticky;bottom:0;background:var(--paper);padding-top:12px}
 #cardpop{position:fixed;z-index:70;width:240px;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 16px 44px rgba(0,0,0,.22);padding:14px;display:none;flex-direction:column;gap:8px}
 #cardpop.open{display:flex}
 #cardpop .cp-h{font-weight:600;font-size:13px;margin-bottom:2px}
@@ -295,12 +305,13 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     </div>
 
     <div id="signupStep" style="display:none">
+      <div id="inviteBanner" style="display:none;background:var(--paper3);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:12px"></div>
       <div class="sub" style="margin-bottom:10px">Create your account</div>
       <input type="text" id="suName" placeholder="Full name" autocomplete="name" />
       <input type="email" id="suEmail" placeholder="Work email" autocomplete="username" />
-      <input type="password" id="suPass1" placeholder="Choose a password (8+ characters)" autocomplete="new-password" />
+      <input type="password" id="suPass1" placeholder="Choose a password (12+ characters)" autocomplete="new-password" />
       <input type="password" id="suPass2" placeholder="Confirm password" autocomplete="new-password" />
-      <input type="password" id="suCode" placeholder="Team signup code" style="margin-bottom:14px" />
+      <span id="suCodeWrap"><input type="password" id="suCode" placeholder="Team signup code" style="margin-bottom:14px" /></span>
       <button class="btn" id="signupBtn" onclick="signUp()">Create account &amp; enter</button>
       <button class="btn ghost" style="width:100%;margin-top:8px" onclick="showSignin()">Back to sign in</button>
     </div>
@@ -316,10 +327,12 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <button data-v="board" class="on">Board</button>
     <button data-v="work">Work</button>
     <button data-v="replies" id="repliesTab">Replies<span id="repliesBadge" class="navbadge" style="display:none">0</span></button>
-    <button data-v="fulfill">Fulfillment</button>
     <button data-v="leads">Leads</button>
-    <button data-v="metrics">Metrics</button>
-    <button data-v="insights">Insights</button>
+    <button data-v="commission" id="commTab">Commission</button>
+    <button data-v="org" id="orgTab" style="display:none">My Org</button>
+    <button data-v="fulfill" id="fulfillTab" style="display:none">Fulfillment</button>
+    <button data-v="metrics" id="metricsTab" style="display:none">Metrics</button>
+    <button data-v="insights" id="insightsTab" style="display:none">Insights</button>
     <button data-v="team" id="teamTab">Admin</button>
   </nav>
   <div class="right"><span id="who"></span><div id="sync" title="sync status"></div><button id="gmailBtn" class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="connectGmail()" title="Connect your Gmail to send and read replies in the CRM">Connect Gmail</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="startTour()" title="Take the tour">? Tour</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="changeMyPass()">Password</button><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="logout()">Log out</button></div>
@@ -371,6 +384,16 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <div style="overflow-x:auto"><table class="tbl" id="insJobs"></table></div>
     <div class="mgrid" id="insGrid" style="margin-top:22px"></div>
   </section>
+  <section id="v-commission" style="display:none">
+    <div class="row"><b style="font-family:var(--serif);font-size:20px">Commission</b><span id="commMeta" style="color:var(--muted);font-size:12.5px"></span><button class="btn sm ghost" style="margin-left:auto" onclick="renderCommission(true)">Refresh</button></div>
+    <div style="font-size:12.5px;color:var(--muted);margin-top:4px">Earned on signed deals. Commission is a share of each deal's contract value.</div>
+    <div id="commKpis" class="pipebar" style="margin-top:12px;flex-wrap:wrap"></div>
+    <div id="commWrap" style="margin-top:18px"></div>
+  </section>
+  <section id="v-org" style="display:none">
+    <div class="row"><b style="font-family:var(--serif);font-size:20px">My Org</b><span id="orgMeta" style="color:var(--muted);font-size:12.5px"></span></div>
+    <div id="orgWrap" style="margin-top:14px"></div>
+  </section>
   <section id="v-team" style="display:none">
     <h2 style="font-family:var(--serif);font-weight:500;font-size:24px;margin-bottom:4px">Admin Dashboard</h2>
     <div style="color:var(--muted);font-size:13px;margin-bottom:18px">Manage your team, pipeline settings, and lead pool.</div>
@@ -397,6 +420,10 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
       <div class="row"><input type="file" id="csvFile" accept=".csv" /><select id="impList" style="padding:8px" onchange="document.getElementById('impName').style.display=this.value==='__new'?'':'none'"><option value="__new">+ New list…</option></select><input id="impName" placeholder="New list name" style="width:170px" /><button class="btn" onclick="importCsv()">Import</button></div>
       <div style="font-size:12.5px;color:var(--muted)">HubSpot-style headers (First Name, Last Name, Email, Job Title, Company Name…). Each upload becomes a named list you can assign separately.</div>
     </div>
+    <div class="panel"><h3>Sales orgs &amp; affiliates</h3>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Invite a sales manager to start their own org. They recruit their own reps via a shareable link, and everyone must pass the product test before selling. Set each manager's comp rate and hard floor in the Users table above.</div>
+      <button class="btn" onclick="createManagerInvite()">Invite a sales manager →</button>
+    </div>
     <div id="log"></div>
   </section>
 </main>
@@ -406,6 +433,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
 <div id="drawer"><div class="head"><button class="x" onclick="closeDrawer()">×</button><h2 id="dName"></h2><div id="dCo" style="color:var(--muted);font-size:13.5px;margin-top:2px"></div></div><div class="body" id="dBody"></div></div>
 <div class="toast" id="toast"></div>
 <div id="cardpop"></div>
+<div id="quizgate"></div>
 <div id="tour"><div id="tour-spot"></div><div id="tour-box"></div></div>
 
 <script>
@@ -561,9 +589,9 @@ async function signUp(){
   if (!name || !email.includes('@')) { err.textContent='Enter your name and a valid email.'; return; }
   if (p1.length < 12) { err.textContent='Password must be at least 12 characters.'; return; }
   if (p1 !== p2) { err.textContent="Passwords don't match."; return; }
-  if (!code) { err.textContent='Enter the team signup code.'; return; }
+  if (!pendingInvite && !code) { err.textContent='Enter the team signup code.'; return; }
   const btn = document.getElementById('signupBtn'); btn.textContent='Creating…';
-  if (useGateway()){
+  if (useGateway() && !pendingInvite){
     let d;
     try { d = await gw('/signup', { name, email, password: p1, code }); }
     catch(e){ err.textContent = e.message || 'Could not create account.'; btn.textContent='Create account & enter'; if((e.message||'').includes('already exists')) showSignin(); return; }
@@ -582,12 +610,17 @@ async function signUp(){
     } catch(e){ err.textContent='Could not create account: '+e.message; btn.textContent='Create account & enter'; }
     return;
   }
-  // 1) team code unlocks the shared token
-  let signupDoc;
-  try { let r = await fetchT('https://api.github.com/repos/'+SITE_REPO+'/contents/crm-signup.json?ref=main&t='+Date.now(), {headers:{'Accept':'application/vnd.github.raw'}}, 12000); if(!r.ok) r = await fetchT(SIGNUP_URL + '?t=' + Date.now()); signupDoc = await r.json(); }
-  catch(e){ err.textContent='Could not reach signup service.'; btn.textContent='Create account & enter'; return; }
-  try { token = await decryptToken(code, signupDoc.enc); }
-  catch(e){ err.textContent='Invalid team signup code.'; btn.textContent='Create account & enter'; return; }
+  // 1) unlock the shared token — via the invite link's code, or the team signup code
+  if (pendingInvite){
+    try { token = await decryptToken(pendingInvite.code, pendingInvite.enc); }
+    catch(e){ err.textContent='This invite link is invalid or expired.'; btn.textContent='Create account & enter'; return; }
+  } else {
+    let signupDoc;
+    try { let r = await fetchT('https://api.github.com/repos/'+SITE_REPO+'/contents/crm-signup.json?ref=main&t='+Date.now(), {headers:{'Accept':'application/vnd.github.raw'}}, 12000); if(!r.ok) r = await fetchT(SIGNUP_URL + '?t=' + Date.now()); signupDoc = await r.json(); }
+    catch(e){ err.textContent='Could not reach signup service.'; btn.textContent='Create account & enter'; return; }
+    try { token = await decryptToken(code, signupDoc.enc); }
+    catch(e){ err.textContent='Invalid team signup code.'; btn.textContent='Create account & enter'; return; }
+  }
   try{
     const { doc, sha } = await loadLogins();
     if (doc.users.find(u => (u.email||'').toLowerCase()===email)){ err.textContent='An account with that email already exists — sign in instead.'; btn.textContent='Create account & enter'; showSignin(); return; }
@@ -598,15 +631,16 @@ async function signUp(){
     else { id = base; let n=1; const taken = new Set([...doc.users.map(u=>u.id), ...reps.map(r=>r.id)]); while (taken.has(id)) id = base + (++n); }
     const colors = ['#4A6FA5','#7A9E7E','#A55050','#C9A227','#6B5B95','#3E7C8F'];
     const seeded = reps.find(r=>r.id===id);
-    const role = seeded ? (seeded.role || (seeded.admin?'founder':'sales')) : (doc.users.length===0 ? 'founder' : 'sales');
+    const role = pendingInvite ? pendingInvite.role : (seeded ? (seeded.role || (seeded.admin?'founder':'sales')) : (doc.users.length===0 ? 'founder' : 'sales'));
+    const mgrId = (pendingInvite && role==='sales' && pendingInvite.managerId) ? pendingInvite.managerId : undefined;
     // 3) write login record (token encrypted under their password)
     doc.users.push({ id, email, name, role, enc: await encryptToken(p1, token) });
     await saveLogins(doc, sha, 'crm: signup '+email);
     // 4) ensure rep roster + data files
     try { reps = await load('meta/reps.json'); } catch(e){ reps = []; }
     let rep = reps.find(r=>r.id===id);
-    if (!rep){ rep = { id, name, email, role, admin: role==='founder', color: colors[reps.length%colors.length], active:true }; reps.push(rep); }
-    else { rep.name = name; rep.email = email; rep.role = role; }
+    if (!rep){ rep = { id, name, email, role, admin: role==='founder', managerId: mgrId, color: colors[reps.length%colors.length], active:true }; reps.push(rep); }
+    else { rep.name = name; rep.email = email; rep.role = role; if(mgrId) rep.managerId = mgrId; }
     await save('meta/reps.json', reps, 'crm: rep '+id);
     for (const f of ['leads','activities','outbox']){ const p=`reps/${id}/${f}.json`; if(shas[p]===undefined){ try{ await load(p); }catch(e){ shas[p]=null; await save(p, [], 'crm: init '+p); } } }
     const store = document.getElementById('remember').checked ? localStorage : sessionStorage;
@@ -635,14 +669,31 @@ async function changeMyPass(){
   }catch(e){ toast('Failed: '+e.message); }
 }
 ['liEmail','liPass'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')signIn();}));
+let pendingInvite = null;
 async function boot(){
+  const inviteCode = new URLSearchParams(location.search).get('invite');
   token = sessionStorage.getItem('crm_t') || localStorage.getItem('crm_t');
-  if (!token) return;
-  try { reps = await load('meta/reps.json'); } catch(e){ token=null; return; }
-  const email = (localStorage.getItem('crm_email')||'').toLowerCase();
-  me = reps.find(r=>(r.email||'').toLowerCase()===email) || reps.find(r=>r.id===localStorage.getItem('crm_rep'));
-  if (me && me.active!==false) await enterApp();
-  else { sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); token=null; }
+  if (token){
+    try { reps = await load('meta/reps.json'); } catch(e){ token=null; }
+    if (token){
+      const email = (localStorage.getItem('crm_email')||'').toLowerCase();
+      me = reps.find(r=>(r.email||'').toLowerCase()===email) || reps.find(r=>r.id===localStorage.getItem('crm_rep'));
+      if (me && me.active!==false){ await enterApp(); return; }
+      sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); token=null;
+    }
+  }
+  // not signed in — an invite link drops the visitor straight into signup for the right org
+  if (inviteCode){
+    try{ const inv = await fetchInvite(inviteCode); if (inv){ pendingInvite = Object.assign({code:inviteCode}, inv); applyInviteToSignup(); } }catch(e){}
+  }
+}
+function applyInviteToSignup(){
+  showSignup();
+  const b = document.getElementById('inviteBanner');
+  if (b){ b.style.display='block'; b.innerHTML = pendingInvite.role==='manager'
+    ? 'You have been invited to lead a sales org on Polyshares. Create your account, then pass the product test to start.'
+    : 'You have been invited to a Polyshares sales org. Create your account, then pass the product test to start.'; }
+  const cw = document.getElementById('suCodeWrap'); if (cw) cw.style.display='none';
 }
 /* logins file lives in the public site repo */
 async function ghSite(path, opts={}){
@@ -670,13 +721,20 @@ async function enterApp(){
   try { myTasks = await load(`reps/${me.id}/tasks.json`); } catch(e){ myTasks = []; shas[`reps/${me.id}/tasks.json`] = null; }
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
-  document.getElementById('who').textContent = me.name + (me.role==='founder'?' · Founder':(me.admin?' · Admin':''));
+  const roleLabel = me.role==='founder'?' · Founder':(me.role==='manager'?' · Manager':(me.admin?' · Admin':''));
+  document.getElementById('who').textContent = me.name + roleLabel;
+  // role-based nav: founders/admins run Polyshares ops; managers run their org; reps just sell
+  const isMgr = me.role==='manager';
   document.getElementById('teamTab').style.display = me.admin ? '' : 'none';
+  ['fulfillTab','insightsTab'].forEach(id=>{ const b=document.getElementById(id); if(b) b.style.display = me.admin?'':'none'; });  // internal delivery ops → founders only
+  { const mt=document.getElementById('metricsTab'); if(mt) mt.style.display=''; }   // sales metrics visible to all
+  document.getElementById('orgTab').style.display = (me.admin||isMgr) ? '' : 'none';
   const bRep = document.getElementById('boardRep');
   if (me.admin){ bRep.style.display=''; bRep.innerHTML = '<option value="">My board</option>' + reps.filter(r=>r.id!==me.id).map(r=>`<option value="${r.id}">${esc(r.name)}'s pipeline</option>`).join(''); }
   renderBoard(); fillAdmin(); updateQueueBadge(); updateActivityBadge();
   updateRepliesBadge(false);          // seed badge from cached lastReplyTs/mailSeen (no toast)
   gmailSilentConnect();               // re-grant Gmail without a popup if connected before; starts reply polling
+  maybeGateQuiz();                    // reps + managers must pass the product test before selling
   if (!localStorage.getItem('crm_tour_done_'+me.id)) setTimeout(startTour, 700);
 }
 function logout(){ sessionStorage.removeItem('crm_t'); localStorage.removeItem('crm_t'); localStorage.removeItem('crm_email'); localStorage.removeItem('crm_rep'); location.reload(); }
@@ -686,7 +744,7 @@ document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
   document.querySelectorAll('header nav button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');
   const v=b.dataset.v;
-  ['board','work','replies','fulfill','leads','metrics','insights','team'].forEach(x => document.getElementById('v-'+x).style.display = (x===v?'':'none'));
+  ['board','work','replies','fulfill','leads','commission','org','metrics','insights','team'].forEach(x => document.getElementById('v-'+x).style.display = (x===v?'':'none'));
   document.getElementById('v-queue').style.display='none';
   document.getElementById('v-activity').style.display='none';
   // a drawer (lead or job) is only contextually correct on these views; close it elsewhere
@@ -696,6 +754,8 @@ document.querySelectorAll('header nav button').forEach(b => b.onclick = () => {
   if (v==='replies') renderReplies();
   if (v==='fulfill') renderFulfill();
   if (v==='insights') renderInsights();
+  if (v==='commission') renderCommission();
+  if (v==='org') renderOrg();
   if (v==='team') { refreshLists(); renderProbEditor(); }
   if (v==='work') workSub(workCur);
 });
@@ -1853,6 +1913,117 @@ async function renderInsights(force){
   document.getElementById('insGrid').innerHTML=`<div class="panel" style="max-width:none"><h3>Utilization — hours logged</h3>${utilRows}</div><div class="panel" style="max-width:none"><h3>Margin by salesperson</h3>${salesRows}</div>`;
 }
 function goJob(id){ document.querySelector('[data-v=fulfill]').click(); openJob(id); }
+
+/* ================= AFFILIATE: commission · org · invites · certification ================= */
+function kpiTile(k,v,sub){ return `<div class="pstat"><div class="pl">${k}</div><div class="pn">${v}</div><div class="pl">${sub||''}</div></div>`; }
+async function loadSignedFor(repId){ let leads; try{ leads = (repId===me.id) ? myLeads : await load(`reps/${repId}/leads.json`); }catch(e){ leads=[]; } return leads.filter(l=>(l.st)==='Signed'); }
+
+async function renderCommission(force){
+  const wrap=document.getElementById('commWrap'), kpis=document.getElementById('commKpis');
+  wrap.innerHTML='<div style="color:var(--muted);padding:16px">Loading…</div>';
+  if((me.role||'sales')==='sales' && !me.admin){
+    const signed = myLeads.filter(l=>l.st==='Signed'); let total=0;
+    const rows = signed.map(l=>{ const c=dealComp(l.v, me.id); total+=c.repPay; return `<tr><td><b>${esc(leadName(l))}</b><div style="color:var(--muted);font-size:11.5px">${esc(l.co||'')}</div></td><td style="text-align:right">${moneyFull(l.v||0)}</td><td style="text-align:right">${dealComp(l.v,me.id).repPct}%</td><td style="text-align:right">${moneyFull(Math.round(c.repPay))}</td></tr>`; }).join('');
+    const mgr = repOf(me.id).managerId ? repOf(repOf(me.id).managerId) : null;
+    kpis.innerHTML = kpiTile('Your commission', moneyFull(Math.round(total)), signed.length+' signed deals');
+    document.getElementById('commMeta').textContent = mgr ? ('Org: '+mgr.name) : 'No manager assigned yet';
+    wrap.innerHTML = signed.length ? `<table class="tbl"><thead><tr><th>Deal</th><th style="text-align:right">Value</th><th style="text-align:right">Your %</th><th style="text-align:right">Commission</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="emptystate"><div class="es-title">No signed deals yet.</div><div class="es-sub">Your commission shows here once a deal reaches the Signed stage.</div></div>';
+    return;
+  }
+  const managers = me.admin ? reps.filter(r=>r.role==='manager') : reps.filter(r=>r.id===me.id);
+  let html='', gPool=0, gRep=0, gMgr=0;
+  for(const m of managers){
+    const orgReps = reps.filter(r=>r.managerId===m.id);
+    let pool=0, repSum=0, repRows=[];
+    for(const r of orgReps){ const signed=await loadSignedFor(r.id); let rp=0,pl=0; signed.forEach(l=>{ const c=dealComp(l.v,r.id); rp+=c.repPay; pl+=c.pool; }); repSum+=rp; pool+=pl;
+      repRows.push(`<tr><td>${esc(r.name)}${r.quizPassed?'':' <span class="tag" style="background:rgba(201,162,39,.16);color:#8a6d0b">not certified</span>'}</td><td style="text-align:right">${signed.length}</td><td style="text-align:right">${moneyFull(Math.round(rp))}</td></tr>`); }
+    const mgrSpread=Math.max(0,pool-repSum); gPool+=pool; gRep+=repSum; gMgr+=mgrSpread;
+    const rate=Math.max(Number(m.compRate)||0,Number(m.compFloor)||0);
+    html+=`<div class="panel" style="max-width:none"><h3>${esc(m.name)} <span style="font-weight:400;color:var(--muted);font-size:12px">· ${rate}% comp (floor ${Number(m.compFloor)||0}%) · reps ${Number(m.repCommissionPct)||0}%</span></h3>
+      <div class="jsum"><div><div class="k">Org pool</div><div class="v">${moneyFull(Math.round(pool))}</div></div><div><div class="k">Reps earn</div><div class="v">${moneyFull(Math.round(repSum))}</div></div><div><div class="k">Manager spread</div><div class="v">${moneyFull(Math.round(mgrSpread))}</div></div></div>
+      <table class="tbl" style="margin-top:8px"><thead><tr><th>Rep</th><th style="text-align:right">Signed</th><th style="text-align:right">Commission</th></tr></thead><tbody>${repRows.join('')||'<tr><td colspan="3" style="color:var(--muted)">No reps yet.</td></tr>'}</tbody></table></div>`;
+  }
+  kpis.innerHTML = me.admin
+    ? kpiTile('Total channel payout', moneyFull(Math.round(gPool)), managers.length+' orgs')+kpiTile('Reps earn', moneyFull(Math.round(gRep)))+kpiTile('Managers earn', moneyFull(Math.round(gMgr)))
+    : kpiTile('Your org pool', moneyFull(Math.round(gPool)))+kpiTile('Your reps earn', moneyFull(Math.round(gRep)))+kpiTile('Your spread', moneyFull(Math.round(gMgr)));
+  document.getElementById('commMeta').textContent = me.admin ? (managers.length+' orgs') : '';
+  wrap.innerHTML = html || '<div class="emptystate"><div class="es-title">No orgs yet.</div><div class="es-sub">Invite a sales manager from the Admin tab.</div></div>';
+}
+
+function renderOrg(){
+  const wrap=document.getElementById('orgWrap'); if(!wrap) return;
+  if(me.role!=='manager'){ wrap.innerHTML='<div style="color:var(--muted);padding:8px">This view is for sales managers. Admins manage orgs from the Admin tab.</div>'; document.getElementById('orgMeta').textContent=''; return; }
+  const m=repOf(me.id); const orgReps=reps.filter(r=>r.managerId===me.id);
+  const rate=Math.max(Number(m.compRate)||0,Number(m.compFloor)||0);
+  const link=m.inviteCode ? location.origin+'/internal/crm?invite='+m.inviteCode : null;
+  wrap.innerHTML=`
+    <div class="panel" style="max-width:none"><h3>Your commission structure</h3>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Polyshares pays your org <b>${rate}%</b> of every signed deal (hard floor ${Number(m.compFloor)||0}%, set by Polyshares). Choose what your reps earn out of that pool. You keep the difference.</div>
+      <div class="row" style="align-items:center"><span style="font-size:13px">Reps earn</span><input type="number" min="0" max="${rate}" value="${m.repCommissionPct!=null?m.repCommissionPct:''}" placeholder="%" onchange="setRepCommission(this.value)" style="width:80px" /><span style="font-size:13px">% of each deal</span><span style="font-size:11.5px;color:var(--muted);margin-left:8px">(max ${rate}% — your comp rate)</span></div>
+    </div>
+    <div class="panel" style="max-width:none"><h3>Invite reps</h3>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Share this link. Anyone who signs up through it joins your org and must pass the product test before selling.</div>
+      ${link ? `<div class="row"><input id="orgInvite" value="${esc(link)}" readonly style="flex:1;min-width:240px" /><button class="btn sm" onclick="copyText(document.getElementById('orgInvite').value)">Copy link</button></div>` : `<button class="btn" onclick="createRepInvite()">Generate my invite link</button>`}
+    </div>
+    <div class="panel" style="max-width:none"><h3>Your reps (${orgReps.length})</h3>
+      <table class="tbl"><thead><tr><th>Rep</th><th>Certified</th><th>Status</th></tr></thead><tbody>${orgReps.map(r=>`<tr><td><b>${esc(r.name)}</b><div style="color:var(--muted);font-size:11.5px">${esc(r.email||'')}</div></td><td>${r.quizPassed?'<span class="tag" style="background:rgba(94,140,97,.14);color:var(--green)">yes</span>':'<span class="tag" style="background:rgba(201,162,39,.16);color:#8a6d0b">no</span>'}</td><td>${r.active===false?'inactive':'active'}</td></tr>`).join('')||'<tr><td colspan="3" style="color:var(--muted)">No reps yet — share your invite link.</td></tr>'}</tbody></table>
+    </div>`;
+  document.getElementById('orgMeta').textContent = orgReps.length+' reps';
+}
+async function setRepCommission(v){
+  const m=repOf(me.id); const cap=Math.max(Number(m.compRate)||0,Number(m.compFloor)||0);
+  let n=Math.max(0,Math.min(cap,Number(v)||0));
+  if((Number(v)||0)>cap) toast('Reps cannot earn more than your '+cap+'% comp rate');
+  const i=reps.findIndex(r=>r.id===me.id); if(i<0) return; reps[i].repCommissionPct=n; me=reps[i];
+  await saveReps('crm: rep commission '+me.id); renderOrg();
+}
+
+/* invites (per-manager shareable links; token encrypted under the invite code, mirrors the team-code model) */
+const INVITES_URL='https://raw.githubusercontent.com/rollupceo/polyshares-com/main/crm-invites.json';
+async function loadInvitesDoc(){ try{ const r=await ghSite('crm-invites.json'); if(r.ok){ const j=await r.json(); return { doc:b64dec(j.content), sha:j.sha }; } }catch(e){} return { doc:{invites:{}}, sha:null }; }
+async function saveInvitesDoc(doc, sha){ const body={ message:'crm: invites', content:b64enc(doc) }; if(sha) body.sha=sha; const r=await ghSite('crm-invites.json',{method:'PUT',body:JSON.stringify(body)}); if(!r.ok) throw new Error('invites save '+r.status); }
+function newInviteCode(){ return 'inv'+Math.random().toString(36).slice(2,9)+Math.random().toString(36).slice(2,6); }
+async function createInvite(role, managerId){
+  const code=newInviteCode(); const enc=await encryptToken(code, token);
+  const { doc, sha }=await loadInvitesDoc(); doc.invites=doc.invites||{};
+  doc.invites[code]={ managerId:managerId||null, role, enc, active:true, by:me.id, createdAt:Date.now() };
+  await saveInvitesDoc(doc, sha); return code;
+}
+async function createRepInvite(){ try{ const code=await createInvite('sales', me.id); const i=reps.findIndex(r=>r.id===me.id); if(i>=0){ reps[i].inviteCode=code; me=reps[i]; } await saveReps('crm: invite '+me.id); renderOrg(); toast('Your invite link is ready'); }catch(e){ toast('Failed: '+e.message); } }
+async function createManagerInvite(){ try{ const code=await createInvite('manager', null); const link=location.origin+'/internal/crm?invite='+code; prompt('Sales-manager invite link — share it:', link); }catch(e){ toast('Failed: '+e.message); } }
+async function fetchInvite(code){
+  const tries=['https://api.github.com/repos/'+SITE_REPO+'/contents/crm-invites.json?ref=main&t='+Date.now(), INVITES_URL+'?t='+Date.now()];
+  for(let i=0;i<tries.length;i++){ try{ const h=i===0?{'Accept':'application/vnd.github.raw'}:{}; const r=await fetchT(tries[i],{headers:h},12000); if(!r.ok) continue; const d=await r.json(); const inv=(d.invites||{})[code]; if(inv&&inv.active) return inv; }catch(e){} }
+  return null;
+}
+
+/* product certification gate */
+let quizDoc=null;
+async function loadQuiz(){ if(quizDoc) return quizDoc; try{ quizDoc=await load('meta/quiz.json'); }catch(e){ quizDoc={questions:[],passPct:80}; } return quizDoc; }
+function needsQuiz(){ return !me.admin && me.role!=='founder' && !me.quizPassed; }
+async function maybeGateQuiz(){ if(!needsQuiz()) return; await loadQuiz(); if(quizDoc.questions && quizDoc.questions.length) renderQuizGate(); }
+function renderQuizGate(){
+  const q=quizDoc, el=document.getElementById('quizgate');
+  el.innerHTML=`<div class="qg-card">
+    <h2>Product certification</h2>
+    <p style="color:var(--muted);font-size:13.5px">Before you can start selling, pass a short test on the Polyshares product. You need ${q.passPct||80}% to pass, and you can retake it.</p>
+    <form id="quizForm">${q.questions.map((qq,qi)=>`<div class="qg-q"><div class="qg-qt">${qi+1}. ${esc(qq.q)}</div>${qq.options.map((op,oi)=>`<label class="qg-opt"><input type="radio" name="q${qi}" value="${oi}" /> <span>${esc(op)}</span></label>`).join('')}</div>`).join('')}</form>
+    <div class="qg-foot"><span id="qgMsg" style="color:var(--red);font-size:13px"></span><button class="btn" onclick="submitQuiz()">Submit test</button></div>
+  </div>`;
+  el.classList.add('open');
+}
+async function submitQuiz(){
+  const q=quizDoc; let correct=0, answered=0;
+  q.questions.forEach((qq,qi)=>{ const sel=document.querySelector('input[name="q'+qi+'"]:checked'); if(sel){ answered++; if(Number(sel.value)===qq.answer) correct++; } });
+  if(answered<q.questions.length){ document.getElementById('qgMsg').textContent='Please answer every question.'; return; }
+  const score=Math.round(correct/q.questions.length*100), pass=q.passPct||80;
+  if(score<pass){ document.getElementById('qgMsg').textContent='You scored '+score+'%. You need '+pass+'%. Review the product and try again.'; return; }
+  const i=reps.findIndex(r=>r.id===me.id);
+  if(i>=0){ reps[i].quizPassed=true; reps[i].quizScore=score; reps[i].quizAt=Date.now(); me=reps[i]; } else { me.quizPassed=true; }
+  try{ await saveReps('crm: certified '+me.id); }catch(e){}
+  document.getElementById('quizgate').classList.remove('open');
+  toast('Certified at '+score+'% — you are cleared to sell.');
+}
 async function setAdmin(i, v){ reps[i].admin = v; await saveReps('crm: admin '+reps[i].id); toast('Updated'); }
 async function setRole(i, v){
   reps[i].role = v;
