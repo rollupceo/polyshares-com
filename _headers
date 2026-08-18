@@ -1,11 +1,10 @@
 # Security headers for polyshares.com
 # ---------------------------------------------------------------------------
-# IMPORTANT: This file is honored by Cloudflare Pages and Netlify ONLY.
-# GitHub Pages (where the site is hosted today) IGNORES this file completely —
-# it does not support custom response headers in any form. To get these headers
-# live you must move hosting to Cloudflare Pages or Netlify (both deploy the
-# same static repo with zero code changes). Until then, the CRM's in-page
-# frame-buster + <meta nosniff> are the only protections in effect.
+# Honored by Cloudflare Pages / Netlify ONLY. GitHub Pages (current host) IGNORES
+# this file. The LIVE protections today are the per-page <meta> CSP + JS frame-
+# buster. The header-only controls below (X-Frame-Options, frame-ancestors,
+# nosniff, HSTS) take effect the moment hosting moves to Cloudflare/Netlify.
+# Kept in sync with the per-page <meta> CSP: same origins, same script hashes.
 # ---------------------------------------------------------------------------
 
 /*
@@ -14,8 +13,8 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=()
-  # CSP allows exactly the origins the site + CRM talk to. 'unsafe-inline' is
-  # required for script-src because the CRM is a single-file app with inline
-  # scripts (and gtag's inline config) — removing it means refactoring all
-  # inline JS into external files first.
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://www.googleapis.com https://gmail.googleapis.com https://accounts.google.com https://www.googletagmanager.com https://*.google-analytics.com; frame-src https://accounts.google.com; form-action 'self'
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'sha256-CRRKSCn7ZW6YErASDFEKgq3kp11/azdnedyKnxS5CuU=' 'sha256-3QJDdnoEDm+5FOzwiIdW7rIfxt1ddeuTgvAqkdD0fmw=' 'sha256-p6a8y+wRzbYFr4ZDSxfTjWTCyj4P0r0HapQq3SFVgvA=' 'sha256-IU4Z5TcumaZgBmNPq33YsOI7/E5iLsy4Dy9Q0eheJ6g=' https://assets.calendly.com https://calendly.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.calendly.com; connect-src 'self' https://formspree.io https://*.calendly.com https://gw.polyshares.workers.dev; frame-src https://calendly.com https://assets.calendly.com; form-action 'self' https://formspree.io
+
+# Long-cache immutable assets
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
