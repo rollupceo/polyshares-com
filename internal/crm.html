@@ -376,7 +376,7 @@ table.tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid v
     <div style="color:var(--muted);font-size:13px;margin-bottom:18px">Manage your team, pipeline settings, and lead pool.</div>
     <div class="panel"><h3>Users &amp; roles</h3>
       <div id="repTable" style="overflow-x:auto"></div>
-      <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" style="width:150px" /><input id="rEmail" type="email" placeholder="Email" style="width:180px" /><select id="rRole" style="padding:8px"><option value="sales">sales</option><option value="founder">founder</option></select><input id="rPass" type="text" placeholder="Temp password (8+)" style="width:150px" /><button class="btn" onclick="addRep()">Add user</button></div>
+      <div class="row" style="margin-top:12px"><input id="rName" placeholder="Full name" style="width:150px" /><input id="rEmail" type="email" placeholder="Email" style="width:180px" /><select id="rRole" style="padding:8px"><option value="sales">sales rep</option><option value="manager">sales manager</option><option value="founder">founder</option></select><input id="rPass" type="text" placeholder="Temp password (8+)" style="width:150px" /><button class="btn" onclick="addRep()">Add user</button></div>
       <div style="font-size:12.5px;color:var(--muted)">Add a user with a temporary password they can change later, or share the team signup code so they self-register. Removing a user returns their leads to the pool and revokes their login.</div>
       <div class="row" style="margin-top:10px"><span style="font-size:12.5px;color:var(--muted)">Team signup code:</span> <button class="btn sm ghost" onclick="showSignupCode()">Reveal / change</button></div>
     </div>
@@ -1561,14 +1561,38 @@ async function saveProb(){
   catch(e){ toast('Save failed: '+e.message); }
 }
 function renderReps(){
-  document.getElementById('repTable').innerHTML = '<table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Admin</th><th>Cost $/h</th><th>Login</th><th>Status</th><th></th></tr></thead><tbody>' + reps.map((r,i)=>`<tr>
-    <td><b>${esc(r.name)}</b>${r.id===me.id?' <span style="color:var(--muted);font-size:11px">(you)</span>':''}<div style="color:var(--muted);font-size:11.5px">${esc(r.email||'')}</div></td>
-    <td><select onchange="setRole(${i}, this.value)" style="font-size:12px;padding:4px 6px">${['founder','sales'].map(x=>`<option ${ (r.role||'sales')===x?'selected':'' }>${x}</option>`).join('')}</select></td>
-    <td><input type="checkbox" ${r.admin?'checked':''} ${r.id===me.id?'disabled':''} onchange="setAdmin(${i}, this.checked)" style="width:auto" /></td>
-    <td><input type="number" min="0" step="5" value="${r.rate||''}" placeholder="—" onchange="setRate(${i}, this.value)" style="width:70px;font-size:12px;padding:4px 6px" /></td>
-    <td><button class="btn sm ghost" onclick="resetPass(${i})">Reset password</button></td>
-    <td>${r.active===false?'<span class="tag">inactive</span> ':''}<button class="btn sm ghost" onclick="toggleActive(${i})">${r.active===false?'Activate':'Deactivate'}</button></td>
-    <td>${r.id!==me.id?`<button class="btn sm ghost" style="color:var(--red)" onclick="delRep(${i})">Remove</button>`:''}</td></tr>`).join('') + '</tbody></table>';
+  const mgrs = reps.filter(r=>r.role==='manager');
+  document.getElementById('repTable').innerHTML = '<table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Manager</th><th>Comp</th><th>Cost $/h</th><th>Status</th><th></th></tr></thead><tbody>' + reps.map((r,i)=>{
+    const role = r.role||'sales';
+    const roleSel = `<select onchange="setRole(${i}, this.value)" style="font-size:12px;padding:4px 6px">${['founder','manager','sales'].map(x=>`<option ${role===x?'selected':''}>${x}</option>`).join('')}</select>`;
+    let mgrCell = '<span style="color:var(--muted)">—</span>';
+    if(role==='sales') mgrCell = `<select onchange="setRepManager(${i}, this.value)" style="font-size:12px;padding:4px 6px"><option value="">— none —</option>${mgrs.map(m=>`<option value="${m.id}" ${r.managerId===m.id?'selected':''}>${esc(m.name)}</option>`).join('')}</select>`;
+    let compCell = '<span style="color:var(--muted)">—</span>';
+    if(role==='manager') compCell = `<span style="font-size:11px;color:var(--muted)">rate</span> <input type="number" min="0" max="100" value="${r.compRate!=null?r.compRate:''}" placeholder="%" onchange="setManagerComp(${i}, this.value)" style="width:48px;font-size:12px;padding:3px 5px" /> <span style="font-size:11px;color:var(--muted)">floor</span> <input type="number" min="0" max="100" value="${r.compFloor!=null?r.compFloor:''}" placeholder="%" onchange="setManagerFloor(${i}, this.value)" style="width:48px;font-size:12px;padding:3px 5px" />`;
+    else if(role==='sales'){ const m=reps.find(x=>x.id===r.managerId); compCell = (m&&m.repCommissionPct!=null) ? `<span style="font-size:12px">${m.repCommissionPct}% of deal</span>` : '<span style="color:var(--muted);font-size:11.5px">set by manager</span>'; }
+    const quizTag = r.quizPassed ? '<span class="tag" style="background:rgba(94,140,97,.14);color:var(--green)">certified</span>' : '<span class="tag" style="background:rgba(201,162,39,.16);color:#8a6d0b">not certified</span>';
+    return `<tr>
+      <td><b>${esc(r.name)}</b>${r.id===me.id?' <span style="color:var(--muted);font-size:11px">(you)</span>':''}<div style="color:var(--muted);font-size:11.5px">${esc(r.email||'')}</div><div style="margin-top:3px">${quizTag}</div></td>
+      <td>${roleSel}</td>
+      <td>${mgrCell}</td>
+      <td>${compCell}</td>
+      <td><input type="number" min="0" step="5" value="${r.rate||''}" placeholder="—" onchange="setRate(${i}, this.value)" style="width:60px;font-size:12px;padding:4px 6px" /></td>
+      <td>${r.active===false?'<span class="tag">inactive</span> ':''}<button class="btn sm ghost" onclick="toggleActive(${i})">${r.active===false?'Activate':'Deactivate'}</button> <button class="btn sm ghost" onclick="resetPass(${i})">Reset pw</button></td>
+      <td>${r.id!==me.id?`<button class="btn sm ghost" style="color:var(--red)" onclick="delRep(${i})">Remove</button>`:''}</td></tr>`;
+  }).join('') + '</tbody></table>';
+}
+async function setRepManager(i, v){ reps[i].managerId = v||undefined; await saveReps('crm: assign '+reps[i].id+' to '+(v||'none')); }
+async function setManagerComp(i, v){ let n=Math.max(0,Math.min(100,Number(v)||0)); const floor=Number(reps[i].compFloor)||0; if(n<floor){ n=floor; toast('Comp can\\'t go below the hard floor ('+floor+'%)'); } reps[i].compRate=n; await saveReps('crm: comp '+reps[i].id); }
+async function setManagerFloor(i, v){ const f=Math.max(0,Math.min(100,Number(v)||0)); reps[i].compFloor=f; if((Number(reps[i].compRate)||0)<f) reps[i].compRate=f; await saveReps('crm: floor '+reps[i].id); }
+/* commission / comp math — spread model: org earns compRate% of the deal, rep earns repCommissionPct% out of it, manager keeps the difference */
+function repOf(id){ return reps.find(r=>r.id===id)||{}; }
+function dealComp(dealValue, repId){
+  const rep = repOf(repId); const mgr = rep.managerId ? repOf(rep.managerId) : null;
+  const v = Number(dealValue)||0;
+  const managerPct = mgr ? Math.max(Number(mgr.compRate)||0, Number(mgr.compFloor)||0) : 0;
+  const repPct = mgr ? Math.min(Number(mgr.repCommissionPct)||0, managerPct) : 0;   // reps can't exceed the org pool
+  const pool = v*managerPct/100, repPay = v*repPct/100;
+  return { v, managerPct, repPct, pool, repPay, mgrPay: Math.max(0, pool-repPay), mgr, rep };
 }
 async function saveReps(msg){ try{ await save('meta/reps.json', reps, msg||'crm: update reps'); }catch(e){ toast('Save failed: '+e.message); } renderReps(); fillAdmin(); }
 async function setRate(i, v){ reps[i].rate = Math.max(0, Math.round(Number(v)||0)) || undefined; await saveReps('crm: rate '+reps[i].id); }
@@ -1832,6 +1856,8 @@ function goJob(id){ document.querySelector('[data-v=fulfill]').click(); openJob(
 async function setAdmin(i, v){ reps[i].admin = v; await saveReps('crm: admin '+reps[i].id); toast('Updated'); }
 async function setRole(i, v){
   reps[i].role = v;
+  reps[i].admin = (v==='founder');            // founders are admins; managers/reps are not
+  if (v!=='sales') delete reps[i].managerId;  // only reps sit under a manager
   try{
     if (useGateway()){ await gw('/set-role', { id: reps[i].id, role: v }, true); }
     else { const { doc, sha } = await loadLogins(); const u = doc.users.find(x=>x.id===reps[i].id); if (u){ u.role = v; await saveLogins(doc, sha, 'crm: role '+reps[i].id); } }
