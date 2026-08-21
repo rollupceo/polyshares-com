@@ -134,8 +134,8 @@ main{padding:22px;max-width:1500px;margin:0 auto}
     <h1>Sign in</h1>
     <div class="sub">Data-licensing deal platform.</div>
     <input id="lg_email" type="email" placeholder="you@company.com" autocomplete="username" />
-    <input id="lg_pass" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
-    <button class="btn" onclick="doLogin()">Sign in</button>
+    <input id="lg_pass" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')($('lg_btn').click())" />
+    <button class="btn" id="lg_btn" onclick="doLogin()">Sign in</button>
     <div class="err" id="lg_err"></div>
     <div class="alt"><a href="#" onclick="sendMagic();return false">Email me a magic link instead</a></div>
   </div>
@@ -193,6 +193,21 @@ async function sendMagic(){
   if(!error) toast('Magic link sent — check your email.');
 }
 async function doLogout(){ await sb.auth.signOut(); location.reload(); }
+async function doSignup(){
+  $('lg_err').style.color='var(--red)'; $('lg_err').textContent='';
+  const email=$('lg_email').value.trim(), password=$('lg_pass').value;
+  if(!email||password.length<8){ $('lg_err').textContent='Enter your email and a password (8+ characters).'; return; }
+  const { data, error } = await sb.auth.signUp({ email, password });
+  if(error){ $('lg_err').textContent=error.message; return; }
+  const code=localStorage.getItem('pendingInvite');
+  if(data.session){
+    if(code){ const { error:ae } = await sb.rpc('accept_invite',{p_code:code}); if(ae){ $('lg_err').textContent=ae.message; return; } localStorage.removeItem('pendingInvite'); }
+    boot();
+  } else {
+    $('lg_err').style.color='var(--ink2)';
+    $('lg_err').textContent='Account created — check your email to confirm, then sign in here.';
+  }
+}
 
 async function loadMe(){
   const { data:{ user } } = await sb.auth.getUser();
@@ -218,7 +233,13 @@ const VIEW_LABEL = { board:'Pipeline', accounting:'Accounting', commission:'Comm
 
 async function boot(){
   me = await loadMe();
+  // freshly-signed-up invitee with no profile yet → provision from stored invite
+  if(me && me.orphan){
+    const code=localStorage.getItem('pendingInvite');
+    if(code){ try{ await sb.rpc('accept_invite',{p_code:code}); localStorage.removeItem('pendingInvite'); me=await loadMe(); }catch(e){} }
+  }
   if(!me){ $('login').style.display='flex'; $('app').style.display='none'; return; }
+  if(me.orphan){ await sb.auth.signOut(); $('login').style.display='flex'; $('app').style.display='none'; $('lg_err').textContent='This account has no workspace access. Use your invite link, or contact an admin.'; return; }
   $('login').style.display='none'; $('app').style.display='block';
   $('whoami').textContent = (me.full_name||me.email) + ' · ' + roleLabel(me.role);
 
@@ -349,18 +370,22 @@ async function openLead(id){
   $('dSub').textContent = (st?.label||l.current_stage) + (l.deal_value?' · '+money(l.deal_value):'');
   openDrawer();
   $('dBody').innerHTML='<div class="muted">Loading…</div>';
-  const [{data:events},{data:sevents},{data:contracts},{data:quotes},{data:est}] = await Promise.all([
+  const [{data:events},{data:sevents},{data:contracts},{data:quotes},{data:est},{data:dp},{data:grants},{data:offtakers}] = await Promise.all([
     sb.from('lead_event').select('*').eq('lead_id',id).order('created_at',{ascending:false}),
     sb.from('lead_stage_event').select('*').eq('lead_id',id).order('created_at',{ascending:false}),
     sb.from('contract').select('*').eq('lead_id',id).order('created_at',{ascending:false}),
     sb.from('quote').select('*').eq('lead_id',id).order('created_at',{ascending:false}),
-    sb.rpc('estimate_commission',{p_lead:id})
+    sb.rpc('estimate_commission',{p_lead:id}),
+    sb.from('data_package').select('*').eq('lead_id',id).order('created_at',{ascending:false}),
+    sb.from('data_package_access').select('*').order('granted_at',{ascending:false}),
+    sb.from('external_portal_user').select('id,full_name,email,nda_signed_at,admin_approved_at').eq('kind','offtaker')
   ]);
   const feed = [...(events||[]).map(e=>({t:e.created_at,type:e.event_type,data:e.data})),
                 ...(sevents||[]).map(e=>({t:e.created_at,type:'stage',data:{from:e.from_stage,to:e.to_stage,note:e.note}}))]
                 .sort((a,b)=>new Date(b.t)-new Date(a.t));
+  window._offtakers = offtakers||[];
   $('dBody').innerHTML = dealFields(l) + stepperHTML(l) + actionsHTML(l)
-    + estHTML(est) + contractsHTML(contracts) + quotesHTML(l,quotes) + feedHTML(feed);
+    + estHTML(est) + contractsHTML(contracts) + dpHTML(l,dp,grants,offtakers) + quotesHTML(l,quotes) + feedHTML(feed);
 }
 function dealFields(l){
   return `<div class="fld"><b>Client</b>${esc(l.company||l.client?.company_name||'—')}</div>
@@ -402,6 +427,48 @@ function quotesHTML(l,qs){
   const rows=(qs||[]).map(q=>`<tr><td>${money(q.amount)}</td><td><span class="tag ${q.status==='accepted'?'green':''}">${esc(q.status)}</span></td>
     <td class="right-actions">${q.status==='submitted'?`<button class="btn sm" onclick="acceptQuote('${q.id}')">Accept</button>`:''}</td></tr>`).join('');
   return `<div class="section-h">Offtaker quotes</div><table class="tbl"><tbody>${rows||'<tr><td class="muted">No quotes yet</td></tr>'}</tbody></table>`;
+}
+function dpHTML(l, dp, grants, offtakers){
+  if(!me.internal) return '';
+  const pkg = (dp&&dp[0])||null;
+  const oMap={}; (offtakers||[]).forEach(o=>oMap[o.id]=o.full_name||o.email);
+  const eligible = (offtakers||[]).filter(o=>o.nda_signed_at&&o.admin_approved_at);
+  let out = `<div class="section-h">Data package</div>`;
+  if(!pkg){
+    out += `<div class="row"><input id="dp_ptr" placeholder="Storage link / path to the export" style="width:280px" /><input id="dp_size" type="number" placeholder="bytes" style="width:110px" />
+      <button class="btn sm" onclick="addPackage()">Add package</button></div>
+      <div class="muted" style="font-size:12px;margin-top:6px">Points to where the anonymized export lives — not stored in the CRM.</div>`;
+    return out;
+  }
+  const myGrants = (grants||[]).filter(g=>g.data_package_id===pkg.id && !g.revoked_at);
+  out += `<div class="fld"><b>Package</b>v${pkg.version} · ${pkg.size_bytes?Math.round(pkg.size_bytes/1024)+' KB':'—'} · <span class="muted">${esc(pkg.storage_pointer)}</span></div>`;
+  out += `<div style="margin:8px 0 4px;font-size:12px;color:var(--muted)">Shared with (offtakers can quote once shared):</div>`;
+  out += myGrants.length? `<table class="tbl"><tbody>`+myGrants.map(g=>`<tr><td>${esc(oMap[g.offtaker_id]||'offtaker')}</td><td class="muted">${g.expires_at?'expires '+new Date(g.expires_at).toLocaleDateString():'no expiry'}</td><td class="right-actions"><button class="btn sm ghost" onclick="revokeAccess('${g.id}')">Revoke</button></td></tr>`).join('')+`</tbody></table>` : '<div class="muted" style="font-size:12.5px">Not shared yet.</div>';
+  if(eligible.length){
+    out += `<div class="row" style="margin-top:10px"><select id="dp_off">${eligible.filter(o=>!myGrants.some(g=>g.offtaker_id===o.id)).map(o=>`<option value="${o.id}">${esc(o.full_name||o.email)}</option>`).join('')}</select>
+      <input id="dp_exp" type="number" placeholder="expires (days)" style="width:130px" />
+      <button class="btn sm" onclick="sharePackage('${pkg.id}')">Share</button></div>`;
+  } else {
+    out += `<div class="muted" style="font-size:12px;margin-top:10px">No NDA-signed, approved offtakers yet. Invite/approve one in Admin → Data offtakers.</div>`;
+  }
+  return out;
+}
+async function addPackage(){
+  const ptr=$('dp_ptr').value.trim(); if(!ptr){ toast('Add a storage link'); return; }
+  const { error } = await sb.from('data_package').insert({ lead_id:curLead.id, storage_pointer:ptr, size_bytes:Number($('dp_size').value)||null });
+  if(error){ toast(error.message); return; } toast('Package added'); openLead(curLead.id);
+}
+async function sharePackage(pkgId){
+  const off=$('dp_off').value; if(!off){ toast('Pick an offtaker'); return; }
+  const days=Number($('dp_exp').value)||null;
+  const row={ data_package_id:pkgId, offtaker_id:off, granted_by:me.id };
+  if(days) row.expires_at=new Date(Date.now()+days*86400000).toISOString();
+  const { error } = await sb.from('data_package_access').insert(row);
+  if(error){ toast(error.message); return; } toast('Shared'); openLead(curLead.id);
+}
+async function revokeAccess(id){
+  const { error } = await sb.from('data_package_access').update({ revoked_at:new Date().toISOString() }).eq('id',id);
+  if(error){ toast(error.message); return; } toast('Access revoked'); openLead(curLead.id);
 }
 function feedHTML(feed){
   const ic={stage:'◆',assignment:'👤',doc_sent:'📄',quote_received:'💬',payment:'💵',accrual:'🧮',ar_opened:'🧾',deal_lost:'✖',clawback:'↩'};
@@ -539,11 +606,23 @@ async function renderAdmin(){
     <div class="panel"><h3>Users &amp; roles</h3><div id="usersTbl" class="muted">Loading…</div></div>
     <div class="panel" style="max-width:640px"><h3>Commission rate tables</h3>
       <div class="muted" style="font-size:12.5px;margin-bottom:12px">Default rates applied to everyone without an override. Spread model: manager pool rate minus rep rate = manager's spread. Editing inserts a new versioned rate; historical deals keep the rate that applied.</div>
-      <div id="ratesBox" class="muted">Loading…</div></div>`;
-  const [{ data:users }, { data:rates }] = await Promise.all([
+      <div id="ratesBox" class="muted">Loading…</div></div>
+    <div class="panel"><h3>Data offtakers &amp; brokers</h3>
+      <div class="row" style="margin-bottom:8px"><button class="btn sm" onclick="genInvite('offtaker')">Invite a data offtaker →</button><button class="btn sm ghost" onclick="genInvite('broker')">Invite a broker →</button></div>
+      <div id="inviteBox" style="margin-bottom:12px"></div>
+      <div id="extTbl" class="muted">Loading…</div></div>`;
+  const [{ data:users }, { data:rates }, { data:ext }] = await Promise.all([
     sb.from('app_user').select('*').order('role'),
-    sb.from('commission_rate').select('*').is('subject_id',null).order('effective_date',{ascending:false})
+    sb.from('commission_rate').select('*').is('subject_id',null).order('effective_date',{ascending:false}),
+    sb.from('external_portal_user').select('*').order('created_at',{ascending:false})
   ]);
+  $('extTbl').innerHTML = (ext&&ext.length)? `<table class="tbl"><thead><tr><th>Person</th><th>Type</th><th>NDA</th><th>Approved</th><th>Status</th></tr></thead><tbody>`
+    + ext.map(u=>`<tr><td><b>${esc(u.full_name||'—')}</b><div class="muted" style="font-size:11.5px">${esc(u.email)}</div></td>
+        <td>${esc(u.kind)}</td>
+        <td>${u.kind==='offtaker'?(u.nda_signed_at?'<span class="tag green">signed</span>':`<button class="btn sm ghost" onclick="setGate('${u.id}',true,${!!u.admin_approved_at})">Mark signed</button>`):'—'}</td>
+        <td>${u.kind==='offtaker'?(u.admin_approved_at?'<span class="tag green">approved</span>':`<button class="btn sm" onclick="setGate('${u.id}',${!!u.nda_signed_at},true)">Approve</button>`):'—'}</td>
+        <td>${u.status==='active'?'<span class="tag green">active</span>':'<span class="tag gold">'+esc(u.status)+'</span>'}</td></tr>`).join('')
+    + `</tbody></table>` : '<div class="empty">No offtakers or brokers yet. Invite one above.</div>';
   const mgrs = (users||[]).filter(u=>u.role==='sales_manager');
   $('usersTbl').innerHTML = `<table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Manager</th><th>Status</th></tr></thead><tbody>`
     + (users||[]).map(u=>{
@@ -571,6 +650,18 @@ async function setManager(id,mgr){ const { error } = await sb.from('app_user').u
 async function toggleStatus(id,cur){ const s=cur==='active'?'inactive':'active'; const { error } = await sb.from('app_user').update({status:s}).eq('id',id); if(error){toast(error.message);return;} toast('Status updated'); renderAdmin(); }
 async function saveRate(type,hasFloor){ const rate=Number($('rate_'+type).value); const floor=hasFloor?(($('floor_'+type).value)===''?null:Number($('floor_'+type).value)):null;
   const { error } = await sb.from('commission_rate').insert({ subject_type:type, subject_id:null, rate, floor, created_by:me.id }); if(error){toast(error.message);return;} toast(roleLabel(type)+' rate saved'); }
+async function genInvite(kind){
+  const { data, error } = await sb.rpc('create_invite',{ p_external_kind:kind });
+  if(error){ toast(error.message); return; }
+  const link = location.origin+location.pathname+'?invite='+data;
+  $('inviteBox').innerHTML = `<div class="muted" style="font-size:12px;margin-bottom:5px">${kind==='offtaker'?'Data offtaker':'Broker'} invite — valid 30 days. They sign up, then ${kind==='offtaker'?'sign the NDA and you approve them below':'pass the product test'} before access.</div>
+    <div class="row"><input id="invLink" value="${esc(link)}" readonly style="flex:1;min-width:260px" /><button class="btn sm" onclick="copyText(document.getElementById('invLink').value)">Copy link</button></div>`;
+  toast('Invite link ready');
+}
+async function setGate(offId,nda,approve){
+  const { error } = await sb.rpc('set_offtaker_gate',{ p_offtaker:offId, p_nda:nda, p_approve:approve });
+  if(error){ toast(error.message); return; } toast('Updated'); renderAdmin();
+}
 /* ============================ BROKER PORTAL ============================ */
 async function renderBrokerPortal(){
   const m=$('main');
@@ -666,6 +757,16 @@ async function submitQuiz(){
 /* ============================ drawer helpers + init ============================ */
 function openDrawer(){ $('drawer').classList.add('open'); $('drawerback').style.display='block'; }
 function closeDrawer(){ $('drawer').classList.remove('open'); $('drawerback').style.display='none'; const on=document.querySelector('#nav button.on'); if(on&&on.dataset.v==='board') renderBoard(); }
+
+// invite link → switch the login card to signup mode
+const _invite = new URLSearchParams(location.search).get('invite');
+if(_invite){
+  localStorage.setItem('pendingInvite', _invite);
+  document.querySelector('#login h1').textContent='Create your account';
+  document.querySelector('#login .sub').textContent="You've been invited to the Polyshares deal platform.";
+  const b=$('lg_btn'); b.textContent='Create account'; b.setAttribute('onclick','doSignup()');
+  $('lg_pass').setAttribute('autocomplete','new-password');
+}
 boot();
 </script>
 </body>
