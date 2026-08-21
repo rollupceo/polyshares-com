@@ -3,7 +3,7 @@
 > Polyshares is a data lab. It licenses enterprise operational data directly from the
 > operating companies that produced it, pays those companies as the principal buyer,
 > anonymizes the material, and supplies AI labs. It also acquires lower middle market
-> businesses outright. Typical data deals pay the company $100K to $1M, with no fee and
+> businesses outright. Typical data deals pay the company $100K to $2M, with no fee and
 > no commission charged to the seller.
 
 Polyshares is the buyer, not an agent and not a marketplace. A company licensing its
@@ -13,7 +13,7 @@ listed anywhere, there is no auction, and no cut is taken out of the company's n
 Key facts, current as of August 2026:
 
 - Counterparty: Polyshares. The company sells to us, not through us.
-- Deal size: typically $100,000 to $1,000,000 paid by Polyshares to the company.
+- Deal size: typically $100,000 to $2,000,000 paid by Polyshares to the company.
 - Structure: a license to defined operational data. No equity, no debt, no dilution.
 - Cost to the seller: none. No fee and no commission at any stage.
 - Eligibility: any company with real operating history, whether venture backed, middle
