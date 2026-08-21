@@ -1,0 +1,51 @@
+# Polyshares
+
+> Polyshares is a private investment firm with two mandates. It represents companies
+> licensing their operational data to the buyers paying for it, and it acquires lower
+> middle market businesses outright. Data licensing deals typically pay the company
+> $100K to $1M, are non-dilutive, and carry a fee taken from the proceeds.
+
+Polyshares works for the seller. It prices the asset, holds the buyer relationships,
+handles anonymization before anything leaves the company's systems, and negotiates the
+license. It is not a marketplace and does not list client data on one. The company keeps
+its equity, keeps ownership of the underlying data, and takes no buyer meetings.
+
+Key facts, current as of August 2026:
+
+- Deal size: typically $100,000 to $1,000,000 paid to the company.
+- Structure: a license to defined operational data. No equity, no debt, no dilution.
+- Eligibility: any company with real operating history, whether venture backed, middle
+  market, or founder owned. Depth of record matters more than headcount or revenue.
+- Fee: taken from the proceeds. If nothing sells, the company owes nothing.
+- Timeline: terms papered within a week of the first conversation; funds in the company
+  account in eight to twelve weeks, on the buyer closing.
+- Anonymization: handled by Polyshares, before any material leaves the company.
+- Second mandate: outright acquisition of lower middle market businesses, currently
+  focused on MSPs and IT providers.
+
+"Operational data" means the working record a business produces by running: Slack and
+Teams threads, Drive and SharePoint, email, CRM history, support tickets, design files,
+call recordings, and accounting or ERP exports. What buyers pay for is the visible
+reasoning inside that record rather than its raw volume.
+
+## Core pages
+
+- [Data licensing](https://polyshares.com/data-licensing): The mandate in full. Terms, who qualifies, what buyers pay for, and what Polyshares is not.
+- [Check your data](https://polyshares.com/intake): Five-question intake that returns whether there is a market for a given company's record.
+- [The firm](https://polyshares.com/team): The four partners, their operating histories, and their roles on a mandate.
+- [Track record](https://polyshares.com/case-studies): Companies the partners founded, bought, scaled, and sold.
+
+## Answers
+
+- [How to sell your company's data to AI companies](https://polyshares.com/sell-company-data-to-ai): The five steps, starting with proving the company owns the records.
+- [What your company's data is worth](https://polyshares.com/what-is-my-company-data-worth): Why depth beats volume, what raises the price, and what caps it.
+- [Who buys company data](https://polyshares.com/who-buys-company-data): Frontier labs, applied AI companies, and aggregators, and what each checks first.
+- [Licensing versus selling outright](https://polyshares.com/data-licensing-vs-selling-data): Why a license usually pays more over the life of a growing record.
+- [Whether you can legally license your company's data](https://polyshares.com/is-it-legal-to-sell-company-data): Ownership, customer agreements, and personal information. Not legal advice.
+- [How a data licensing deal works](https://polyshares.com/how-data-licensing-deals-work): The sequence from first call to funds received.
+
+## Contact
+
+- Managing Partners: Nathan Mathews, Ryan Lock. Partner: Zak Kuzbari. Principal: Austin Turner.
+- Enquiries begin at https://polyshares.com/intake
+- LinkedIn: https://www.linkedin.com/company/polyshares

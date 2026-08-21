@@ -379,3 +379,47 @@ footer{border-top:1px solid var(--line);padding:44px 0;background:var(--paper3)}
   .calwrap .calendly-inline-widget{height:760px!important}
 }
 .calalt{margin-top:14px;font-size:14.5px;color:var(--muted)}
+
+/* ---------- answer hub: interior hero, faq, question lists ---------- */
+.hero-sm{padding:84px 0 60px}
+.hero-sm h1{font-size:clamp(36px,5.2vw,62px);max-width:19ch;margin-top:16px}
+.hero-sm .sub{margin-top:24px;max-width:58ch}
+
+.faqsec{padding-top:0}
+.faq{margin-top:44px;border-top:1px solid var(--line)}
+.faq-item{padding:30px 0;border-bottom:1px solid var(--line2)}
+.faq-item h3{
+  font-size:clamp(21px,2.5vw,26px);
+  font-weight:400;line-height:1.2;max-width:46ch;
+}
+.faq-item p{margin-top:14px;color:var(--ink2);max-width:64ch}
+.faq-item p + p{margin-top:12px}
+
+.relsec,.hubsec{padding-top:0}
+.relsec{border-top:1px solid var(--line2);padding-top:72px}
+.qlist{list-style:none;margin-top:26px;border-top:1px solid var(--line)}
+.qlist li{border-bottom:1px solid var(--line2)}
+.qlist a{
+  display:block;padding:24px 0;
+  transition:opacity .2s,transform .2s;
+}
+.qlist a:hover{opacity:.72;transform:translateX(3px)}
+.qlist .qt{
+  display:block;font-family:var(--serif);font-weight:400;
+  font-size:20px;letter-spacing:-.015em;line-height:1.25;
+}
+.qlist .qb{
+  display:block;margin-top:7px;font-size:15px;
+  color:var(--muted);max-width:66ch;line-height:1.55;
+}
+.qlist-lg{margin-top:0}
+.qlist-lg a{padding:30px 0}
+.qlist-lg .qt{font-size:clamp(21px,2.6vw,27px)}
+.qlist-lg .qb{font-size:15.5px;margin-top:9px}
+
+@media (max-width:720px){
+  .hero-sm{padding:64px 0 46px}
+  .faq-item{padding:24px 0}
+  .qlist a{padding:20px 0}
+  .relsec{padding-top:56px}
+}
