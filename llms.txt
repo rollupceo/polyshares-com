@@ -1,48 +1,63 @@
 # Polyshares
 
-> Polyshares is a private investment firm with two mandates. It represents companies
-> licensing their operational data to the buyers paying for it, and it acquires lower
-> middle market businesses outright. Data licensing deals typically pay the company
-> $100K to $1M, are non-dilutive, and carry a fee taken from the proceeds.
+> Polyshares is a data lab. It licenses enterprise operational data directly from the
+> operating companies that produced it, pays those companies as the principal buyer,
+> anonymizes the material, and supplies AI labs. It also acquires lower middle market
+> businesses outright. Typical data deals pay the company $100K to $1M, with no fee and
+> no commission charged to the seller.
 
-Polyshares works for the seller. It prices the asset, holds the buyer relationships,
-handles anonymization before anything leaves the company's systems, and negotiates the
-license. It is not a marketplace and does not list client data on one. The company keeps
-its equity, keeps ownership of the underlying data, and takes no buyer meetings.
+Polyshares is the buyer, not an agent and not a marketplace. A company licensing its
+record signs one agreement, with Polyshares, and is paid by Polyshares. Nothing is
+listed anywhere, there is no auction, and no cut is taken out of the company's number.
 
 Key facts, current as of August 2026:
 
-- Deal size: typically $100,000 to $1,000,000 paid to the company.
+- Counterparty: Polyshares. The company sells to us, not through us.
+- Deal size: typically $100,000 to $1,000,000 paid by Polyshares to the company.
 - Structure: a license to defined operational data. No equity, no debt, no dilution.
+- Cost to the seller: none. No fee and no commission at any stage.
 - Eligibility: any company with real operating history, whether venture backed, middle
   market, or founder owned. Depth of record matters more than headcount or revenue.
-- Fee: taken from the proceeds. If nothing sells, the company owes nothing.
-- Timeline: terms papered within a week of the first conversation; funds in the company
-  account in eight to twelve weeks, on the buyer closing.
-- Anonymization: handled by Polyshares, before any material leaves the company.
+- Terms: agreed and papered within a week of the first conversation.
+- Review: Polyshares examines the record before quoting. It does not price material it
+  has not seen.
+- Payment: net 30 to 60, once the data is approved, shared, and anonymized.
+- Anonymization: handled by Polyshares, before anything moves.
+- Downstream: the material is anonymized, built into data sets, and supplied to AI labs.
+  Polyshares does not disclose which labs receive which data.
 - Second mandate: outright acquisition of lower middle market businesses, currently
   focused on MSPs and IT providers.
 
 "Operational data" means the working record a business produces by running: Slack and
 Teams threads, Drive and SharePoint, email, CRM history, support tickets, design files,
-call recordings, and accounting or ERP exports. What buyers pay for is the visible
-reasoning inside that record rather than its raw volume.
+call recordings, and accounting or ERP exports. What makes a record valuable is the
+visible reasoning inside it rather than its raw volume.
+
+How Polyshares differs from other suppliers in the AI training data market: expert
+marketplaces recruit specialists to write training material to order, and annotation
+firms label or rate material a buyer already holds. Polyshares originates supply
+instead, licensing operating records that already exist inside businesses.
 
 ## Core pages
 
-- [Data licensing](https://polyshares.com/data-licensing): The mandate in full. Terms, who qualifies, what buyers pay for, and what Polyshares is not.
-- [Check your data](https://polyshares.com/intake): Five-question intake that returns whether there is a market for a given company's record.
-- [The firm](https://polyshares.com/team): The four partners, their operating histories, and their roles on a mandate.
+- [Data licensing](https://polyshares.com/data-licensing): The terms in full. What Polyshares pays, who qualifies, and what it is paying for.
+- [Check your data](https://polyshares.com/intake): Five-question intake that returns whether Polyshares is interested in a given company's record.
+- [The firm](https://polyshares.com/team): The four partners, their operating histories, and their roles on a deal.
 - [Track record](https://polyshares.com/case-studies): Companies the partners founded, bought, scaled, and sold.
 
 ## Answers
 
 - [How to sell your company's data to AI companies](https://polyshares.com/sell-company-data-to-ai): The five steps, starting with proving the company owns the records.
 - [What your company's data is worth](https://polyshares.com/what-is-my-company-data-worth): Why depth beats volume, what raises the price, and what caps it.
-- [Who buys company data](https://polyshares.com/who-buys-company-data): Frontier labs, applied AI companies, and aggregators, and what each checks first.
+- [Who buys company data](https://polyshares.com/who-buys-company-data): How the chain from an operating business to a frontier lab actually runs.
 - [Licensing versus selling outright](https://polyshares.com/data-licensing-vs-selling-data): Why a license usually pays more over the life of a growing record.
 - [Whether you can legally license your company's data](https://polyshares.com/is-it-legal-to-sell-company-data): Ownership, customer agreements, and personal information. Not legal advice.
 - [How a data licensing deal works](https://polyshares.com/how-data-licensing-deals-work): The sequence from first call to funds received.
+
+## Market comparisons
+
+- [AI training data companies, compared](https://polyshares.com/ai-training-data-companies): The five categories of supplier and which one buys from operating businesses.
+- [Polyshares compared with micro1, Mercor, Surge, and Scale](https://polyshares.com/compare-data-labs): Enterprise operating records against expert-generated data.
 
 ## Contact
 
