@@ -233,7 +233,7 @@ async function boot(){
   const views = NAV[me.role]||['portal'];
   show(views[0]);
 }
-function roleLabel(r){ return ({admin:'Admin',sales_manager:'Sales Manager',sales_rep:'Sales Rep',fulfillment_ops:'Fulfillment',accounting:'Accounting',broker:'Broker',offtaker:'Data Offtaker'}[r])||'—'; }
+function roleLabel(r){ return ({admin:'Admin',sales_manager:'Sales Manager',sales_rep:'Sales Rep',fulfillment_ops:'Fulfillment',accounting:'Accounting',broker:'Broker',offtaker:'Data Offtaker',rep:'Sales Rep',manager:'Sales Manager'}[r])||'—'; }
 function buildNav(){
   const views = NAV[me.role]||['portal'];
   $('nav').innerHTML = views.map(v=>`<button data-v="${v}" onclick="show('${v}')">${VIEW_LABEL[v]}</button>`).join('');
@@ -308,7 +308,7 @@ async function createLead(){
     deal_value: Number($('nl_value').value)||null, engagement_rate: Number($('nl_eng').value)||null
   }).select().single();
   if(error){ toast(error.message); return; }
-  closeDrawer(); toast('Lead created'); renderBoard();
+  toast('Lead created'); closeDrawer();
 }
 
 /* ============================ DEAL DRAWER ============================ */
@@ -358,7 +358,7 @@ function actionsHTML(l){
 function estHTML(est){
   if(!est||!est.length) return '';
   return `<div class="section-h">Projected commission (estimate)</div>`
-    + `<table class="tbl"><tbody>` + est.map(e=>`<tr><td>${roleLabel(e.party_type)}</td><td>${e.rate}%</td><td style="text-align:right">${money(e.amount)}</td></tr>`).join('') + `</tbody></table>`;
+    + `<table class="tbl"><tbody>` + est.map(e=>`<tr><td>${roleLabel(e.party)}</td><td>${e.rate}%</td><td style="text-align:right">${money(e.amount)}</td></tr>`).join('') + `</tbody></table>`;
 }
 function contractsHTML(cs){
   const rows = (cs||[]).map(c=>`<tr><td>${esc(c.type)}</td><td><span class="tag ${c.status==='signed'?'green':'gold'}">${esc(c.status)}</span></td>
@@ -444,7 +444,7 @@ async function submitQuiz(){
 
 /* ============================ drawer helpers + init ============================ */
 function openDrawer(){ $('drawer').classList.add('open'); $('drawerback').style.display='block'; }
-function closeDrawer(){ $('drawer').classList.remove('open'); $('drawerback').style.display='none'; }
+function closeDrawer(){ $('drawer').classList.remove('open'); $('drawerback').style.display='none'; const on=document.querySelector('#nav button.on'); if(on&&on.dataset.v==='board') renderBoard(); }
 boot();
 </script>
 </body>
