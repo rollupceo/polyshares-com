@@ -256,24 +256,32 @@ async function renderBoard(){
       <button class="btn" onclick="newLeadForm()">+ New lead</button></div>
     <div class="kpis" id="kpis"></div>
     <div class="board" id="board"><div class="empty">Loading…</div></div>`;
-  const { data, error } = await sb.from('lead').select('*, client:client_id(company_name)').order('created_at',{ascending:false});
-  if(error){ $('board').innerHTML=`<div class="empty">${esc(error.message)}</div>`; return; }
-  leads = data||[];
-  const active = leads.filter(l=>!l.is_dead);
-  const open = active.filter(l=>l.current_stage!=='final_payout_complete');
-  const pipeVal = open.reduce((s,l)=>s+Number(l.deal_value||0),0);
-  const won = leads.filter(l=>l.current_stage==='final_payout_complete');
-  const wonVal = won.reduce((s,l)=>s+Number(l.deal_value||0),0);
-  const weighted = open.reduce((s,l)=>{const st=stages.find(x=>x.key===l.current_stage);return s+Number(l.deal_value||0)*Number(st?.probability||0)/100;},0);
-  $('kpis').innerHTML = kpi('Open pipeline',money(pipeVal),open.length+' deals')
+  // accurate per-stage counts/sums (RLS-scoped, not capped) + a recent slice for cards
+  const [{ data:sum, error:se }, { data:recent, error:re }] = await Promise.all([
+    sb.rpc('board_summary'),
+    sb.from('lead').select('id,company,contact_name,deal_value,current_stage,client:client_id(company_name)').eq('is_dead',false).order('created_at',{ascending:false}).limit(600)
+  ]);
+  if(se||re){ $('board').innerHTML=`<div class="empty">${esc((se||re).message)}</div>`; return; }
+  const byStage = {}; (sum||[]).forEach(r=>byStage[r.stage]={cnt:Number(r.cnt),total:Number(r.total)});
+  leads = recent||[];
+  const openStages = stages.filter(s=>!s.is_lost && !s.is_won);
+  const pipeVal = openStages.reduce((a,s)=>a+(byStage[s.key]?.total||0),0);
+  const openCnt = openStages.reduce((a,s)=>a+(byStage[s.key]?.cnt||0),0);
+  const weighted = openStages.reduce((a,s)=>a+(byStage[s.key]?.total||0)*Number(s.probability||0)/100,0);
+  const wonC = byStage['final_payout_complete']||{cnt:0,total:0};
+  $('kpis').innerHTML = kpi('Open pipeline',money(pipeVal),openCnt.toLocaleString()+' deals')
     + kpi('Weighted forecast',money(weighted),'by stage probability')
-    + kpi('Closed',money(wonVal),won.length+' completed');
+    + kpi('Closed',money(wonC.total),wonC.cnt+' completed');
+  const CAP = 60;
   const cols = stages.filter(s=>!s.is_lost);
   $('board').innerHTML = cols.map(s=>{
-    const items = active.filter(l=>l.current_stage===s.key);
-    const val = items.reduce((a,l)=>a+Number(l.deal_value||0),0);
-    return `<div class="col"><h3>${esc(s.label)}<span class="cnt">${items.length}${val?' · '+money(val):''}</span></h3>
-      <div class="cards">${items.map(cardHTML).join('')||'<div class="muted" style="padding:6px 4px;font-size:12px">—</div>'}</div></div>`;
+    const info = byStage[s.key]||{cnt:0,total:0};
+    const items = leads.filter(l=>l.current_stage===s.key);
+    const shown = items.slice(0,CAP);
+    const moreInStage = info.cnt - shown.length;
+    return `<div class="col"><h3>${esc(s.label)}<span class="cnt">${info.cnt.toLocaleString()}${info.total?' · '+money(info.total):''}</span></h3>
+      <div class="cards">${shown.map(cardHTML).join('')||'<div class="muted" style="padding:6px 4px;font-size:12px">—</div>'}
+      ${moreInStage>0?`<div class="muted" style="padding:8px 4px;font-size:12px">+${moreInStage.toLocaleString()} more — use search (coming soon)</div>`:''}</div></div>`;
   }).join('');
 }
 function kpi(l,n,s){ return `<div class="kpi"><div class="pl">${l}</div><div class="pn">${n}</div><div class="ps">${s}</div></div>`; }
