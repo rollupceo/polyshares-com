@@ -3,8 +3,9 @@
 > Polyshares is a data lab. It licenses enterprise operational data directly from the
 > operating companies that produced it, pays those companies as the principal buyer,
 > anonymizes the material, and supplies AI labs. It also acquires lower middle market
-> businesses outright. Typical data deals pay the company $100K to $2M, with no fee and
-> no commission charged to the seller.
+> businesses outright, currently MSPs and IT providers, so that it owns the sources
+> producing that data rather than licensing from them. Typical data deals pay the
+> company $100K to $2M, with no fee and no commission charged to the seller.
 
 Polyshares is the buyer, not an agent and not a marketplace. A company licensing its
 record signs one agreement, with Polyshares, and is paid by Polyshares. Nothing is
@@ -25,8 +26,12 @@ Key facts, current as of August 2026:
 - Anonymization: handled by Polyshares, before anything moves.
 - Downstream: the material is anonymized, built into data sets, and supplied to AI labs.
   Polyshares does not disclose which labs receive which data.
-- Second mandate: outright acquisition of lower middle market businesses, currently
-  focused on MSPs and IT providers.
+- Acquisitions: Polyshares buys lower middle market businesses outright, currently MSPs
+  and IT providers. A license runs for a term; an owned business keeps producing a record
+  indefinitely. An MSP is targeted because diagnosing faults in writing is its ordinary
+  output, so its ticket queue is years of technical reasoning captured as it happened.
+  Buying a business conveys that business's own operating record. Material it holds on
+  behalf of a client remains governed by the client's agreements.
 
 "Operational data" means the working record a business produces by running: Slack and
 Teams threads, Drive and SharePoint, email, CRM history, support tickets, design files,
