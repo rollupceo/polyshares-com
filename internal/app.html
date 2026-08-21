@@ -443,8 +443,95 @@ async function acceptQuote(id){
 }
 
 /* ============================ placeholder views (built next) ============================ */
-function renderCommission(){ $('main').innerHTML = `<div class="viewhead"><h2>Commission</h2></div><div class="empty"><div class="big">Coming next</div>Commission dashboard.</div>`; }
-function renderAccounting(){ $('main').innerHTML = `<div class="viewhead"><h2>Accounting</h2></div><div class="empty"><div class="big">Coming next</div>AR / AP / commission ledger queues.</div>`; }
+/* ---- shared: resolve party/payee names (polymorphic ids) ---- */
+let userMap = null;
+async function loadUserMap(){
+  if(userMap) return userMap;
+  userMap = {};
+  const [{data:au},{data:eu}] = await Promise.all([
+    sb.from('app_user').select('id,full_name,email'),
+    sb.from('external_portal_user').select('id,full_name,email,kind')
+  ]);
+  (au||[]).forEach(u=>userMap[u.id]={name:u.full_name||u.email, kind:'internal'});
+  (eu||[]).forEach(u=>userMap[u.id]={name:u.full_name||u.email, kind:u.kind});
+  return userMap;
+}
+const pName = (id)=> (userMap&&userMap[id]?.name)||'—';
+const stTag = (s)=>{ const g={paid:'green',approved:'green',active:'green'}, r={overdue:'red',disputed:'red',written_off:'red',clawed_back:'red'}; return `<span class="tag ${g[s]||r[s]||''}">${esc((s||'').replace(/_/g,' '))}</span>`; };
+
+/* ============================ ACCOUNTING (admin/accounting) ============================ */
+async function renderAccounting(){
+  const m=$('main');
+  m.innerHTML = `<div class="viewhead"><h2>Accounting</h2><div class="sub">Receivables, commission ledger, and payables — the post-close money loop.</div></div>
+    <div class="kpis" id="acctKpis"></div>
+    <div class="panel"><h3>Receivables (AR)</h3><div id="arTbl" class="muted">Loading…</div></div>
+    <div class="panel"><h3>Commission ledger</h3><div id="ledgerTbl" class="muted">Loading…</div></div>
+    <div class="panel"><h3>Payables (AP)</h3><div id="apTbl" class="muted">Loading…</div></div>`;
+  await loadUserMap();
+  const [{data:ar},{data:led},{data:ap}] = await Promise.all([
+    sb.from('ar_ticket').select('*, lead:lead_id(company)').order('opened_date',{ascending:false}),
+    sb.from('commission_ledger_entry').select('*, lead:lead_id(company)').order('created_at',{ascending:false}),
+    sb.from('ap_ticket').select('*, lead:lead_id(company)').order('created_at',{ascending:false})
+  ]);
+  const arOut = (ar||[]).filter(t=>t.status!=='paid').reduce((s,t)=>s+(Number(t.amount_due)-Number(t.amount_paid)),0);
+  const accrued = (led||[]).filter(e=>e.status==='accrued').reduce((s,e)=>s+Number(e.computed_amount),0);
+  const apOut = (ap||[]).filter(t=>t.status!=='paid').reduce((s,t)=>s+Number(t.amount),0);
+  $('acctKpis').innerHTML = kpi('AR outstanding',money(arOut),(ar||[]).filter(t=>t.status!=='paid').length+' open')
+    + kpi('Commissions to approve',money(accrued),(led||[]).filter(e=>e.status==='accrued').length+' accrued')
+    + kpi('AP outstanding',money(apOut),(ap||[]).filter(t=>t.status!=='paid').length+' open');
+  $('arTbl').innerHTML = (ar&&ar.length)? `<table class="tbl"><thead><tr><th>Deal</th><th>Payer</th><th style="text-align:right">Due</th><th style="text-align:right">Paid</th><th>Status</th><th></th></tr></thead><tbody>`
+    + ar.map(t=>`<tr><td><b>${esc(t.lead?.company||'—')}</b></td><td>${esc(pName(t.offtaker_id))}</td>
+        <td style="text-align:right">${money(t.amount_due)}</td><td style="text-align:right">${money(t.amount_paid)}</td>
+        <td>${stTag(t.status)}</td><td class="right-actions">${t.status!=='paid'?`<button class="btn sm" onclick="payForm('${t.id}',${Number(t.amount_due)-Number(t.amount_paid)})">Record payment</button>`:''}</td></tr>`).join('')
+    + `</tbody></table>` : '<div class="empty">No receivables yet. AR opens when a deal reaches Purchase Agreement Signed.</div>';
+  $('ledgerTbl').innerHTML = (led&&led.length)? `<table class="tbl"><thead><tr><th>Deal</th><th>Party</th><th>Rate</th><th style="text-align:right">Amount</th><th>Status</th><th></th></tr></thead><tbody>`
+    + led.map(e=>`<tr><td>${esc(e.lead?.company||'—')}</td><td>${roleLabel(e.party_type)} · ${esc(pName(e.party_id))}</td><td>${e.rate_applied}%</td>
+        <td style="text-align:right">${money(e.computed_amount)}</td><td>${stTag(e.status)}</td>
+        <td class="right-actions">${e.status==='accrued'?`<button class="btn sm" onclick="approveLedger('${e.id}')">Approve</button>`:''}</td></tr>`).join('')
+    + `</tbody></table>` : '<div class="empty">No commissions yet. They accrue when an AR ticket is paid in full.</div>';
+  $('apTbl').innerHTML = (ap&&ap.length)? `<table class="tbl"><thead><tr><th>Deal</th><th>Payee</th><th style="text-align:right">Amount</th><th>Status</th><th></th></tr></thead><tbody>`
+    + ap.map(t=>`<tr><td>${esc(t.lead?.company||'—')}</td><td>${roleLabel(t.payee_type)} · ${esc(pName(t.payee_id))}</td>
+        <td style="text-align:right">${money(t.amount)}</td><td>${stTag(t.status)}</td>
+        <td class="right-actions">${t.status==='open'?`<button class="btn sm ghost" onclick="setAp('${t.id}','scheduled')">Schedule</button>`:''}${t.status!=='paid'?`<button class="btn sm" onclick="setAp('${t.id}','paid')">Mark paid</button>`:''}</td></tr>`).join('')
+    + `</tbody></table>` : '<div class="empty">No payables yet. Client + commission payouts open after AR is paid and commissions approved.</div>';
+}
+function payForm(arId,remaining){
+  $('dTitle').textContent='Record payment'; $('dSub').textContent='Outstanding: '+money(remaining);
+  $('dBody').innerHTML = `<div class="fld"><b>Amount $</b><input id="pay_amt" type="number" step="100" value="${remaining}" style="width:160px" /></div>
+    <div class="fld"><b>Method</b><input id="pay_method" placeholder="wire, check…" style="width:200px" /></div>
+    <div class="fld"><b>Reference</b><input id="pay_ref" style="width:200px" /></div>
+    <button class="btn" style="margin-top:8px" onclick="recordPayment('${arId}')">Record payment</button>
+    <div class="muted" style="font-size:12px;margin-top:10px">Paying in full fires commission accrual + the client payout automatically.</div>`;
+  openDrawer();
+}
+async function recordPayment(arId){
+  const amount=Number($('pay_amt').value); if(!(amount>0)){ toast('Enter an amount'); return; }
+  const { error } = await sb.from('payment_received').insert({ ar_ticket_id:arId, amount, method:$('pay_method').value||null, reference:$('pay_ref').value||null, created_by:me.id });
+  if(error){ toast(error.message); return; }
+  closeDrawer(); toast('Payment recorded'); renderAccounting();
+}
+async function approveLedger(id){ const { error } = await sb.from('commission_ledger_entry').update({status:'approved'}).eq('id',id); if(error){toast(error.message);return;} toast('Approved — payable opened'); renderAccounting(); }
+async function setAp(id,status){ const patch={status}; if(status==='paid') patch.paid_date=new Date().toISOString(); if(status==='scheduled') patch.scheduled_date=new Date().toISOString();
+  const { error } = await sb.from('ap_ticket').update(patch).eq('id',id); if(error){toast(error.message);return;} toast('Payable '+status); renderAccounting(); }
+
+/* ============================ COMMISSION DASHBOARD ============================ */
+async function renderCommission(){
+  const m=$('main');
+  m.innerHTML = `<div class="viewhead"><h2>Commission</h2><div class="sub">Earned on signed deals — locked at cash collected.</div></div>
+    <div class="kpis" id="commKpis"></div><div class="panel"><h3>Ledger</h3><div id="commTbl" class="muted">Loading…</div></div>`;
+  await loadUserMap();
+  const { data:led, error } = await sb.from('commission_ledger_entry').select('*, lead:lead_id(company)').order('created_at',{ascending:false});
+  if(error){ $('commTbl').innerHTML=`<div class="empty">${esc(error.message)}</div>`; return; }
+  const sum=(f)=>(led||[]).filter(f).reduce((s,e)=>s+Number(e.computed_amount),0);
+  $('commKpis').innerHTML = kpi('Accrued',money(sum(e=>e.status==='accrued')),'awaiting approval')
+    + kpi('Approved',money(sum(e=>e.status==='approved')),'to be paid')
+    + kpi('Paid',money(sum(e=>e.status==='paid')),'settled');
+  const isStaffWide = me.role==='admin'||me.role==='accounting';
+  $('commTbl').innerHTML = (led&&led.length)? `<table class="tbl"><thead><tr><th>Deal</th>${isStaffWide?'<th>Party</th>':''}<th>Rate</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>`
+    + led.map(e=>`<tr><td>${esc(e.lead?.company||'—')}</td>${isStaffWide?`<td>${roleLabel(e.party_type)} · ${esc(pName(e.party_id))}</td>`:''}<td>${e.rate_applied}%</td>
+        <td style="text-align:right">${money(e.computed_amount)}</td><td>${stTag(e.status)}</td></tr>`).join('')
+    + `</tbody></table>` : '<div class="empty"><div class="big">No commissions yet</div>They appear here once a deal is paid.</div>';
+}
 const ROLES = [['admin','Admin'],['accounting','Accounting'],['fulfillment_ops','Fulfillment'],['sales_manager','Sales Manager'],['sales_rep','Sales Rep']];
 async function renderAdmin(){
   const m=$('main');
