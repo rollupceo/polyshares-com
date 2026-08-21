@@ -571,8 +571,75 @@ async function setManager(id,mgr){ const { error } = await sb.from('app_user').u
 async function toggleStatus(id,cur){ const s=cur==='active'?'inactive':'active'; const { error } = await sb.from('app_user').update({status:s}).eq('id',id); if(error){toast(error.message);return;} toast('Status updated'); renderAdmin(); }
 async function saveRate(type,hasFloor){ const rate=Number($('rate_'+type).value); const floor=hasFloor?(($('floor_'+type).value)===''?null:Number($('floor_'+type).value)):null;
   const { error } = await sb.from('commission_rate').insert({ subject_type:type, subject_id:null, rate, floor, created_by:me.id }); if(error){toast(error.message);return;} toast(roleLabel(type)+' rate saved'); }
-function renderBrokerPortal(){ $('main').innerHTML = `<div class="viewhead"><h2>My Portal</h2></div><div class="empty"><div class="big">Coming next</div>Broker portal.</div>`; }
-function renderOfftakerPortal(){ $('main').innerHTML = `<div class="viewhead"><h2>My Portal</h2></div><div class="empty"><div class="big">Coming next</div>Offtaker portal.</div>`; }
+/* ============================ BROKER PORTAL ============================ */
+async function renderBrokerPortal(){
+  const m=$('main');
+  m.innerHTML = `<div class="viewhead"><h2>Broker portal</h2><div class="sub">Submit deals and track your commission. Deal status only — no client-side terms.</div></div>
+    <div class="kpis" id="bkKpis"></div>
+    <div class="panel" style="max-width:620px"><h3>Submit a deal</h3>
+      <div class="row"><input id="bl_company" placeholder="Company *" style="width:220px" /><input id="bl_contact" placeholder="Contact name" style="width:180px" /></div>
+      <div class="row" style="margin-top:8px"><input id="bl_email" placeholder="Email" style="width:220px" /><input id="bl_phone" placeholder="Phone" style="width:150px" />
+        <button class="btn" onclick="submitBrokerLead()">Submit</button></div></div>
+    <div class="panel"><h3>My submitted deals</h3><div id="bkLeads" class="muted">Loading…</div></div>
+    <div class="panel"><h3>My commission</h3><div id="bkComm" class="muted">Loading…</div></div>`;
+  const [{data:leads},{data:comm}] = await Promise.all([
+    sb.from('broker_lead_view').select('*').order('created_at',{ascending:false}),
+    sb.from('broker_commission_view').select('*').order('created_at',{ascending:false})
+  ]);
+  const earned = (comm||[]).reduce((s,e)=>s+Number(e.computed_amount),0);
+  const paid = (comm||[]).filter(e=>e.status==='paid').reduce((s,e)=>s+Number(e.computed_amount),0);
+  $('bkKpis').innerHTML = kpi('Deals submitted',(leads||[]).length,'')+kpi('Commission earned',money(earned),'across all deals')+kpi('Paid out',money(paid),'settled');
+  $('bkLeads').innerHTML = (leads&&leads.length)? `<table class="tbl"><thead><tr><th>Company</th><th>Status</th><th>Submitted</th></tr></thead><tbody>`
+    + leads.map(l=>`<tr><td><b>${esc(l.company||'—')}</b></td><td>${l.is_dead?'<span class="tag red">Lost</span>':esc(l.status_label||l.status)}</td><td class="muted">${new Date(l.created_at).toLocaleDateString()}</td></tr>`).join('')+`</tbody></table>`
+    : '<div class="empty">No deals submitted yet.</div>';
+  $('bkComm').innerHTML = (comm&&comm.length)? `<table class="tbl"><thead><tr><th>Rate</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>`
+    + comm.map(e=>`<tr><td>${e.rate_applied}%</td><td style="text-align:right">${money(e.computed_amount)}</td><td>${stTag(e.status)}</td></tr>`).join('')+`</tbody></table>`
+    : '<div class="empty">No commission yet — you earn when your deals are paid.</div>';
+}
+async function submitBrokerLead(){
+  const company=$('bl_company').value.trim(); if(!company){ toast('Company required'); return; }
+  const { error } = await sb.rpc('submit_broker_lead',{ p_company:company, p_contact:$('bl_contact').value.trim()||null, p_email:$('bl_email').value.trim()||null, p_phone:$('bl_phone').value.trim()||null });
+  if(error){ toast(error.message); return; }
+  toast('Deal submitted'); renderBrokerPortal();
+}
+
+/* ============================ OFFTAKER PORTAL ============================ */
+async function renderOfftakerPortal(){
+  const m=$('main');
+  const pending = !me.nda_signed_at || !me.admin_approved_at;
+  m.innerHTML = `<div class="viewhead"><h2>Offtaker portal</h2><div class="sub">Deals shared with you. Quotes are private — you never see others' bids.</div></div>
+    ${pending?`<div class="panel" style="border-color:var(--gold);background:rgba(201,162,39,.06)"><b>Access pending.</b> <span class="muted">You'll see shared deals once your NDA is signed and your account is approved.</span></div>`:''}
+    <div class="panel"><h3>Deals shared with you</h3><div id="ofDeals" class="muted">Loading…</div></div>
+    <div class="panel"><h3>My quotes</h3><div id="ofQuotes" class="muted">Loading…</div></div>`;
+  const [{data:deals},{data:quotes}] = await Promise.all([
+    sb.from('offtaker_deal_view').select('*'),
+    sb.from('offtaker_quote_view').select('*').order('created_at',{ascending:false})
+  ]);
+  window._ofDeals = deals||[];
+  $('ofDeals').innerHTML = (deals&&deals.length)? `<table class="tbl"><thead><tr><th>Industry</th><th>Size</th><th>Region</th><th>Package</th><th></th></tr></thead><tbody>`
+    + deals.map((d,i)=>`<tr><td>${esc(d.industry||'—')}</td><td>${esc(d.company_size||'—')}</td><td>${esc(d.region||'—')}</td>
+        <td class="muted">v${d.package_version} · ${d.size_bytes?Math.round(d.size_bytes/1024)+' KB':'—'}</td>
+        <td class="right-actions"><button class="btn sm" onclick="quoteForm(${i})">Submit quote</button></td></tr>`).join('')+`</tbody></table>`
+    : '<div class="empty">No deals shared with you yet.</div>';
+  $('ofQuotes').innerHTML = (quotes&&quotes.length)? `<table class="tbl"><thead><tr><th style="text-align:right">Amount</th><th>Terms</th><th>Status</th><th>Submitted</th></tr></thead><tbody>`
+    + quotes.map(q=>`<tr><td style="text-align:right">${money(q.amount)}</td><td>${esc(q.terms||'—')}</td><td>${stTag(q.status)}</td><td class="muted">${new Date(q.created_at).toLocaleDateString()}</td></tr>`).join('')+`</tbody></table>`
+    : '<div class="empty">No quotes submitted yet.</div>';
+}
+function quoteForm(i){
+  const d=window._ofDeals[i];
+  $('dTitle').textContent='Submit a quote'; $('dSub').textContent=`${d.industry||'Deal'} · ${d.region||''}`;
+  $('dBody').innerHTML = `<div class="fld"><b>Amount $</b><input id="q_amt" type="number" step="1000" style="width:180px" /></div>
+    <div class="fld" style="align-items:flex-start"><b>Terms / notes</b><textarea id="q_terms" placeholder="Payment terms, conditions…"></textarea></div>
+    <button class="btn" style="margin-top:8px" onclick="submitQuote2('${d.id}')">Submit quote</button>
+    <div class="muted" style="font-size:12px;margin-top:10px">Your quote is private to Polyshares — competing offtakers never see it.</div>`;
+  openDrawer();
+}
+async function submitQuote2(leadId){
+  const amount=Number($('q_amt').value); if(!(amount>0)){ toast('Enter an amount'); return; }
+  const { error } = await sb.from('quote').insert({ lead_id:leadId, offtaker_id:me.id, amount, terms:$('q_terms').value||null });
+  if(error){ toast(error.message); return; }
+  closeDrawer(); toast('Quote submitted'); renderOfftakerPortal();
+}
 
 /* ============================ cert gate ============================ */
 let quizQ=[], quizA={};
