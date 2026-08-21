@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Polyshares CRM</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<script>try{if(self!==top){document.documentElement.style.display='none';top.location=self.location.href;}}catch(e){document.documentElement.style.display='none';}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="icon" href="/favicon.ico?v=2" sizes="any" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+<style>
+:root{--paper:#F7F5F0;--paper2:#EFECE4;--paper3:#E7E3D9;--ink:#16140F;--ink2:#4A463C;--muted:#6E6858;--line:#DDD8CC;--line2:#D0CABD;--dark:#16140F;--accent:#4A6FA5;--green:#5E8C61;--red:#A55050;--gold:#8a6d0b;--serif:'Fraunces',serif;--sans:'Inter',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+button{font-family:var(--sans);cursor:pointer}
+input,select,textarea{font-family:var(--sans);font-size:14px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+a{color:var(--accent)}
+.btn{background:var(--ink);color:#fff;border:none;border-radius:7px;padding:9px 16px;font-weight:500;font-size:13.5px}
+.btn:hover{opacity:.88}.btn:disabled{opacity:.4;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:6px 11px;font-size:12.5px}
+.btn.accent{background:var(--accent);border-color:var(--accent)}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--paper3);color:var(--ink2)}
+.tag.green{background:rgba(94,140,97,.16);color:var(--green)}
+.tag.gold{background:rgba(201,162,39,.16);color:var(--gold)}
+.tag.red{background:rgba(165,80,80,.14);color:var(--red)}
+.muted{color:var(--muted)}
+
+/* login */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--dark);position:relative;overflow:hidden}
+#login::before{content:"";position:absolute;inset:0;background:radial-gradient(900px 480px at 50% -10%, rgba(74,111,165,.22), transparent 60%);pointer-events:none}
+#login .card{position:relative;background:var(--paper);border-radius:14px;padding:40px 38px;width:392px;max-width:92vw;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.loginbrand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+.loginbrand svg{width:30px;height:30px;color:var(--ink)}
+.loginbrand .wm{font-family:var(--serif);font-size:22px;font-weight:500}
+.loginbrand .wm small{display:block;font-family:var(--sans);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-top:1px}
+#login h1{font-family:var(--serif);font-weight:400;font-size:23px;margin-bottom:4px}
+#login .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+#login input{width:100%;margin-bottom:12px}
+#login .btn{width:100%;background:var(--accent);border-color:var(--accent);font-size:15px;padding:12px}
+#login .err{color:var(--red);font-size:13px;margin-top:10px;min-height:18px}
+#login .alt{margin-top:14px;text-align:center;font-size:13px}
+
+/* app shell */
+#app{display:none;min-height:100vh}
+header{position:sticky;top:0;z-index:30;background:var(--dark);color:#fff;display:flex;align-items:center;gap:22px;padding:0 20px;height:54px}
+header .brand{font-family:var(--serif);font-size:18px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+header .brand svg{width:20px;height:20px}
+header nav{display:flex;gap:4px;min-width:0;overflow-x:auto;scrollbar-width:none}
+header nav::-webkit-scrollbar{display:none}
+header nav button{background:none;border:none;color:rgba(255,255,255,.65);padding:8px 12px;border-radius:6px;font-size:13.5px;white-space:nowrap;flex-shrink:0}
+header nav button.on{background:rgba(255,255,255,.14);color:#fff}
+header .right{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:12.5px;color:rgba(255,255,255,.72);flex-shrink:0}
+main{padding:22px;max-width:1500px;margin:0 auto}
+.viewhead{margin-bottom:18px}
+.viewhead h2{font-family:var(--serif);font-weight:400;font-size:26px}
+.viewhead .sub{color:var(--muted);font-size:13.5px;margin-top:2px}
+.view{display:none}.view.on{display:block}
+
+/* KPI tiles */
+.kpis{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;min-width:170px;flex:1}
+.kpi .pl{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.kpi .pn{font-family:var(--serif);font-size:26px;margin-top:3px}
+.kpi .ps{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+/* board */
+.board{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
+.col{background:var(--paper2);border:1px solid var(--line);border-radius:12px;min-width:270px;width:270px;flex:none}
+.col h3{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);padding:12px 14px 8px;display:flex;justify-content:space-between}
+.col .cnt{color:var(--muted);font-weight:500}
+.col .cards{padding:0 10px 12px;display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 240px);overflow-y:auto}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 12px;cursor:pointer;transition:border-color .12s}
+.card:hover{border-color:var(--ink)}
+.card .co{font-weight:600;font-size:13.5px}
+.card .sub{color:var(--muted);font-size:12px;margin-top:1px}
+.card .val{color:var(--green);font-weight:600;font-size:13px;margin-top:5px}
+
+/* panels + tables */
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px}
+.panel h3{font-family:var(--serif);font-weight:500;font-size:17px;margin-bottom:12px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);padding:8px 10px}
+.tbl td{border-bottom:1px solid var(--paper2);padding:9px 10px}
+.tbl tr:hover td{background:var(--paper)}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.right-actions{display:flex;gap:8px;justify-content:flex-end}
+.empty{text-align:center;color:var(--muted);padding:50px 20px}
+.empty .big{font-family:var(--serif);font-size:20px;color:var(--ink2);margin-bottom:4px}
+
+/* drawer */
+#drawerback{display:none;position:fixed;inset:0;background:rgba(20,18,14,.4);z-index:40}
+#drawer{position:fixed;top:0;right:0;height:100vh;width:640px;max-width:96vw;background:var(--paper);z-index:50;transform:translateX(100%);transition:transform .22s;box-shadow:-20px 0 60px rgba(0,0,0,.25);display:flex;flex-direction:column}
+#drawer.open{transform:none}
+#drawer .head{padding:20px 22px 14px;border-bottom:1px solid var(--line);position:relative}
+#drawer .head h2{font-family:var(--serif);font-weight:400;font-size:22px;padding-right:30px}
+#drawer .x{position:absolute;top:16px;right:18px;background:none;border:none;font-size:24px;color:var(--muted)}
+#drawer .body{padding:20px 22px 60px;overflow-y:auto}
+.fld{margin-bottom:11px;font-size:13px}
+.fld b{display:inline-block;width:120px;color:var(--muted);font-weight:500}
+.stepper{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 16px}
+.pill{font-size:12px;padding:7px 11px;border-radius:7px;border:1px solid var(--line);background:#fff;white-space:nowrap}
+.pill.done{background:var(--paper3);color:var(--ink2)}
+.pill.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
+.pill.next{cursor:pointer}.pill.next:hover{border-color:var(--ink)}
+.feed{margin-top:6px}
+.feed .ev{display:flex;gap:9px;padding:8px 0;border-bottom:1px solid var(--paper2);font-size:13px}
+.feed .ev .ic{width:22px;flex:none;text-align:center}
+.feed .ev .tm{color:var(--muted);font-size:11.5px;margin-left:auto;flex:none}
+.section-h{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px}
+
+/* toast + gate */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:9px;opacity:0;transition:all .25s;z-index:100;font-size:13.5px;max-width:80vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#gate{display:none;position:fixed;inset:0;background:var(--paper);z-index:60;overflow-y:auto;padding:40px 20px}
+#gate .wrap{max-width:640px;margin:0 auto}
+.q{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px}
+.q .opt{display:block;padding:9px 12px;border:1px solid var(--line);border-radius:8px;margin-top:7px;cursor:pointer}
+.q .opt:hover{border-color:var(--ink)}
+.q .opt.sel{border-color:var(--accent);background:rgba(74,111,165,.08)}
+@media(max-width:700px){main{padding:14px}#drawer{width:100vw}.kpi{min-width:44%}}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="card">
+    <div class="loginbrand"><svg viewBox="0 0 96 96" fill="none" aria-hidden="true"><rect x="18" y="18" width="42" height="42" stroke="currentColor" stroke-width="7"/><rect x="36" y="36" width="42" height="42" stroke="currentColor" stroke-width="7"/><path d="M60 28V44" stroke="currentColor" stroke-width="7"/></svg><div class="wm">Polyshares<small>CRM</small></div></div>
+    <h1>Sign in</h1>
+    <div class="sub">Data-licensing deal platform.</div>
+    <input id="lg_email" type="email" placeholder="you@company.com" autocomplete="username" />
+    <input id="lg_pass" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
+    <button class="btn" onclick="doLogin()">Sign in</button>
+    <div class="err" id="lg_err"></div>
+    <div class="alt"><a href="#" onclick="sendMagic();return false">Email me a magic link instead</a></div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="brand"><svg viewBox="0 0 96 96" fill="none"><rect x="18" y="18" width="42" height="42" stroke="currentColor" stroke-width="7"/><rect x="36" y="36" width="42" height="42" stroke="currentColor" stroke-width="7"/></svg> Polyshares</div>
+    <nav id="nav"></nav>
+    <div class="right"><span id="whoami"></span><button class="btn sm ghost" style="color:#fff;border-color:rgba(255,255,255,.25)" onclick="doLogout()">Log out</button></div>
+  </header>
+  <main id="main"></main>
+</div>
+
+<div id="drawerback" onclick="closeDrawer()"></div>
+<div id="drawer"><div class="head"><button class="x" onclick="closeDrawer()">×</button><h2 id="dTitle"></h2><div class="muted" id="dSub" style="font-size:13px;margin-top:2px"></div></div><div class="body" id="dBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<div id="gate"><div class="wrap">
+  <div class="loginbrand"><div class="wm" style="font-family:var(--serif);font-size:22px">Product certification</div></div>
+  <p class="muted" style="margin:6px 0 18px">You must pass the product test before you can work deals.</p>
+  <div id="gateBody"></div>
+</div></div>
+
+<script src="./vendor/supabase.js"></script>
+<script>
+/* ============================ config + client ============================ */
+const SUPABASE_URL = 'https://naayxogekfnmxsqkfqek.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_BuR8RD0tKTH7n6deWeUwcQ_Y78xmHUU'; // browser-safe; RLS protects data
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth:{ persistSession:true, autoRefreshToken:true } });
+
+let me = null;         // {id,email,role|kind,...}
+let stages = [];       // pipeline_stage rows
+let leads = [];        // current scope
+let curLead = null;
+const $ = (id)=>document.getElementById(id);
+const money = (n)=> n==null?'—':'$'+Number(n).toLocaleString('en-US',{maximumFractionDigits:0});
+const esc = (s)=> String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
+
+/* ============================ auth ============================ */
+async function doLogin(){
+  $('lg_err').textContent='';
+  const email=$('lg_email').value.trim(), password=$('lg_pass').value;
+  if(!email||!password){ $('lg_err').textContent='Enter email and password.'; return; }
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error){ $('lg_err').textContent=error.message; return; }
+  boot();
+}
+async function sendMagic(){
+  const email=$('lg_email').value.trim();
+  if(!email){ $('lg_err').textContent='Enter your email first.'; return; }
+  const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.href } });
+  $('lg_err').textContent = error ? error.message : '';
+  if(!error) toast('Magic link sent — check your email.');
+}
+async function doLogout(){ await sb.auth.signOut(); location.reload(); }
+
+async function loadMe(){
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user) return null;
+  let { data:au } = await sb.from('app_user').select('*').eq('id',user.id).maybeSingle();
+  if(au){ return { ...au, email:au.email||user.email, internal:true }; }
+  let { data:eu } = await sb.from('external_portal_user').select('*').eq('id',user.id).maybeSingle();
+  if(eu){ return { ...eu, email:eu.email||user.email, internal:false, role:eu.kind }; }
+  return { id:user.id, email:user.email, role:null, internal:false, orphan:true };
+}
+
+/* ============================ role → nav/views ============================ */
+const NAV = {
+  admin:        ['board','accounting','commission','admin'],
+  sales_manager:['board','commission'],
+  sales_rep:    ['board','commission'],
+  fulfillment_ops:['board'],
+  accounting:   ['accounting'],
+  broker:       ['portal'],
+  offtaker:     ['portal'],
+};
+const VIEW_LABEL = { board:'Pipeline', accounting:'Accounting', commission:'Commission', admin:'Admin', portal:'My Portal' };
+
+async function boot(){
+  me = await loadMe();
+  if(!me){ $('login').style.display='flex'; $('app').style.display='none'; return; }
+  $('login').style.display='none'; $('app').style.display='block';
+  $('whoami').textContent = (me.full_name||me.email) + ' · ' + roleLabel(me.role);
+
+  // cert gate for reps/managers/brokers
+  if(['sales_rep','sales_manager','broker'].includes(me.role)){
+    const { data:cert } = await sb.rpc('is_certified');
+    if(!cert){ return showGate(); }
+  }
+  const { data:st } = await sb.from('pipeline_stage').select('*').order('sort_order');
+  stages = st||[];
+  buildNav();
+  const views = NAV[me.role]||['portal'];
+  show(views[0]);
+}
+function roleLabel(r){ return ({admin:'Admin',sales_manager:'Sales Manager',sales_rep:'Sales Rep',fulfillment_ops:'Fulfillment',accounting:'Accounting',broker:'Broker',offtaker:'Data Offtaker'}[r])||'—'; }
+function buildNav(){
+  const views = NAV[me.role]||['portal'];
+  $('nav').innerHTML = views.map(v=>`<button data-v="${v}" onclick="show('${v}')">${VIEW_LABEL[v]}</button>`).join('');
+}
+function show(v){
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  const m=$('main'); m.innerHTML='';
+  if(v==='board') renderBoard();
+  else if(v==='commission') renderCommission();
+  else if(v==='accounting') renderAccounting();
+  else if(v==='admin') renderAdmin();
+  else if(v==='portal') (me.role==='broker'?renderBrokerPortal:renderOfftakerPortal)();
+}
+
+/* ============================ PIPELINE BOARD (staff) ============================ */
+async function renderBoard(){
+  const m=$('main');
+  m.innerHTML = `<div class="viewhead" style="display:flex;justify-content:space-between;align-items:flex-end">
+      <div><h2>Pipeline</h2><div class="sub">Data-licensing deals through the full lifecycle.</div></div>
+      <button class="btn" onclick="newLeadForm()">+ New lead</button></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="board" id="board"><div class="empty">Loading…</div></div>`;
+  const { data, error } = await sb.from('lead').select('*, client:client_id(company_name)').order('created_at',{ascending:false});
+  if(error){ $('board').innerHTML=`<div class="empty">${esc(error.message)}</div>`; return; }
+  leads = data||[];
+  const active = leads.filter(l=>!l.is_dead);
+  const open = active.filter(l=>l.current_stage!=='final_payout_complete');
+  const pipeVal = open.reduce((s,l)=>s+Number(l.deal_value||0),0);
+  const won = leads.filter(l=>l.current_stage==='final_payout_complete');
+  const wonVal = won.reduce((s,l)=>s+Number(l.deal_value||0),0);
+  const weighted = open.reduce((s,l)=>{const st=stages.find(x=>x.key===l.current_stage);return s+Number(l.deal_value||0)*Number(st?.probability||0)/100;},0);
+  $('kpis').innerHTML = kpi('Open pipeline',money(pipeVal),open.length+' deals')
+    + kpi('Weighted forecast',money(weighted),'by stage probability')
+    + kpi('Closed',money(wonVal),won.length+' completed');
+  const cols = stages.filter(s=>!s.is_lost);
+  $('board').innerHTML = cols.map(s=>{
+    const items = active.filter(l=>l.current_stage===s.key);
+    const val = items.reduce((a,l)=>a+Number(l.deal_value||0),0);
+    return `<div class="col"><h3>${esc(s.label)}<span class="cnt">${items.length}${val?' · '+money(val):''}</span></h3>
+      <div class="cards">${items.map(cardHTML).join('')||'<div class="muted" style="padding:6px 4px;font-size:12px">—</div>'}</div></div>`;
+  }).join('');
+}
+function kpi(l,n,s){ return `<div class="kpi"><div class="pl">${l}</div><div class="pn">${n}</div><div class="ps">${s}</div></div>`; }
+function cardHTML(l){
+  return `<div class="card" onclick="openLead('${l.id}')">
+    <div class="co">${esc(l.company||l.client?.company_name||'Untitled')}</div>
+    ${l.contact_name?`<div class="sub">${esc(l.contact_name)}</div>`:''}
+    ${l.deal_value?`<div class="val">${money(l.deal_value)}</div>`:''}</div>`;
+}
+
+async function newLeadForm(){
+  curLead=null;
+  $('dTitle').textContent='New lead'; $('dSub').textContent='';
+  $('dBody').innerHTML = `
+    <div class="fld"><b>Company</b><input id="nl_company" style="width:300px" /></div>
+    <div class="fld"><b>Contact</b><input id="nl_contact" style="width:300px" /></div>
+    <div class="fld"><b>Email</b><input id="nl_email" style="width:300px" /></div>
+    <div class="fld"><b>Deal value $</b><input id="nl_value" type="number" min="0" step="1000" style="width:160px" /></div>
+    <div class="fld"><b>Engagement fee %</b><input id="nl_eng" type="number" min="0" max="100" step="1" value="30" style="width:100px" /> <span class="muted" style="font-size:12px">Polyshares' cut of gross</span></div>
+    <button class="btn" style="margin-top:10px" onclick="createLead()">Create lead</button>`;
+  openDrawer();
+}
+async function createLead(){
+  const company=$('nl_company').value.trim();
+  if(!company){ toast('Company required'); return; }
+  let client_id=null;
+  const { data:cli } = await sb.from('client').insert({ company_name:company, contact_name:$('nl_contact').value.trim()||null, contact_email:$('nl_email').value.trim()||null }).select().single();
+  client_id = cli?.id||null;
+  const { data:lead, error } = await sb.from('lead').insert({
+    source:'internal', current_stage:'new_lead', assigned_rep_id: me.internal? me.id : null,
+    client_id, company, contact_name:$('nl_contact').value.trim()||null, email:$('nl_email').value.trim()||null,
+    deal_value: Number($('nl_value').value)||null, engagement_rate: Number($('nl_eng').value)||null
+  }).select().single();
+  if(error){ toast(error.message); return; }
+  closeDrawer(); toast('Lead created'); renderBoard();
+}
+
+/* ============================ DEAL DRAWER ============================ */
+async function openLead(id){
+  const { data:l } = await sb.from('lead').select('*, client:client_id(company_name,contact_name,contact_email)').eq('id',id).single();
+  curLead=l;
+  $('dTitle').textContent = l.company||l.client?.company_name||'Deal';
+  const st=stages.find(s=>s.key===l.current_stage);
+  $('dSub').textContent = (st?.label||l.current_stage) + (l.deal_value?' · '+money(l.deal_value):'');
+  openDrawer();
+  $('dBody').innerHTML='<div class="muted">Loading…</div>';
+  const [{data:events},{data:sevents},{data:contracts},{data:quotes},{data:est}] = await Promise.all([
+    sb.from('lead_event').select('*').eq('lead_id',id).order('created_at',{ascending:false}),
+    sb.from('lead_stage_event').select('*').eq('lead_id',id).order('created_at',{ascending:false}),
+    sb.from('contract').select('*').eq('lead_id',id).order('created_at',{ascending:false}),
+    sb.from('quote').select('*').eq('lead_id',id).order('created_at',{ascending:false}),
+    sb.rpc('estimate_commission',{p_lead:id})
+  ]);
+  const feed = [...(events||[]).map(e=>({t:e.created_at,type:e.event_type,data:e.data})),
+                ...(sevents||[]).map(e=>({t:e.created_at,type:'stage',data:{from:e.from_stage,to:e.to_stage,note:e.note}}))]
+                .sort((a,b)=>new Date(b.t)-new Date(a.t));
+  $('dBody').innerHTML = dealFields(l) + stepperHTML(l) + actionsHTML(l)
+    + estHTML(est) + contractsHTML(contracts) + quotesHTML(l,quotes) + feedHTML(feed);
+}
+function dealFields(l){
+  return `<div class="fld"><b>Client</b>${esc(l.company||l.client?.company_name||'—')}</div>
+    <div class="fld"><b>Contact</b>${esc(l.contact_name||l.client?.contact_name||'—')} ${l.email?'· '+esc(l.email):''}</div>
+    <div class="fld"><b>Deal value</b>${money(l.deal_value)} <span class="muted">gross</span></div>
+    <div class="fld"><b>Engagement fee</b>${l.engagement_rate!=null?l.engagement_rate+'%':'—'}</div>
+    <div class="fld"><b>Source</b>${esc(l.source)}</div>`;
+}
+function stepperHTML(l){
+  const order = stages.filter(s=>!s.is_lost);
+  const idx = order.findIndex(s=>s.key===l.current_stage);
+  return `<div class="section-h">Stage</div><div class="stepper">` + order.map((s,i)=>{
+    let cls = i<idx?'done': i===idx?'active':'';
+    const isNext = i===idx+1 && me.internal;
+    return `<span class="pill ${cls} ${isNext?'next':''}" ${isNext?`onclick="advance('${s.key}')"`:''}>${esc(s.label)}${isNext?' →':''}</span>`;
+  }).join('') + `</div>`;
+}
+function actionsHTML(l){
+  if(!me.internal || l.is_dead) return '';
+  return `<div class="row" style="margin-bottom:6px">
+     <button class="btn sm ghost" onclick="markLost('${l.id}')">Mark lost</button>
+   </div>`;
+}
+function estHTML(est){
+  if(!est||!est.length) return '';
+  return `<div class="section-h">Projected commission (estimate)</div>`
+    + `<table class="tbl"><tbody>` + est.map(e=>`<tr><td>${roleLabel(e.party_type)}</td><td>${e.rate}%</td><td style="text-align:right">${money(e.amount)}</td></tr>`).join('') + `</tbody></table>`;
+}
+function contractsHTML(cs){
+  const rows = (cs||[]).map(c=>`<tr><td>${esc(c.type)}</td><td><span class="tag ${c.status==='signed'?'green':'gold'}">${esc(c.status)}</span></td>
+     <td class="right-actions">${c.status!=='signed'&&me.internal?`<button class="btn sm" onclick="signContract('${c.id}')">Mark signed</button>`:''}</td></tr>`).join('');
+  const add = me.internal? `<div class="row" style="margin-top:8px">
+      <select id="ct_type"><option value="engagement">Engagement</option><option value="purchase">Purchase agreement</option><option value="nda">NDA</option></select>
+      <button class="btn sm" onclick="addContract()">Add contract</button></div>`:'';
+  return `<div class="section-h">Contracts</div><table class="tbl"><tbody>${rows||'<tr><td class="muted">None yet</td></tr>'}</tbody></table>${add}`;
+}
+function quotesHTML(l,qs){
+  if(!me.internal) return '';
+  const rows=(qs||[]).map(q=>`<tr><td>${money(q.amount)}</td><td><span class="tag ${q.status==='accepted'?'green':''}">${esc(q.status)}</span></td>
+    <td class="right-actions">${q.status==='submitted'?`<button class="btn sm" onclick="acceptQuote('${q.id}')">Accept</button>`:''}</td></tr>`).join('');
+  return `<div class="section-h">Offtaker quotes</div><table class="tbl"><tbody>${rows||'<tr><td class="muted">No quotes yet</td></tr>'}</tbody></table>`;
+}
+function feedHTML(feed){
+  const ic={stage:'◆',assignment:'👤',doc_sent:'📄',quote_received:'💬',payment:'💵',accrual:'🧮',ar_opened:'🧾',deal_lost:'✖',clawback:'↩'};
+  return `<div class="section-h">Activity</div><div class="feed">` + (feed.length? feed.map(e=>{
+    let txt = e.type==='stage' ? `Moved ${e.data.from?stageLabel(e.data.from)+' → ':''}${stageLabel(e.data.to)}` : evText(e);
+    return `<div class="ev"><span class="ic">${ic[e.type]||'•'}</span><span>${esc(txt)}</span><span class="tm">${when(e.t)}</span></div>`;
+  }).join('') : '<div class="muted" style="padding:8px 0">No activity yet.</div>') + `</div>`;
+}
+function evText(e){ const d=e.data||{}; if(e.type==='accrual')return 'Commissions accrued on $'+Number(d.basis||0).toLocaleString(); if(e.type==='ar_opened')return 'AR ticket opened ('+money(d.amount)+')'; if(e.type==='deal_lost')return 'Marked lost: '+(d.reason||''); return e.type.replace(/_/g,' '); }
+function stageLabel(k){ return stages.find(s=>s.key===k)?.label||k; }
+function when(t){ const d=new Date(t),n=new Date(),diff=(n-d)/1000; if(diff<60)return'just now'; if(diff<3600)return Math.floor(diff/60)+'m'; if(diff<86400)return Math.floor(diff/3600)+'h'; return d.toLocaleDateString(); }
+
+async function advance(to){
+  const { error } = await sb.rpc('advance_stage',{ p_lead:curLead.id, p_to:to });
+  if(error){ toast(error.message.replace(/^.*?: /,'')); return; }
+  toast('Moved to '+stageLabel(to)); openLead(curLead.id);
+}
+async function markLost(id){
+  const reason = prompt('Reason this deal is lost (e.g. client went dark, offtaker passed):');
+  if(!reason) return;
+  const { error } = await sb.rpc('mark_lost',{ p_lead:id, p_reason:reason });
+  if(error){ toast(error.message); return; }
+  closeDrawer(); toast('Marked lost'); renderBoard();
+}
+async function addContract(){
+  const type=$('ct_type').value;
+  const { error } = await sb.from('contract').insert({ lead_id:curLead.id, type, status:'draft' });
+  if(error){ toast(error.message); return; }
+  openLead(curLead.id);
+}
+async function signContract(id){
+  const { error } = await sb.from('contract').update({ status:'signed', signed_at:new Date().toISOString() }).eq('id',id);
+  if(error){ toast(error.message); return; }
+  toast('Contract signed'); openLead(curLead.id);
+}
+async function acceptQuote(id){
+  await sb.from('quote').update({ status:'accepted', decided_at:new Date().toISOString() }).eq('id',id);
+  toast('Quote accepted'); openLead(curLead.id);
+}
+
+/* ============================ placeholder views (built next) ============================ */
+function renderCommission(){ $('main').innerHTML = `<div class="viewhead"><h2>Commission</h2></div><div class="empty"><div class="big">Coming next</div>Commission dashboard.</div>`; }
+function renderAccounting(){ $('main').innerHTML = `<div class="viewhead"><h2>Accounting</h2></div><div class="empty"><div class="big">Coming next</div>AR / AP / commission ledger queues.</div>`; }
+function renderAdmin(){ $('main').innerHTML = `<div class="viewhead"><h2>Admin</h2></div><div class="empty"><div class="big">Coming next</div>Users, rates, invites.</div>`; }
+function renderBrokerPortal(){ $('main').innerHTML = `<div class="viewhead"><h2>My Portal</h2></div><div class="empty"><div class="big">Coming next</div>Broker portal.</div>`; }
+function renderOfftakerPortal(){ $('main').innerHTML = `<div class="viewhead"><h2>My Portal</h2></div><div class="empty"><div class="big">Coming next</div>Offtaker portal.</div>`; }
+
+/* ============================ cert gate ============================ */
+let quizQ=[], quizA={};
+async function showGate(){
+  $('app').style.display='none'; $('gate').style.display='block';
+  const { data:mod } = await sb.from('training_module').select('*').eq('active',true).order('version',{ascending:false}).limit(1).maybeSingle();
+  if(!mod){ $('gateBody').innerHTML='<div class="empty">No active module. Contact an admin.</div>'; return; }
+  const { data:qs } = await sb.rpc('get_quiz',{ p_module:mod.id });
+  quizQ = qs||[]; window._mod=mod;
+  $('gateBody').innerHTML = quizQ.map((q,i)=>`<div class="q"><b>${i+1}. ${esc(q.question)}</b>
+    ${(q.options||[]).map((o,oi)=>`<label class="opt" onclick="pick('${q.id}',${oi},this)">${esc(o)}</label>`).join('')}</div>`).join('')
+    + `<button class="btn" onclick="submitQuiz()">Submit test</button> <span id="quizmsg" class="muted"></span>`;
+}
+function pick(qid,oi,el){ quizA[qid]=oi; el.parentElement.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel')); el.classList.add('sel'); }
+async function submitQuiz(){
+  if(Object.keys(quizA).length<quizQ.length){ $('quizmsg').textContent='Answer every question.'; return; }
+  const { data, error } = await sb.rpc('submit_quiz',{ p_module:window._mod.id, p_answers:quizA });
+  if(error){ $('quizmsg').textContent=error.message; return; }
+  const r=data[0];
+  if(r.passed){ toast('Passed — '+r.score+'%'); $('gate').style.display='none'; boot(); }
+  else { $('quizmsg').textContent=`Scored ${r.score}% — need ${r.threshold}%. Try again.`; quizA={}; document.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel')); }
+}
+
+/* ============================ drawer helpers + init ============================ */
+function openDrawer(){ $('drawer').classList.add('open'); $('drawerback').style.display='block'; }
+function closeDrawer(){ $('drawer').classList.remove('open'); $('drawerback').style.display='none'; }
+boot();
+</script>
+</body>
+</html>
